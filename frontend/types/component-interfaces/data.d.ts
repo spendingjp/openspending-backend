@@ -37,3 +37,8 @@ export interface Map {
   sourceId: string
   targetId: string
 }
+
+export interface ConsumeMap {
+  sourceId: string
+  targetId: string
+}

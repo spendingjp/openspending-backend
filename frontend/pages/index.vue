@@ -48,6 +48,7 @@
           append-outer-icon="mdi-cached"
           :success="item.cofogLevel3 !== item.copyCofogLevel3"
           @click:append-outer="restoreSelect(item)"
+          @change="registerMappingArray(item)"
         ></v-select>
       </template>
       <template v-slot:no-data>
@@ -66,7 +67,8 @@ import Vue from 'vue'
 import cofog from '@/data/cofog_flatten.json'
 import data from '@/data/tsukuba_flatten.json'
 import mapping from '@/data/mapping.json'
-import { Data, Cofog, Map } from '@/types/component-interfaces/data'
+import { Data, Cofog, Map, ConsumeMap } from '@/types/component-interfaces/data'
+import { dataStore } from '@/store'
 
 interface CofogItem {
   id: string
@@ -197,7 +199,13 @@ export default Vue.extend({
       })
       this.setSelectItemsCofogLevel2(restoreItem)
       this.setSelectItemsCofogLevel3(restoreItem)
-    }
+      dataStore.removeMap(item.level6Id)
+    },
+    registerMappingArray(item: DataItem) {
+      if (item.cofogLevel3 && item.cofogLevel3 !== item.copyCofogLevel3) {
+        dataStore.setMap({ sourceId: item.level6Id, targetId: item.cofogLevel3 })
+      }
+    },
   }
 })
 </script>
