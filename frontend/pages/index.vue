@@ -1,87 +1,203 @@
 <template>
-  <v-row justify="center" align="center">
-    <v-col cols="12" sm="8" md="6">
-      <v-card class="logo py-4 d-flex justify-center">
-        <NuxtLogo />
-        <VuetifyLogo />
-      </v-card>
-      <v-card>
-        <v-card-title class="headline">
-          Welcome to the Vuetify + Nuxt.js template
-        </v-card-title>
-        <v-card-text>
-          <p>
-            Vuetify is a progressive Material Design component framework for
-            Vue.js. It was designed to empower developers to create amazing
-            applications.
-          </p>
-          <p>
-            For more information on Vuetify, check out the
-            <a
-              href="https://vuetifyjs.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              documentation </a
-            >.
-          </p>
-          <p>
-            If you have questions, please join the official
-            <a
-              href="https://chat.vuetifyjs.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="chat"
-            >
-              discord </a
-            >.
-          </p>
-          <p>
-            Find a bug? Report it on the github
-            <a
-              href="https://github.com/vuetifyjs/vuetify/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="contribute"
-            >
-              issue board </a
-            >.
-          </p>
-          <p>
-            Thank you for developing with Vuetify and I look forward to bringing
-            more exciting features in the future.
-          </p>
-          <div class="text-xs-right">
-            <em><small>&mdash; John Leider</small></em>
-          </div>
-          <hr class="my-3" />
-          <a
-            href="https://nuxtjs.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Nuxt Documentation
-          </a>
-          <br />
-          <a
-            href="https://github.com/nuxt/nuxt.js"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Nuxt GitHub
-          </a>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn color="primary" nuxt to="/inspire"> Continue </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-col>
-  </v-row>
+  <div>
+    <v-data-table
+      :headers="headers"
+      :footer-props="footerProps"
+      :items="originalItems"
+      class="elevation-1"
+      dense
+    >
+      <template v-slot:item.cofogLevel1="{ item }">
+        <v-select
+          v-model="item.cofogLevel1"
+          :items="cofogItems"
+          item-value="id"
+          item-text="text"
+          label="COFOG Level1"
+          dense
+          outlined
+          class="mt-4"
+          :success="item.cofogLevel1 !== item.copyCofogLevel1"
+          @change="setSelectItemsCofogLevel2(item)"
+        ></v-select>
+      </template>
+      <template v-slot:item.cofogLevel2="{ item }">
+        <v-select
+          v-model="item.cofogLevel2"
+          :items="cofogLevel2Items[item.number]"
+          item-value="id"
+          item-text="text"
+          label="COFOG Level2"
+          dense
+          outlined
+          class="mt-4"
+          :success="item.cofogLevel2 !== item.copyCofogLevel2"
+          @change="setSelectItemsCofogLevel3(item)"
+        ></v-select>
+      </template>
+      <template v-slot:item.cofogLevel3="{ item }">
+        <v-select
+          v-model="item.cofogLevel3"
+          :items="cofogLevel3Items[item.number]"
+          item-value="id"
+          item-text="text"
+          label="COFOG Level3"
+          dense
+          outlined
+          class="mt-4"
+          append-outer-icon="mdi-cached"
+          :success="item.cofogLevel3 !== item.copyCofogLevel3"
+          @click:append-outer="restoreSelect(item)"
+        ></v-select>
+      </template>
+      <template v-slot:no-data>
+        <v-skeleton-loader
+          class="mx-auto"
+          width="1000"
+          type="table"
+        ></v-skeleton-loader>
+      </template>
+    </v-data-table>
+  </div>
 </template>
 
-<script>
-export default {
-  name: 'IndexPage',
+<script lang="ts">
+import Vue from 'vue'
+import cofog from '@/data/cofog_flatten.json'
+import data from '@/data/tsukuba_flatten.json'
+import mapping from '@/data/mapping.json'
+import { Data, Cofog, Map } from '@/types/component-interfaces/data'
+
+interface CofogItem {
+  id: string
+  text: string
 }
+
+interface Action {
+  number: number
+  cofogLevel1: string | undefined
+  cofogLevel2: string | undefined
+  cofogLevel3: string | undefined
+  copyCofogLevel1: string | undefined
+  copyCofogLevel2: string | undefined
+  copyCofogLevel3: string | undefined
+}
+
+type DataItem = Data & Action
+
+export default Vue.extend({
+  data() {
+    return {
+      headers: [
+        { text: 'level1Code', value: 'level1Code', sortable: false },
+        { text: 'level1Name', value: 'level1Name', sortable: false, cellClass: 'text-no-wrap' },
+        { text: 'level2Code', value: 'level2Code', sortable: false },
+        { text: 'level2Name', value: 'level2Name', sortable: false, cellClass: 'text-no-wrap' },
+        { text: 'level3Code', value: 'level3Code', sortable: false },
+        { text: 'level3Name', value: 'level3Name', sortable: false, cellClass: 'text-no-wrap' },
+        { text: 'level4Code', value: 'level4Code', sortable: false },
+        { text: 'level4Name', value: 'level4Name', sortable: false, cellClass: 'text-no-wrap' },
+        { text: 'level5Code', value: 'level5Code', sortable: false },
+        { text: 'level5Name', value: 'level5Name', sortable: false, cellClass: 'text-no-wrap' },
+        { text: 'level6Code', value: 'level6Code', sortable: false },
+        { text: 'level6Name', value: 'level6Name', sortable: false, cellClass: 'text-no-wrap' },
+        { text: 'cofogLevel1', value: 'cofogLevel1', sortable: false },
+        { text: 'cofogLevel2', value: 'cofogLevel2', sortable: false },
+        { text: 'cofogLevel3', value: 'cofogLevel3', sortable: false },
+      ],
+      footerProps: {
+        itemsPerPageOptions: [50, 100, 150, 200, -1]
+      },
+      originalData: [] as Data[],
+      originalItems: [] as DataItem[],
+      mappingData: [] as Map[],
+      cofogData: [] as Cofog[],
+      cofogItems: [] as CofogItem[],
+      cofogLevel2Items: [] as CofogItem[][],
+      cofogLevel3Items: [] as CofogItem[][],
+    }
+  },
+  mounted() {
+    this.cofogData = cofog.data
+    this.cofogItems = this.cofogData.map((item: Cofog) => {
+      return {
+        id: item.cofogLevel1Id,
+        text: `${item.cofogLevel1Code} ${item.cofogLevel1Name}`
+      }
+    })
+    this.mappingData = mapping.data
+    this.originalData = data.data
+    this.originalItems = this.originalData.map((item, index) => {
+      const matchedCofog = this.getMatchCofog(item)
+      this.cofogLevel2Items[index] = this.cofogData.filter((v: Cofog) => {
+        return v.cofogLevel1Id === matchedCofog?.cofogLevel1Id
+      })
+        .map((item2: Cofog) => {
+          return {
+            id: item2.cofogLevel2Id,
+            text: `${item2.cofogLevel2Code} ${item2.cofogLevel2Name}`
+          }
+        })
+      this.cofogLevel3Items[index] = this.cofogData.filter((v: Cofog) => {
+        return v.cofogLevel2Id === matchedCofog?.cofogLevel2Id
+      })
+        .map((item3: Cofog) => {
+          return {
+            id: item3.cofogLevel3Id,
+            text: `${item3.cofogLevel3Code} ${item3.cofogLevel3Name}`
+          }
+        })
+      return {
+        number: index,
+        cofogLevel1: matchedCofog?.cofogLevel1Id,
+        cofogLevel2: matchedCofog?.cofogLevel2Id,
+        cofogLevel3: matchedCofog?.cofogLevel3Id,
+        copyCofogLevel1: JSON.parse(JSON.stringify(matchedCofog?.cofogLevel1Id)),
+        copyCofogLevel2: JSON.parse(JSON.stringify(matchedCofog?.cofogLevel2Id)),
+        copyCofogLevel3: JSON.parse(JSON.stringify(matchedCofog?.cofogLevel3Id)),
+        ...item,
+      }
+    })
+  },
+  methods: {
+    setSelectItemsCofogLevel2(item: DataItem) {
+      this.cofogLevel2Items[item.number] = this.cofogData.filter((v: Cofog) => {
+        return v.cofogLevel1Id === item.cofogLevel1
+      })
+        .map((item: Cofog) => {
+          return {
+            id: item.cofogLevel2Id,
+            text: `${item.cofogLevel2Code} ${item.cofogLevel2Name}`
+          }
+        })
+    },
+    setSelectItemsCofogLevel3(item: DataItem) {
+      this.cofogLevel3Items[item.number] = this.cofogData.filter((v: Cofog) => {
+        return v.cofogLevel2Id === item.cofogLevel2
+      })
+        .map((item: Cofog) => {
+          return {
+            id: item.cofogLevel3Id,
+            text: `${item.cofogLevel3Code} ${item.cofogLevel3Name}`
+          }
+        })
+    },
+    getMatchCofog(item: Data) {
+      const matched = this.mappingData.find((v: Map) => { return v.sourceId === item.level6Id })
+      const matchedId = matched ? matched.targetId : null
+      return this.cofogData.find((v: Cofog) => {
+        return v.cofogLevel3Id === matchedId
+      })
+    },
+    restoreSelect(item: DataItem) {
+      const restoreItem = Object.assign(item, {
+        cofogLevel1: item.copyCofogLevel1,
+        cofogLevel2: item.copyCofogLevel2,
+        cofogLevel3: item.copyCofogLevel3,
+      })
+      this.setSelectItemsCofogLevel2(restoreItem)
+      this.setSelectItemsCofogLevel3(restoreItem)
+    }
+  }
+})
 </script>
