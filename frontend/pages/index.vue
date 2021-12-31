@@ -133,7 +133,7 @@ export default Vue.extend({
     this.mappingData = mapping.data
     this.originalData = data.data
     this.originalItems = this.originalData.map((item, index) => {
-      const matchedCofog: Cofog = this.getMatchCofog(item)
+      const matchedCofog = this.getMatchCofog(item)
       this.cofogLevel2Items[index] = this.cofogData.filter((v: Cofog) => {
         return v.cofogLevel1Id === matchedCofog?.cofogLevel1Id
       })
@@ -157,9 +157,9 @@ export default Vue.extend({
         cofogLevel1: matchedCofog?.cofogLevel1Id,
         cofogLevel2: matchedCofog?.cofogLevel2Id,
         cofogLevel3: matchedCofog?.cofogLevel3Id,
-        copyCofogLevel1: matchedCofog ? JSON.parse(JSON.stringify(matchedCofog.cofogLevel1Id)) : '',
-        copyCofogLevel2: matchedCofog ? JSON.parse(JSON.stringify(matchedCofog.cofogLevel2Id)) : '',
-        copyCofogLevel3: matchedCofog ? JSON.parse(JSON.stringify(matchedCofog.cofogLevel3Id)) : '',
+        copyCofogLevel1: JSON.parse(JSON.stringify(matchedCofog?.cofogLevel1Id || '')),
+        copyCofogLevel2: JSON.parse(JSON.stringify(matchedCofog?.cofogLevel2Id || '')),
+        copyCofogLevel3: JSON.parse(JSON.stringify(matchedCofog?.cofogLevel3Id || '')),
         ...item,
       }
     })
@@ -187,9 +187,9 @@ export default Vue.extend({
           }
         })
     },
-    getMatchCofog(item: Data) {
-      const matched: Map = this.mappingData.find((v: Map) => { return v.sourceId === item.level6Id })
-      const matchedId = matched ? matched.targetId : null
+    getMatchCofog(item: Data): Cofog | undefined {
+      const matched: Map | undefined = this.mappingData.find((v: Map) => { return v.sourceId === item.level6Id })
+      const matchedId = matched?.targetId || null
       return this.cofogData.find((v: Cofog) => {
         return v.cofogLevel3Id === matchedId
       })
@@ -205,9 +205,8 @@ export default Vue.extend({
       dataStore.removeMap(item.level6Id)
     },
     registerMappingArray(item: DataItem) {
-      const cofogLevel3: string = item.cofogLevel3
-      if (cofogLevel3 && cofogLevel3 !== item.copyCofogLevel3) {
-        dataStore.setMap({ sourceId: item.level6Id, targetId: cofogLevel3 })
+      if (item.cofogLevel3 && item.cofogLevel3 !== item.copyCofogLevel3) {
+        dataStore.setMap({ sourceId: item.level6Id, targetId: item.cofogLevel3 })
       }
     },
   }
