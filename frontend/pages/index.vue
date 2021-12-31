@@ -18,6 +18,7 @@
           outlined
           class="mt-4"
           :success="item.cofogLevel1 !== item.copyCofogLevel1"
+          :error="!item.cofogLevel1"
           @change="setSelectItemsCofogLevel2(item)"
         ></v-select>
       </template>
@@ -32,6 +33,7 @@
           outlined
           class="mt-4"
           :success="item.cofogLevel2 !== item.copyCofogLevel2"
+          :error="!item.cofogLevel2"
           @change="setSelectItemsCofogLevel3(item)"
         ></v-select>
       </template>
@@ -47,6 +49,7 @@
           class="mt-4"
           append-outer-icon="mdi-cached"
           :success="item.cofogLevel3 !== item.copyCofogLevel3"
+          :error="!item.cofogLevel3"
           @click:append-outer="restoreSelect(item)"
           @change="registerMappingArray(item)"
         ></v-select>
@@ -67,7 +70,7 @@ import Vue from 'vue'
 import cofog from '@/data/cofog_flatten.json'
 import data from '@/data/tsukuba_flatten.json'
 import mapping from '@/data/mapping.json'
-import { Data, Cofog, Map, ConsumeMap } from '@/types/component-interfaces/data'
+import { Data, Cofog, Map } from '@/types/component-interfaces/data'
 import { dataStore } from '@/store'
 
 interface CofogItem {
@@ -154,9 +157,9 @@ export default Vue.extend({
         cofogLevel1: matchedCofog?.cofogLevel1Id,
         cofogLevel2: matchedCofog?.cofogLevel2Id,
         cofogLevel3: matchedCofog?.cofogLevel3Id,
-        copyCofogLevel1: JSON.parse(JSON.stringify(matchedCofog?.cofogLevel1Id)),
-        copyCofogLevel2: JSON.parse(JSON.stringify(matchedCofog?.cofogLevel2Id)),
-        copyCofogLevel3: JSON.parse(JSON.stringify(matchedCofog?.cofogLevel3Id)),
+        copyCofogLevel1: matchedCofog ? JSON.parse(JSON.stringify(matchedCofog?.cofogLevel1Id)) : '',
+        copyCofogLevel2: matchedCofog ? JSON.parse(JSON.stringify(matchedCofog?.cofogLevel2Id)) : '',
+        copyCofogLevel3: matchedCofog ? JSON.parse(JSON.stringify(matchedCofog?.cofogLevel3Id)) : '',
         ...item,
       }
     })
