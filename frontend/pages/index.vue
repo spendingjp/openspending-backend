@@ -54,6 +54,14 @@
           @change="registerMappingArray(item)"
         ></v-select>
       </template>
+      <template v-slot:item.rating="{ item }">
+        <v-rating
+          v-model="item.rating"
+          background-color="purple lighten-3"
+          color="purple"
+          small
+        ></v-rating>
+      </template>
       <template v-slot:no-data>
         <v-skeleton-loader
           class="mx-auto"
@@ -80,12 +88,13 @@ interface CofogItem {
 
 interface Action {
   number: number
-  cofogLevel1: string | undefined
-  cofogLevel2: string | undefined
-  cofogLevel3: string | undefined
-  copyCofogLevel1: string | undefined
-  copyCofogLevel2: string | undefined
-  copyCofogLevel3: string | undefined
+  cofogLevel1: string | null
+  cofogLevel2: string | null
+  cofogLevel3: string | null
+  copyCofogLevel1: string | null
+  copyCofogLevel2: string | null
+  copyCofogLevel3: string | null
+  rating?: number
 }
 
 type DataItem = Data & Action
@@ -109,6 +118,7 @@ export default Vue.extend({
         { text: 'cofogLevel1', value: 'cofogLevel1', sortable: false },
         { text: 'cofogLevel2', value: 'cofogLevel2', sortable: false },
         { text: 'cofogLevel3', value: 'cofogLevel3', sortable: false },
+        { text: 'マッチ度', value: 'rating', sortable: false },
       ],
       footerProps: {
         itemsPerPageOptions: [50, 100, 150, 200, -1]
@@ -154,12 +164,13 @@ export default Vue.extend({
         })
       return {
         number: index,
-        cofogLevel1: matchedCofog?.cofogLevel1Id,
-        cofogLevel2: matchedCofog?.cofogLevel2Id,
-        cofogLevel3: matchedCofog?.cofogLevel3Id,
+        cofogLevel1: matchedCofog?.cofogLevel1Id || '',
+        cofogLevel2: matchedCofog?.cofogLevel2Id || '',
+        cofogLevel3: matchedCofog?.cofogLevel3Id || '',
         copyCofogLevel1: JSON.parse(JSON.stringify(matchedCofog?.cofogLevel1Id || '')),
         copyCofogLevel2: JSON.parse(JSON.stringify(matchedCofog?.cofogLevel2Id || '')),
         copyCofogLevel3: JSON.parse(JSON.stringify(matchedCofog?.cofogLevel3Id || '')),
+        rating: 0,
         ...item,
       }
     })
@@ -206,7 +217,7 @@ export default Vue.extend({
     },
     registerMappingArray(item: DataItem) {
       if (item.cofogLevel3 && item.cofogLevel3 !== item.copyCofogLevel3) {
-        dataStore.setMap({ sourceId: item.level6Id, targetId: item.cofogLevel3 })
+        dataStore.setMap({ sourceId: item.level6Id, targetId: item.cofogLevel3, rating: item.rating })
       }
     },
   }

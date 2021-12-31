@@ -41,4 +41,5 @@ export interface Map {
 export interface ConsumeMap {
   sourceId: string
   targetId: string
+  rating?: number
 }
