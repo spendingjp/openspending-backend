@@ -79,7 +79,7 @@ import cofog from '@/data/cofog_flatten.json'
 import data from '@/data/tsukuba_flatten.json'
 import mapping from '@/data/mapping.json'
 import { Data, Cofog, Map } from '@/types/component-interfaces/data'
-import { dataStore } from '@/store'
+import { dataStore, authStore } from '@/store'
 
 interface CofogItem {
   id: string
@@ -265,6 +265,12 @@ export default Vue.extend({
           rating: item.rating,
         })
       }
+    },
+    getName() {
+      return authStore.getName
+    },
+    getToken() {
+      return authStore.getToken
     },
   },
 })
