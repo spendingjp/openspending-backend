@@ -1,7 +1,5 @@
 import { VuexModule, Module, Mutation, Action } from 'vuex-module-decorators'
-import {
-  ConsumeMap
-} from '@/types/component-interfaces/data'
+import { ConsumeMap } from '@/types/component-interfaces/data'
 
 @Module({
   name: 'modules/data',
@@ -20,7 +18,7 @@ class DataModule extends VuexModule {
   public removeMappingData(sourseId: string): void {
     this.newMappingData.splice(
       this.newMappingData.findIndex((item) => item.sourceId === sourseId),
-      1,
+      1
     )
   }
 

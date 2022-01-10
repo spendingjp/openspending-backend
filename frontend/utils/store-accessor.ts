@@ -9,7 +9,4 @@ function initialiseStores(store: Store<any>): void {
   dataStore = getModule(DataModule, store)
 }
 
-export {
-  initialiseStores,
-  dataStore,
-}
+export { initialiseStores, dataStore }
