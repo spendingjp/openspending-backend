@@ -7,7 +7,7 @@
       class="elevation-1"
       dense
     >
-      <template v-slot:item.cofogLevel1="{ item }">
+      <template #item.cofogLevel1="{ item }">
         <v-select
           v-model="item.cofogLevel1"
           :items="cofogItems"
@@ -22,7 +22,7 @@
           @change="setSelectItemsCofogLevel2(item)"
         ></v-select>
       </template>
-      <template v-slot:item.cofogLevel2="{ item }">
+      <template #item.cofogLevel2="{ item }">
         <v-select
           v-model="item.cofogLevel2"
           :items="cofogLevel2Items[item.number]"
@@ -37,7 +37,7 @@
           @change="setSelectItemsCofogLevel3(item)"
         ></v-select>
       </template>
-      <template v-slot:item.cofogLevel3="{ item }">
+      <template #item.cofogLevel3="{ item }">
         <v-select
           v-model="item.cofogLevel3"
           :items="cofogLevel3Items[item.number]"
@@ -54,7 +54,7 @@
           @change="registerMappingArray(item)"
         ></v-select>
       </template>
-      <template v-slot:item.rating="{ item }">
+      <template #item.rating="{ item }">
         <v-rating
           v-model="item.rating"
           background-color="purple lighten-3"
@@ -62,7 +62,7 @@
           small
         ></v-rating>
       </template>
-      <template v-slot:no-data>
+      <template #no-data>
         <v-skeleton-loader
           class="mx-auto"
           width="1000"
@@ -104,24 +104,54 @@ export default Vue.extend({
     return {
       headers: [
         { text: 'level1Code', value: 'level1Code', sortable: false },
-        { text: 'level1Name', value: 'level1Name', sortable: false, cellClass: 'text-no-wrap' },
+        {
+          text: 'level1Name',
+          value: 'level1Name',
+          sortable: false,
+          cellClass: 'text-no-wrap',
+        },
         { text: 'level2Code', value: 'level2Code', sortable: false },
-        { text: 'level2Name', value: 'level2Name', sortable: false, cellClass: 'text-no-wrap' },
+        {
+          text: 'level2Name',
+          value: 'level2Name',
+          sortable: false,
+          cellClass: 'text-no-wrap',
+        },
         { text: 'level3Code', value: 'level3Code', sortable: false },
-        { text: 'level3Name', value: 'level3Name', sortable: false, cellClass: 'text-no-wrap' },
+        {
+          text: 'level3Name',
+          value: 'level3Name',
+          sortable: false,
+          cellClass: 'text-no-wrap',
+        },
         { text: 'level4Code', value: 'level4Code', sortable: false },
-        { text: 'level4Name', value: 'level4Name', sortable: false, cellClass: 'text-no-wrap' },
+        {
+          text: 'level4Name',
+          value: 'level4Name',
+          sortable: false,
+          cellClass: 'text-no-wrap',
+        },
         { text: 'level5Code', value: 'level5Code', sortable: false },
-        { text: 'level5Name', value: 'level5Name', sortable: false, cellClass: 'text-no-wrap' },
+        {
+          text: 'level5Name',
+          value: 'level5Name',
+          sortable: false,
+          cellClass: 'text-no-wrap',
+        },
         { text: 'level6Code', value: 'level6Code', sortable: false },
-        { text: 'level6Name', value: 'level6Name', sortable: false, cellClass: 'text-no-wrap' },
+        {
+          text: 'level6Name',
+          value: 'level6Name',
+          sortable: false,
+          cellClass: 'text-no-wrap',
+        },
         { text: 'cofogLevel1', value: 'cofogLevel1', sortable: false },
         { text: 'cofogLevel2', value: 'cofogLevel2', sortable: false },
         { text: 'cofogLevel3', value: 'cofogLevel3', sortable: false },
         { text: 'マッチ度', value: 'rating', sortable: false },
       ],
       footerProps: {
-        itemsPerPageOptions: [50, 100, 150, 200, -1]
+        itemsPerPageOptions: [50, 100, 150, 200, -1],
       },
       originalData: [] as Data[],
       originalItems: [] as DataItem[],
@@ -137,29 +167,31 @@ export default Vue.extend({
     this.cofogItems = this.cofogData.map((item: Cofog) => {
       return {
         id: item.cofogLevel1Id,
-        text: `${item.cofogLevel1Code} ${item.cofogLevel1Name}`
+        text: `${item.cofogLevel1Code} ${item.cofogLevel1Name}`,
       }
     })
     this.mappingData = mapping.data
     this.originalData = data.data
     this.originalItems = this.originalData.map((item, index) => {
       const matchedCofog = this.getMatchCofog(item)
-      this.cofogLevel2Items[index] = this.cofogData.filter((v: Cofog) => {
-        return v.cofogLevel1Id === matchedCofog?.cofogLevel1Id
-      })
+      this.cofogLevel2Items[index] = this.cofogData
+        .filter((v: Cofog) => {
+          return v.cofogLevel1Id === matchedCofog?.cofogLevel1Id
+        })
         .map((item2: Cofog) => {
           return {
             id: item2.cofogLevel2Id,
-            text: `${item2.cofogLevel2Code} ${item2.cofogLevel2Name}`
+            text: `${item2.cofogLevel2Code} ${item2.cofogLevel2Name}`,
           }
         })
-      this.cofogLevel3Items[index] = this.cofogData.filter((v: Cofog) => {
-        return v.cofogLevel2Id === matchedCofog?.cofogLevel2Id
-      })
+      this.cofogLevel3Items[index] = this.cofogData
+        .filter((v: Cofog) => {
+          return v.cofogLevel2Id === matchedCofog?.cofogLevel2Id
+        })
         .map((item3: Cofog) => {
           return {
             id: item3.cofogLevel3Id,
-            text: `${item3.cofogLevel3Code} ${item3.cofogLevel3Name}`
+            text: `${item3.cofogLevel3Code} ${item3.cofogLevel3Name}`,
           }
         })
       return {
@@ -167,9 +199,15 @@ export default Vue.extend({
         cofogLevel1: matchedCofog?.cofogLevel1Id || '',
         cofogLevel2: matchedCofog?.cofogLevel2Id || '',
         cofogLevel3: matchedCofog?.cofogLevel3Id || '',
-        copyCofogLevel1: JSON.parse(JSON.stringify(matchedCofog?.cofogLevel1Id || '')),
-        copyCofogLevel2: JSON.parse(JSON.stringify(matchedCofog?.cofogLevel2Id || '')),
-        copyCofogLevel3: JSON.parse(JSON.stringify(matchedCofog?.cofogLevel3Id || '')),
+        copyCofogLevel1: JSON.parse(
+          JSON.stringify(matchedCofog?.cofogLevel1Id || '')
+        ),
+        copyCofogLevel2: JSON.parse(
+          JSON.stringify(matchedCofog?.cofogLevel2Id || '')
+        ),
+        copyCofogLevel3: JSON.parse(
+          JSON.stringify(matchedCofog?.cofogLevel3Id || '')
+        ),
         rating: 0,
         ...item,
       }
@@ -177,29 +215,33 @@ export default Vue.extend({
   },
   methods: {
     setSelectItemsCofogLevel2(item: DataItem) {
-      this.cofogLevel2Items[item.number] = this.cofogData.filter((v: Cofog) => {
-        return v.cofogLevel1Id === item.cofogLevel1
-      })
+      this.cofogLevel2Items[item.number] = this.cofogData
+        .filter((v: Cofog) => {
+          return v.cofogLevel1Id === item.cofogLevel1
+        })
         .map((item: Cofog) => {
           return {
             id: item.cofogLevel2Id,
-            text: `${item.cofogLevel2Code} ${item.cofogLevel2Name}`
+            text: `${item.cofogLevel2Code} ${item.cofogLevel2Name}`,
           }
         })
     },
     setSelectItemsCofogLevel3(item: DataItem) {
-      this.cofogLevel3Items[item.number] = this.cofogData.filter((v: Cofog) => {
-        return v.cofogLevel2Id === item.cofogLevel2
-      })
+      this.cofogLevel3Items[item.number] = this.cofogData
+        .filter((v: Cofog) => {
+          return v.cofogLevel2Id === item.cofogLevel2
+        })
         .map((item: Cofog) => {
           return {
             id: item.cofogLevel3Id,
-            text: `${item.cofogLevel3Code} ${item.cofogLevel3Name}`
+            text: `${item.cofogLevel3Code} ${item.cofogLevel3Name}`,
           }
         })
     },
     getMatchCofog(item: Data): Cofog | undefined {
-      const matched: Map | undefined = this.mappingData.find((v: Map) => { return v.sourceId === item.level6Id })
+      const matched: Map | undefined = this.mappingData.find((v: Map) => {
+        return v.sourceId === item.level6Id
+      })
       const matchedId = matched?.targetId || null
       return this.cofogData.find((v: Cofog) => {
         return v.cofogLevel3Id === matchedId
@@ -217,9 +259,13 @@ export default Vue.extend({
     },
     registerMappingArray(item: DataItem) {
       if (item.cofogLevel3 && item.cofogLevel3 !== item.copyCofogLevel3) {
-        dataStore.setMap({ sourceId: item.level6Id, targetId: item.cofogLevel3, rating: item.rating })
+        dataStore.setMap({
+          sourceId: item.level6Id,
+          targetId: item.cofogLevel3,
+          rating: item.rating,
+        })
       }
     },
-  }
+  },
 })
 </script>
