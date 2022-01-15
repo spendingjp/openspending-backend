@@ -23,7 +23,5 @@ setup(
         "drf-nested-routers",
         "django-polymorphic",
     ],
-    extras_require={
-        "dev": ["flake8", "black", "isort"],
-    },
+    extras_require={"dev": ["flake8", "black", "isort", "psycopg2-binary"], "prod": ["psycopg2"]},
 )
