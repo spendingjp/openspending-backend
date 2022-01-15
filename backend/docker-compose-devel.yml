@@ -1,0 +1,14 @@
+version: "3"
+services:
+  db:
+    image: postgres
+    volumes:
+      - db-volume:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${APPLICATION_DATABASE_PASSWORD}
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  db-volume:
