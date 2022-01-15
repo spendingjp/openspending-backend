@@ -1,5 +1,8 @@
+from typing import Any
+
 import pykakasi
 import shortuuidfield
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
@@ -55,10 +58,26 @@ class BudgetAmountField(models.FloatField):
     ...
 
 
+class LatitudeField(models.FloatField):
+    def __init__(self, *args, **kwargs):
+        super(LatitudeField, self).__init__(
+            *args, **dict(kwargs, validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)])
+        )
+
+
+class LongitudeField(models.FloatField):
+    def __init__(self, *args, **kwargs):
+        super(LongitudeField, self).__init__(
+            *args, **dict(kwargs, validators=[MinValueValidator(0.0), MaxValueValidator(180.0)])
+        )
+
+
 class Government(models.Model):
     id = PkField()
     name = NameField()
     slug = JpSlugField(unique=True)
+    latitude = LatitudeField()
+    longitude = LongitudeField()
     created_at = CurrentDateTimeField()
     updated_at = AutoUpdateCurrentDateTimeField()
 

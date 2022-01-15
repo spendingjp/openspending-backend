@@ -19,7 +19,7 @@ def custom_exception_handler(exc, context):
 class GovernmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Government
-        fields = ("id", "name", "slug", "created_at", "updated_at")
+        fields = ("id", "name", "slug", "latitude", "longitude", "created_at", "updated_at")
 
 
 class ClassificationSystemSerializer(serializers.ModelSerializer):
