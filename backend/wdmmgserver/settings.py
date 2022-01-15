@@ -85,17 +85,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'wdmmgserver.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv("APPLICATION_DATABASE_DATABASE_NAME", "postgres"),
+        'USER': os.getenv("APPLICATION_DATABASE_USER", "postgres"),
+        'PASSWORD': getenv_or_die('APPLICATION_DATABASE_PASSWORD'),
+        'PORT': os.getenv("APPLICATION_DATABASE_PORT", "5432"),
+        'HOST': os.getenv('APPLICATION_DATABASE_HOST', "localhost"),
+        'TEST': {
+            'NAME': f'test_{os.getenv("APPLICATION_DATABASE_DATABASE_NAME", "postgres")}',
+        },
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
