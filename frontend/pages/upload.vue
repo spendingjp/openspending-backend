@@ -23,6 +23,7 @@ export default Vue.extend({
     uploadFile() {
       const formData = new FormData()
       formData.append('file', this.file)
+      // TODO: moduleに置き換え
       this.$axios
         .post('/', formData, {
           headers: {
