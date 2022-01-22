@@ -1,0 +1,27 @@
+version: "3"
+services:
+  app:
+    build: .
+    networks:
+      - backend
+    ports:
+      - "8000:8000"
+    environment:
+      - APPLICATION_DATABASE_PASSWORD=${APPLICATION_DATABASE_PASSWORD}
+      - APPLICATION_DATABASE_HOST=db
+  db:
+    image: postgres
+    volumes:
+      - db-volume:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${APPLICATION_DATABASE_PASSWORD}
+    restart: unless-stopped
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  db-volume:
