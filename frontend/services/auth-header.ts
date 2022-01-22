@@ -1,9 +1,9 @@
 export default function authHeader() {
-  const storedUser = localStorage.getItem('user')
+  const storedUser = localStorage.getItem('openspending')
   const user = JSON.parse(storedUser || '{}')
 
-  if (user && user.idToken) {
-    return { Authorization: user.idToken }
+  if (user && user.token) {
+    return { Authorization: user.token }
   } else {
     return {}
   }

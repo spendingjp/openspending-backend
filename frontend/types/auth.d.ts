@@ -1,6 +1,6 @@
 export interface AuthUser {
   username: string
-  idToken: string
+  token: string
   refreshToken: string
   isExpired: boolean
 }

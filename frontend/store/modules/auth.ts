@@ -2,14 +2,16 @@ import { VuexModule, Module, Mutation, Action } from 'vuex-module-decorators'
 import AuthService from '@/services/AuthService'
 import { AuthUser } from '@/types/auth'
 
+const storedUser = localStorage.getItem('openspending')
+
 @Module({
   name: 'modules/auth',
   stateFactory: true,
   namespaced: true,
 })
 export default class AuthModule extends VuexModule {
-  public status = { loggedIn: false }
-  private userProp: AuthUser | null = null
+  public status = storedUser ? { loggedIn: true } : { loggedIn: false }
+  private userProp: AuthUser | null = storedUser ? JSON.parse(storedUser) : null
 
   get user(): AuthUser | null {
     return this.userProp
@@ -28,23 +30,23 @@ export default class AuthModule extends VuexModule {
   public loginSuccess(user: AuthUser): void {
     this.userProp = user
     this.status.loggedIn = true
-    if (user.idToken) {
-      localStorage.setItem('user', JSON.stringify(user))
+    if (user.token) {
+      localStorage.setItem('openspending', JSON.stringify(user))
     }
   }
 
   @Mutation
-  public updateIdToken(idToken: string): void {
-    this.userProp!.idToken = idToken
+  public updateToken(token: string): void {
+    this.userProp!.token = token
     this.userProp!.isExpired = false
-    localStorage.setItem('user', JSON.stringify(this.userProp))
+    localStorage.setItem('openspending', JSON.stringify(this.userProp))
   }
 
   @Mutation
   public loginFailure(): void {
     this.status.loggedIn = false
     this.userProp = null
-    localStorage.removeItem('user')
+    localStorage.removeItem('openspending')
   }
 
   @Mutation
@@ -56,17 +58,17 @@ export default class AuthModule extends VuexModule {
   public logout(): void {
     this.status.loggedIn = false
     this.userProp = null
-    localStorage.removeItem('user')
+    localStorage.removeItem('openspending')
   }
 
   @Action
   public checkIsExpired(): Promise<boolean> {
     if (!this.userProp) return Promise.resolve(false)
     if (this.userProp.isExpired) return Promise.resolve(true)
-    const payload: any = JSON.parse(atob(this.userProp!.idToken.split('.')[1]!))
-    const isExpird = new Date().getTime() > payload.exp * 1000
-    this.context.commit('setExpired', isExpird)
-    return Promise.resolve(isExpird)
+    const payload: any = JSON.parse(atob(this.userProp!.token.split('.')[1]!))
+    const isExpired = new Date().getTime() > payload.exp * 1000
+    this.context.commit('setExpired', isExpired)
+    return Promise.resolve(isExpired)
   }
 
   @Action({ rawError: true })
@@ -97,7 +99,7 @@ export default class AuthModule extends VuexModule {
     return AuthService.refreshToken(this.user!.refreshToken).then(
       (userdata) => {
         if (this.user) {
-          this.context.commit('updateIdToken', userdata.idToken)
+          this.context.commit('updateToken', userdata.token)
           return Promise.resolve(this.user)
         } else {
           this.context.commit('loginSuccess', userdata)
