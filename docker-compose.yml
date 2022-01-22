@@ -5,10 +5,11 @@ services:
     networks:
       - backend
     ports:
-      - "8000:8000"
+      - "8000:80"
     environment:
       - APPLICATION_DATABASE_PASSWORD=${APPLICATION_DATABASE_PASSWORD}
       - APPLICATION_DATABASE_HOST=db
+      - APPLICATION_ALLOWED_HOSTS=${APPLICATION_ALLOWED_HOSTS}
   db:
     image: postgres
     volumes:
