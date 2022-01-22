@@ -38,6 +38,13 @@ export default Vue.extend({
       password: '',
     }
   },
+  created() {
+    if (authStore.user != null) {
+      authStore.refreshToken().then(() => {
+        this.$router.push('/')
+      })
+    }
+  },
   methods: {
     submit() {
       authStore
@@ -46,8 +53,8 @@ export default Vue.extend({
           password: this.password,
         })
         .then(
-          (user) => {
-            console.log(user)
+          () => {
+            this.$router.push('/')
           },
           (error) => {
             console.error(error)
