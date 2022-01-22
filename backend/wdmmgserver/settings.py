@@ -66,6 +66,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+if DEBUG:
+    INSTALLED_APPS.append("corsheaders")
+    MIDDLEWARE.append("corsheaders.middleware.CorsMiddleware")
+    MIDDLEWARE.append("django.middleware.common.CommonMiddleware")
+    CORS_ALLOW_ALL_ORIGINS = True
+
 ROOT_URLCONF = 'wdmmgserver.urls'
 
 TEMPLATES = [
