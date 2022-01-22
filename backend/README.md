@@ -24,7 +24,7 @@ To setup python packages for development, the following command does the job.
 It is highly recommended to use `venv` before you run it.
 
 ```
-pip install -e .[dev]
+pip install -e ".[dev]"
 ```
 
 #### Migration
