@@ -28,6 +28,7 @@
 
 <script>
 import Vue from 'vue'
+import { authStore } from '@/store'
 
 export default Vue.extend({
   data() {
@@ -37,9 +38,28 @@ export default Vue.extend({
       password: '',
     }
   },
+  created() {
+    if (authStore.user != null) {
+      authStore.refreshToken().then(() => {
+        this.$router.push('/')
+      })
+    }
+  },
   methods: {
     submit() {
-      console.log(this.name, this.password)
+      authStore
+        .login({
+          username: this.name,
+          password: this.password,
+        })
+        .then(
+          () => {
+            this.$router.push('/')
+          },
+          (error) => {
+            console.error(error)
+          }
+        )
     },
   },
 })

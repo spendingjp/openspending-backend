@@ -1,4 +1,7 @@
 export default {
+  // Disable server-side rendering (https://go.nuxtjs.dev/ssr-mode)
+  ssr: false,
+
   // Target: https://go.nuxtjs.dev/config-target
   target: 'static',
 
@@ -50,8 +53,7 @@ export default {
 
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
   axios: {
-    // Workaround to avoid enforcing hard-coded localhost:3000: https://github.com/nuxt-community/axios-module/issues/308
-    baseURL: '/',
+    proxy: true,
   },
 
   // Vuetify module configuration: https://go.nuxtjs.dev/config-vuetify
@@ -61,7 +63,26 @@ export default {
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {},
+
+  proxy: {
+    '/api/': {
+      target: 'http://localhost:8000',
+      pathRewrite: { '^/api/': '/api/v1/' },
+    },
+    '/api-token-auth/': {
+      target: 'http://localhost:8000',
+      pathRewrite: { '^/api-token-auth/': '' },
+    },
+  },
+
+  publicRuntimeConfig: {
+    authURL: process.env.AUTH_URL || 'http://localhost:8000/api-token-auth/',
+    axios: {
+      baseURL: process.env.API_URL || 'http://localhost:8000',
+    },
+  },
+
   router: {
-    base: "/static/"
-  }
+    base: '/static/',
+  },
 }
