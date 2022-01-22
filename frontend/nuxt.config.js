@@ -81,4 +81,8 @@ export default {
       baseURL: process.env.API_URL || 'http://localhost:8000',
     },
   },
+
+  router: {
+    base: '/static/',
+  },
 }
