@@ -51,11 +51,6 @@ export default {
     '@nuxtjs/axios',
   ],
 
-  // Axios module configuration: https://go.nuxtjs.dev/config-axios
-  axios: {
-    proxy: true,
-  },
-
   // Vuetify module configuration: https://go.nuxtjs.dev/config-vuetify
   vuetify: {
     customVariables: ['~/assets/variables.scss'],
@@ -63,17 +58,6 @@ export default {
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {},
-
-  proxy: {
-    '/api/': {
-      target: 'http://localhost:8000',
-      pathRewrite: { '^/api/': '/api/v1/' },
-    },
-    '/api-token-auth/': {
-      target: 'http://localhost:8000',
-      pathRewrite: { '^/api-token-auth/': '' },
-    },
-  },
 
   publicRuntimeConfig: {
     authURL: process.env.AUTH_URL || 'http://localhost:8000/api-token-auth/',
