@@ -43,3 +43,14 @@ export interface ConsumeMap {
   targetId: string
   rating?: number
 }
+
+export interface ConsumeData {
+  name: string
+  slug: string
+}
+
+export interface RegisteredData {
+  id: string
+  name: string
+  slug: string
+}

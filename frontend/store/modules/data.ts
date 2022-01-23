@@ -1,5 +1,10 @@
 import { VuexModule, Module, Mutation, Action } from 'vuex-module-decorators'
-import { ConsumeMap } from '@/types/component-interfaces/data'
+import DataService from '@/services/DataService'
+import {
+  ConsumeMap,
+  ConsumeData,
+  RegisteredData,
+} from '@/types/component-interfaces/data'
 
 @Module({
   name: 'modules/data',
@@ -19,6 +24,24 @@ class DataModule extends VuexModule {
     this.newMappingData.splice(
       this.newMappingData.findIndex((item) => item.sourceId === sourseId),
       1
+    )
+  }
+
+  @Action({ rawError: true })
+  create(target: ConsumeData): Promise<RegisteredData[]> {
+    return DataService.postData(target).then(
+      (data) => {
+        return Promise.resolve(data)
+      },
+      (error) => {
+        const message =
+          (error.response &&
+            error.response.data &&
+            error.response.data.errorMessage) ||
+          error.message ||
+          error.toString()
+        return Promise.reject(message)
+      }
     )
   }
 
