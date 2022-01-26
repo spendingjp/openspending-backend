@@ -1,3 +1,5 @@
+import sys
+from io import BufferedIOBase, RawIOBase
 from typing import Any
 
 import pykakasi
@@ -178,3 +180,57 @@ class MappedBudgetItem(BudgetItemBase):
     @property
     def value(self) -> float:
         return sum(self.mapped_budget.get_value_of(c) for c in self.mapped_classifications.all())
+
+
+class Blob(models.Model):
+    id = PkField()
+    name = NameField()
+    created_at = CurrentDateTimeField()
+    updated_at = AutoUpdateCurrentDateTimeField()
+
+    @classmethod
+    def write(cls, data: RawIOBase, name: str = None, chunk_size: int = 65536) -> None:
+        instance = cls(name=name)
+        instance.save()
+        idx = 0
+        while True:
+            buf = data.read(chunk_size)
+            if len(buf) == 0:
+                break
+            BlobChunk(blob=instance, index=idx, body=buf).save()
+            idx += 1
+
+
+class BlobChunk(models.Model):
+    id = PkField()
+    blob = models.ForeignKey(Blob, on_delete=models.CASCADE, db_index=False, null=False)
+    index = models.PositiveIntegerField(db_index=False)
+    body = models.BinaryField(db_index=False)
+
+    class Meta:
+        unique_together = ("blob", "index")
+
+
+class BlobReader(BufferedIOBase):
+    def __init__(self, blob: Blob):
+        self._fp = BlobChunk.objects.filter(blob=blob).order_by("index")
+        self._buffer = b''
+        self._gen = self._next()
+
+    def _next(self) -> BlobChunk:
+        for d in self._fp:
+            yield d
+
+    def read(self, size: int = -1) -> bytes:
+        while size == -1 or len(self._buffer) < size:
+            try:
+                self._buffer += next(self._gen).body
+            except StopIteration:
+                break
+        if size >= 0:
+            retval = self._buffer[:size]
+            self._buffer = self._buffer[size:]
+        else:
+            retval = self._buffer
+            self._buffer = b""
+        return retval

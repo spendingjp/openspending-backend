@@ -18,4 +18,5 @@ classification_system_router.register(
 urlpatterns = [
     path('api/v1/', include(router.urls)),
     path('api/v1/', include(classification_system_router.urls)),
+    path('transfer/xlsx_template', views.download_xlsx_template_view),
 ]
