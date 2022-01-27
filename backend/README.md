@@ -41,6 +41,12 @@ python manage.py runserver
 
 ## Appendix
 
+### Use of vscode setting file
+
+The vscode setting file for python development file is located in `.vscode/settings.json` from the root of this repository.
+With this setting, `black` and `isort` are fired on save.
+To take advantage of it, you should install `venv` in `backend/.venv/bin/python`.
+
 ### List of supported environmental variables
 
 ...
