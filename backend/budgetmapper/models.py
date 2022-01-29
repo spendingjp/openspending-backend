@@ -5,6 +5,7 @@ from typing import Any
 import pykakasi
 import shortuuidfield
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.signals import post_save
@@ -38,7 +39,7 @@ class AutoUpdateCurrentDateTimeField(CurrentDateTimeField):
 kks = pykakasi.kakasi()
 
 
-def jp_sluggify(name: str) -> str:
+def jp_slugify(name: str) -> str:
     return slugify("-".join(d["hepburn"] for d in kks.convert(name)))
 
 
@@ -46,7 +47,7 @@ class JpSlugField(models.SlugField):
     def pre_save(self, model_instance, add):
         val = getattr(model_instance, self.attname)
         if val is None or len(val) == 0:
-            val = jp_sluggify(model_instance.name)
+            val = jp_slugify(model_instance.name)
             setattr(model_instance, self.attname, val)
         return val
 
@@ -73,14 +74,14 @@ class BudgetAmountField(models.FloatField):
 class LatitudeField(models.FloatField):
     def __init__(self, *args, **kwargs):
         super(LatitudeField, self).__init__(
-            *args, **dict(kwargs, validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)])
+            *args, **dict(kwargs, validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)], null=True)
         )
 
 
 class LongitudeField(models.FloatField):
     def __init__(self, *args, **kwargs):
         super(LongitudeField, self).__init__(
-            *args, **dict(kwargs, validators=[MinValueValidator(0.0), MaxValueValidator(180.0)])
+            *args, **dict(kwargs, validators=[MinValueValidator(0.0), MaxValueValidator(180.0)], null=True)
         )
 
 
@@ -128,12 +129,19 @@ class Classification(models.Model):
             return 0
         return self.parent.level + 1
 
+    def clean(self) -> None:
+        if self.parent is not None:
+            if self.parent.classification_system != self.classification_system:
+                raise ValidationError(
+                    {"classification_system": "classification_system must be the same as that of parent"}
+                )
+
 
 class Budget(models.Model):
     id = PkField()
     name = NameField()
     slug = JpSlugField(unique=True)
-    year = models.IntegerField()
+    year = models.IntegerField(null=False)
     subtitle = models.TextField()
     classification_system = models.ForeignKey(ClassificationSystem, on_delete=models.CASCADE, db_index=True, null=False)
     government = models.ForeignKey(Government, on_delete=models.CASCADE, db_index=True, null=False)
@@ -143,10 +151,10 @@ class Budget(models.Model):
     def get_value_of(self, classification: Classification) -> float:
         if self.classification_system != classification.classification_system:
             raise ValueError
-        val = BudgetItemBase.objects.get(budget=self, classification=classification)
-        if val is not None:
+        try:
+            val = BudgetItemBase.objects.get(budget=self, classification=classification)
             return val.value
-        else:
+        except BudgetItemBase.DoesNotExist:
             return sum(self.get_value_of(c) for c in Classification.objects.filter(parent=classification))
 
 
@@ -163,6 +171,15 @@ class BudgetItemBase(PolymorphicModel):
 
     class Meta:
         unique_together = ("budget", "classification")
+
+    def clean(self) -> None:
+        if self.budget.classification_system != self.classification.classification_system:
+            raise ValidationError(
+                {
+                    "budget": "classification_system should be the same as that of classification",
+                    "classification": "classification_system should be the same as that of budget",
+                }
+            )
 
 
 class AtomicBudgetItem(BudgetItemBase):
@@ -199,6 +216,7 @@ class Blob(models.Model):
                 break
             BlobChunk(blob=instance, index=idx, body=buf).save()
             idx += 1
+        return instance
 
 
 class BlobChunk(models.Model):
