@@ -3,6 +3,9 @@
     <v-app-bar fixed app>
       <v-toolbar-title v-text="title" />
       <v-spacer />
+      <v-btn class="mr-4" outlined @click="downloadTemplate">
+        テンプレートをダウンロード
+      </v-btn>
       <v-btn outlined @click="handleLogout">ログアウト</v-btn>
     </v-app-bar>
     <v-main>
@@ -15,7 +18,7 @@
 
 <script>
 import Vue from 'vue'
-import { authStore } from '@/store'
+import { authStore, fileStore } from '@/store'
 
 export default Vue.extend({
   middleware: ['authenticated'],
@@ -25,6 +28,9 @@ export default Vue.extend({
     }
   },
   methods: {
+    downloadTemplate() {
+      fileStore.download()
+    },
     handleLogout() {
       authStore.signOut()
       this.$router.push('/login')
