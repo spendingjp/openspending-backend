@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 import os
 from pathlib import Path
+from corsheaders.defaults import default_headers
 
 from dotenv import load_dotenv
 
@@ -71,6 +72,9 @@ if DEBUG:
     MIDDLEWARE.append("corsheaders.middleware.CorsMiddleware")
     MIDDLEWARE.append("django.middleware.common.CommonMiddleware")
     CORS_ALLOW_ALL_ORIGINS = True
+    CORS_EXPOSE_HEADERS = list(default_headers) + [
+        'content-disposition',
+    ]
 
 ROOT_URLCONF = 'wdmmgserver.urls'
 
