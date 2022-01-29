@@ -22,10 +22,24 @@ class GovernmentSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "slug", "latitude", "longitude", "created_at", "updated_at")
 
 
+class ClassificationLevelNameListDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ClassificationLevelNameList
+        fields = ("id", "names", "created_at", "updated_at")
+
+
+class ClassificationLevelNameListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ClassificationLevelNameList
+        fields = ("names",)
+
+
 class ClassificationSystemSerializer(serializers.ModelSerializer):
+    level_names = ClassificationLevelNameListSerializer()
+
     class Meta:
         model = models.ClassificationSystem
-        fields = ("id", "slug", "name", "created_at", "updated_at")
+        fields = ("id", "slug", "name", "level_names", "created_at", "updated_at")
 
 
 class ClassificationSerializer(serializers.ModelSerializer):
