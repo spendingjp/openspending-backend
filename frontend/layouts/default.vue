@@ -2,6 +2,8 @@
   <v-app>
     <v-app-bar fixed app>
       <v-toolbar-title v-text="title" />
+      <v-spacer />
+      <v-btn outlined @click="handleLogout">ログアウト</v-btn>
     </v-app-bar>
     <v-main>
       <v-container>
@@ -12,12 +14,21 @@
 </template>
 
 <script>
-export default {
+import Vue from 'vue'
+import { authStore } from '@/store'
+
+export default Vue.extend({
   middleware: ['authenticated'],
   data() {
     return {
       title: 'Vuetify.js',
     }
   },
-}
+  methods: {
+    handleLogout() {
+      authStore.signOut()
+      this.$router.push('/login')
+    },
+  },
+})
 </script>
