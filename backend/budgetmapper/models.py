@@ -5,6 +5,7 @@ from typing import Any
 import pykakasi
 import shortuuidfield
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -95,10 +96,18 @@ class Government(models.Model):
     updated_at = AutoUpdateCurrentDateTimeField()
 
 
+class ClassificationLevelNameList(models.Model):
+    id = PkField()
+    names = ArrayField(models.CharField(max_length=255))
+    created_at = CurrentDateTimeField()
+    updated_at = AutoUpdateCurrentDateTimeField()
+
+
 class ClassificationSystem(models.Model):
     id = PkField()
     name = NameField()
     slug = JpSlugField(unique=True)
+    level_names = models.ForeignKey(ClassificationLevelNameList, on_delete=models.SET_NULL, null=True)
     created_at = CurrentDateTimeField()
     updated_at = AutoUpdateCurrentDateTimeField()
 

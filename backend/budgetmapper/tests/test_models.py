@@ -52,6 +52,12 @@ class ClassificationSystemTest(TestCase):
         self.assertEqual(sut.slug, "special-slug")
 
 
+class ClassificationLevelNameListTestCase(TestCase):
+    def test_cs_level_name(self):
+        sut = models.ClassificationLevelNameList(names=["a", "b", "c", "d"])
+        self.assertEqual(sut.names, ["a", "b", "c", "d"])
+
+
 class ClassificationTest(TestCase):
     def test_classification_has_name(self) -> None:
         cs = factories.ClassificationSystemFactory()
