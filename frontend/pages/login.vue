@@ -19,7 +19,7 @@
           @click:append="showPassword = !showPassword"
         />
         <v-card-actions>
-          <v-btn class="info" @click="submit">ログイン</v-btn>
+          <v-btn class="info" @click="handleLogin">ログイン</v-btn>
         </v-card-actions>
       </v-form>
     </v-card-text>
@@ -46,7 +46,7 @@ export default Vue.extend({
     }
   },
   methods: {
-    submit() {
+    handleLogin() {
       authStore
         .login({
           username: this.name,
