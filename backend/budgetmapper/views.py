@@ -1,4 +1,5 @@
 import django_filters.rest_framework as drf_filters
+from django.http import FileResponse
 from django_filters import rest_framework as filters
 from rest_framework import viewsets
 from rest_framework.pagination import CursorPagination
@@ -44,3 +45,8 @@ class BudgetViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return serializers.BudgetDetailSerializer
         return serializers.BudgetSerializer
+
+
+def download_xlsx_template_view(request):
+    blob = models.Blob.objects.get(id="Jm3YrwfxRJaNbayG7mJNCm")
+    return FileResponse(models.BlobReader(blob), as_attachment=True, filename=blob.name)
