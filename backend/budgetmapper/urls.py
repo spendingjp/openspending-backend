@@ -19,4 +19,5 @@ urlpatterns = [
     path('api/v1/', include(router.urls)),
     path('api/v1/', include(classification_system_router.urls)),
     path('transfer/xlsx_template', views.download_xlsx_template_view),
+    path('transfer/csv/<str:budget_id>', views.download_csv_view),
 ]

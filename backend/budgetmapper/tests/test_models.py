@@ -1,4 +1,5 @@
 import doctest
+from collections.abc import Iterator
 from unittest.mock import MagicMock, patch
 
 from budgetmapper import models
@@ -50,6 +51,28 @@ class ClassificationSystemTest(TestCase):
         sut = models.ClassificationSystem(name="まほろ市2101年度予算", slug="special-slug")
         sut.save()
         self.assertEqual(sut.slug, "special-slug")
+
+    def test_iterate_classifications(self) -> None:
+        cs = factories.ClassificationSystemFactory()
+        cl0 = factories.ClassificationFactory(classification_system=cs)
+        cl00 = factories.ClassificationFactory(classification_system=cs, parent=cl0)
+        cl01 = factories.ClassificationFactory(classification_system=cs, parent=cl0)
+        cl1 = factories.ClassificationFactory(classification_system=cs)
+        cl10 = factories.ClassificationFactory(classification_system=cs, parent=cl1)
+        cl11 = factories.ClassificationFactory(classification_system=cs, parent=cl1)
+        cl12 = factories.ClassificationFactory(classification_system=cs, parent=cl1)
+
+        expected = [
+            [cl0, cl00],
+            [cl0, cl01],
+            [cl1, cl10],
+            [cl1, cl11],
+            [cl1, cl12],
+        ]
+        actual = cs.iterate_classifications()
+        self.assertIsInstance(actual, Iterator)
+        for e, a in zip(expected, actual):
+            self.assertEqual(a, e)
 
 
 class ClassificationLevelNameListTestCase(TestCase):
@@ -131,6 +154,37 @@ class BudgetTest(TestCase):
         self.assertEqual(sut.year, 2101)
         self.assertEqual(sut.classification_system, cs)
         self.assertEqual(sut.government, gov)
+
+    def test_iterate_classifications(self) -> None:
+        cs = factories.ClassificationSystemFactory()
+        bud = factories.BudgetFactory(classification_system=cs)
+        cl0 = factories.ClassificationFactory(classification_system=cs)
+        cl00 = factories.ClassificationFactory(classification_system=cs, parent=cl0)
+        cl01 = factories.ClassificationFactory(classification_system=cs, parent=cl0)
+        cl1 = factories.ClassificationFactory(classification_system=cs)
+        cl10 = factories.ClassificationFactory(classification_system=cs, parent=cl1)
+        cl11 = factories.ClassificationFactory(classification_system=cs, parent=cl1)
+        cl12 = factories.ClassificationFactory(classification_system=cs, parent=cl1)
+        cl13 = factories.ClassificationFactory(classification_system=cs, parent=cl1)
+
+        abi00 = factories.AtomicBudgetItemFactory(budget=bud, classification=cl00)
+        abi01 = factories.AtomicBudgetItemFactory(budget=bud, classification=cl01)
+        abi10 = factories.AtomicBudgetItemFactory(budget=bud, classification=cl10)
+        abi11 = factories.AtomicBudgetItemFactory(budget=bud, classification=cl11)
+        abi12 = factories.AtomicBudgetItemFactory(budget=bud, classification=cl12)
+
+        expected = [
+            {"classifications": [cl0, cl00], "budget_item": abi00},
+            {"classifications": [cl0, cl01], "budget_item": abi01},
+            {"classifications": [cl1, cl10], "budget_item": abi10},
+            {"classifications": [cl1, cl11], "budget_item": abi11},
+            {"classifications": [cl1, cl12], "budget_item": abi12},
+            {"classifications": [cl1, cl13], "budget_item": None},
+        ]
+        actual = bud.iterate_items()
+        self.assertIsInstance(actual, Iterator)
+        for e, a in zip(expected, actual):
+            self.assertEqual(a, e)
 
 
 class AtomicBudgetItemTestCase(TestCase):
