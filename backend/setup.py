@@ -24,8 +24,7 @@ setup(
         "django-polymorphic",
     ],
     extras_require={
-        "dev": ["flake8", "black", "isort",
-                "psycopg2-binary", "django-cors-headers"],
-        "prod": ["psycopg2"]
+        "dev": ["flake8", "black", "isort", "psycopg2-binary", "django-cors-headers", "factory-boy"],
+        "prod": ["psycopg2"],
     },
 )
