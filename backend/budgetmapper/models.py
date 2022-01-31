@@ -1,6 +1,4 @@
-import sys
 from io import BufferedIOBase, RawIOBase
-from typing import Any
 
 import pykakasi
 import shortuuidfield
@@ -113,7 +111,7 @@ class ClassificationSystem(models.Model):
 
     @property
     def roots(self) -> models.QuerySet:
-        return Classification.objects.filter(parent=None)
+        return Classification.objects.filter(classification_system=self, parent=None)
 
     @property
     def leaves(self) -> models.QuerySet:
@@ -121,6 +119,18 @@ class ClassificationSystem(models.Model):
             ~models.Exists(Classification.objects.filter(classification_system=self, parent=models.OuterRef("pk"))),
             classification_system=self,
         )
+
+    def __iterate_classifications_sub(self, buf):
+        is_leaf = True
+        for d in Classification.objects.filter(parent=buf[-1]):
+            is_leaf = False
+            yield from self.__iterate_classifications_sub(buf + [d])
+        if is_leaf:
+            yield buf
+
+    def iterate_classifications(self):
+        for r in self.roots:
+            yield from self.__iterate_classifications_sub([r])
 
 
 class Classification(models.Model):
@@ -165,6 +175,14 @@ class Budget(models.Model):
             return val.value
         except BudgetItemBase.DoesNotExist:
             return sum(self.get_value_of(c) for c in Classification.objects.filter(parent=classification))
+
+    def iterate_items(self):
+        for cl in self.classification_system.iterate_classifications():
+            try:
+                val = BudgetItemBase.objects.get(budget=self, classification=cl[-1])
+                yield {"classifications": cl, "budget_item": val}
+            except BudgetItemBase.DoesNotExist:
+                yield {"classifications": cl, "budget_item": None}
 
 
 class BudgetItemBase(PolymorphicModel):
