@@ -43,6 +43,9 @@ def jp_slugify(name: str) -> str:
 
 
 class JpSlugField(models.SlugField):
+    def __init__(self, *args, **kwargs):
+        super(JpSlugField, self).__init__(*args, **dict(kwargs, null=True, blank=True))
+
     def pre_save(self, model_instance, add):
         val = getattr(model_instance, self.attname)
         if val is None or len(val) == 0:
