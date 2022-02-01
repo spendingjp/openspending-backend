@@ -13,19 +13,12 @@ class GovernmentFactory(DjangoModelFactory):
     name = fuzzy.FuzzyText(suffix="市")
 
 
-class ClassificationLevelNameListFactory(DjangoModelFactory):
-    class Meta:
-        model = models.ClassificationLevelNameList
-
-    names = ["款", "項", "目", "事業", "節", "節細"]
-
-
 class ClassificationSystemFactory(DjangoModelFactory):
     class Meta:
         model = models.ClassificationSystem
 
     name = fuzzy.FuzzyText(suffix="予算")
-    level_names = factory.SubFactory(ClassificationLevelNameListFactory)
+    level_names = ["款", "項", "目", "事業", "節", "節細"]
 
 
 class ClassificationFactory(DjangoModelFactory):
