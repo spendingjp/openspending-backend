@@ -169,7 +169,7 @@ class Budget(models.Model):
     name = NameField()
     slug = JpSlugField(unique=True)
     year = models.IntegerField(null=False)
-    subtitle = models.TextField()
+    subtitle = models.TextField(null=True)
     classification_system = models.ForeignKey(ClassificationSystem, on_delete=models.CASCADE, db_index=True, null=False)
     government = models.ForeignKey(Government, on_delete=models.CASCADE, db_index=True, null=False)
     created_at = CurrentDateTimeField()

@@ -125,7 +125,7 @@ class BudgetTest(TestCase):
         sut.save()
         self.assertEqual(sut.name, "まほろ市 2101 年度予算")
         self.assertEqual(sut.slug, "a-slug")
-        self.assertEqual(sut.subtitle, "")
+        self.assertEqual(sut.subtitle, None)
         self.assertEqual(sut.year, 2101)
         self.assertEqual(sut.classification_system, cs)
         self.assertEqual(sut.government, gov)
