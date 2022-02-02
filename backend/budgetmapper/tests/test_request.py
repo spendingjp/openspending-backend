@@ -85,7 +85,7 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
 
     def test_retrieve(self):
         govs = [factories.GovernmentFactory() for i in range(100)]
-        gov = govs[random.randint(0, 100)]
+        gov = govs[random.randint(0, 99)]
         res = self.client.get(f"/api/v1/governments/{gov.id}/", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         expected = {
@@ -149,13 +149,13 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
 
     def test_destroy_requires_login(self):
         govs = [factories.GovernmentFactory() for i in range(100)]
-        gov = govs[random.randint(0, 100)]
+        gov = govs[random.randint(0, 99)]
         res = self.client.delete(f"/api/v1/governments/{gov.id}/")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_destroy(self):
         govs = [factories.GovernmentFactory() for i in range(100)]
-        gov = govs[random.randint(0, 100)]
+        gov = govs[random.randint(0, 99)]
         self.client.login(username=self._user_username, password=self._user_password)
         res = self.client.delete(f"/api/v1/governments/{gov.id}/")
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
@@ -164,7 +164,7 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
 
     def test_update_requires_login(self):
         govs = [factories.GovernmentFactory() for i in range(100)]
-        gov = govs[random.randint(0, 100)]
+        gov = govs[random.randint(0, 99)]
         res = self.client.put(f"/api/v1/governments/{gov.id}/", {"slug": ""}, format="json")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -216,7 +216,7 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
 
     def test_retrieve(self):
         css = [factories.ClassificationSystemFactory() for i in range(100)]
-        cs = css[random.randint(0, 100)]
+        cs = css[random.randint(0, 99)]
         res = self.client.get(f"/api/v1/classification-systems/{cs.id}/", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         expected = {
@@ -278,13 +278,13 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
 
     def test_destroy_requires_login(self):
         css = [factories.ClassificationSystemFactory() for i in range(100)]
-        cs = css[random.randint(0, 100)]
+        cs = css[random.randint(0, 99)]
         res = self.client.delete(f"/api/v1/classification-systems/{cs.id}/")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_destroy(self):
         css = [factories.ClassificationSystemFactory() for i in range(100)]
-        cs = css[random.randint(0, 100)]
+        cs = css[random.randint(0, 99)]
         self.client.login(username=self._user_username, password=self._user_password)
         res = self.client.delete(f"/api/v1/classification-systems/{cs.id}/")
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
@@ -293,7 +293,7 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
 
     def test_update_requires_login(self):
         css = [factories.ClassificationSystemFactory() for i in range(100)]
-        cs = css[random.randint(0, 100)]
+        cs = css[random.randint(0, 99)]
         res = self.client.put(f"/api/v1/classification-systems/{cs.id}/", {"slug": ""}, format="json")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -311,6 +311,178 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "slug": "theslug",
                 "levelNames": cs.level_names,
                 "createdAt": cs.created_at.strftime(datetime_format),
+                "updatedAt": dt.strftime(datetime_format),
+            }
+            actual = res.json()
+            self.assertEqual(actual, expected)
+
+
+class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
+    def test_list(self):
+        ordering = CreatedAtPagination.ordering
+        page_size = CreatedAtPagination.page_size
+        bs = [factories.BudgetFactory() for i in range(100)]
+        res = self.client.get("/api/v1/budgets/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = [
+            {
+                "id": b.id,
+                "name": b.name,
+                "slug": b.slug,
+                "year": b.year,
+                "subtitle": b.subtitle,
+                "classificationSystem": b.classification_system.id,
+                "government": b.government.id,
+                "createdAt": b.created_at.strftime(datetime_format),
+                "updatedAt": b.updated_at.strftime(datetime_format),
+            }
+            for b in sorted(bs, key=lambda b: getattr(b, ordering.strip("-")), reverse=ordering.startswith("-"))[
+                :page_size
+            ]
+        ]
+        res_json = res.json()
+        self.assertIn("results", res_json)
+        actual = res_json["results"]
+        self.assertEqual(actual, expected)
+
+    def test_retrieve(self):
+        bs = [factories.BudgetFactory() for i in range(100)]
+        b = bs[random.randint(0, 99)]
+        res = self.client.get(f"/api/v1/budgets/{b.id}/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = {
+            "id": b.id,
+            "name": b.name,
+            "slug": b.slug,
+            "year": b.year,
+            "subtitle": b.subtitle,
+            "classificationSystem": {
+                "id": b.classification_system.id,
+                "name": b.classification_system.name,
+                "slug": b.classification_system.slug,
+                "levelNames": b.classification_system.level_names,
+                "createdAt": b.classification_system.created_at.strftime(datetime_format),
+                "updatedAt": b.classification_system.updated_at.strftime(datetime_format),
+            },
+            "government": {
+                "id": b.government.id,
+                "name": b.government.name,
+                "slug": b.government.slug,
+                "latitude": b.government.latitude,
+                "longitude": b.government.longitude,
+                "createdAt": b.government.created_at.strftime(datetime_format),
+                "updatedAt": b.government.updated_at.strftime(datetime_format),
+            },
+            "items": [],
+            "createdAt": b.created_at.strftime(datetime_format),
+            "updatedAt": b.updated_at.strftime(datetime_format),
+        }
+
+        actual = res.json()
+        self.assertEqual(actual, expected)
+
+    def test_create_requires_authentication(self):
+        gov = factories.GovernmentFactory()
+        cs = factories.ClassificationSystemFactory()
+        query = {"name": "まほろ市2101年度予算", "year": 2101, "government": gov.id, "classificationSystem": cs.id}
+        res = self.client.post(f"/api/v1/budgets/", query, format="json")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @patch("budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890")
+    @patch("budgetmapper.models.jp_slugify", return_value="theslug")
+    def test_create_with_default(self, jp_slugify, shortuuidfield_ShortUUIDField_get_default):
+        gov = factories.GovernmentFactory()
+        cs = factories.ClassificationSystemFactory()
+        dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt):
+            self.client.login(username=self._user_username, password=self._user_password)
+            query = {"name": "まほろ市2101年度予算", "year": 2101, "government": gov.id, "classificationSystem": cs.id}
+            res = self.client.post(f"/api/v1/budgets/", query, format="json")
+            self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+            expected = {
+                "id": "ab12345678901234567890",
+                "name": "まほろ市2101年度予算",
+                "slug": "theslug",
+                "year": 2101,
+                "subtitle": None,
+                "classificationSystem": cs.id,
+                "government": gov.id,
+                "createdAt": dt.strftime(datetime_format),
+                "updatedAt": dt.strftime(datetime_format),
+            }
+            actual = res.json()
+            self.assertEqual(actual, expected)
+
+    @patch("budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890")
+    @patch("budgetmapper.models.jp_slugify", return_value="theslug")
+    def test_create_with_specified_values(self, jp_slugify, shortuuidfield_ShortUUIDField_get_default):
+        gov = factories.GovernmentFactory()
+        cs = factories.ClassificationSystemFactory()
+        dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt):
+            self.client.login(username=self._user_username, password=self._user_password)
+            query = {
+                "name": "まほろ市2101年度予算",
+                "slug": "mahoro-city-2101-budget",
+                "year": 2101,
+                "subtitle": "第一次補正案",
+                "government": gov.id,
+                "classificationSystem": cs.id,
+            }
+            res = self.client.post(f"/api/v1/budgets/", query, format="json")
+            self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+            expected = {
+                "id": "ab12345678901234567890",
+                "name": "まほろ市2101年度予算",
+                "slug": "mahoro-city-2101-budget",
+                "year": 2101,
+                "subtitle": "第一次補正案",
+                "classificationSystem": cs.id,
+                "government": gov.id,
+                "createdAt": dt.strftime(datetime_format),
+                "updatedAt": dt.strftime(datetime_format),
+            }
+            actual = res.json()
+            self.assertEqual(actual, expected)
+
+    def test_destroy_requires_login(self):
+        bs = [factories.BudgetFactory() for i in range(100)]
+        b = bs[random.randint(0, 99)]
+        res = self.client.delete(f"/api/v1/budgets/{b.id}/")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_destroy(self):
+        bs = [factories.BudgetFactory() for i in range(100)]
+        b = bs[random.randint(0, 99)]
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.delete(f"/api/v1/budgets/{b.id}/")
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        with self.assertRaises(models.Budget.DoesNotExist):
+            models.Budget.objects.get(id=b.id)
+
+    def test_update_requires_login(self):
+        bs = [factories.BudgetFactory() for i in range(100)]
+        b = bs[random.randint(0, 99)]
+        res = self.client.put(f"/api/v1/budgets/{b.id}/", {"slug": ""}, format="json")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @patch("budgetmapper.models.jp_slugify", return_value="theslug")
+    def test_partial_update(self, jp_slugify):
+        b = factories.BudgetFactory(slug="someslug")
+        self.client.login(username=self._user_username, password=self._user_password)
+        dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt):
+            res = self.client.patch(f"/api/v1/budgets/{b.id}/", {"slug": None}, format="json")
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            expected = {
+                "id": b.id,
+                "name": b.name,
+                "slug": "theslug",
+                "year": b.year,
+                "subtitle": b.subtitle,
+                "classificationSystem": b.classification_system.id,
+                "government": b.government.id,
+                "createdAt": b.created_at.strftime(datetime_format),
                 "updatedAt": dt.strftime(datetime_format),
             }
             actual = res.json()
