@@ -26,31 +26,6 @@ class GovernmentSerializerTestCase(TestCase):
         self.assertEqual(actual, expected)
 
 
-class ClassificationLevelNameListDetailSerializerTestCase(TestCase):
-    def test_classification_level_name_serializer(self):
-        cln = factories.ClassificationLevelNameListFactory()
-        sut = serializers.ClassificationLevelNameListDetailSerializer(instance=cln)
-        expected = {
-            "id": cln.id,
-            "names": cln.names,
-            "created_at": cln.created_at.strftime(datetime_format),
-            "updated_at": cln.updated_at.strftime(datetime_format),
-        }
-        actual = sut.data
-        self.assertEqual(actual, expected)
-
-
-class ClassificationLevelNameListSerializerTestCase(TestCase):
-    def test_classification_level_name_serializer(self):
-        cln = factories.ClassificationLevelNameListFactory()
-        sut = serializers.ClassificationLevelNameListSerializer(instance=cln)
-        expected = {
-            "names": cln.names,
-        }
-        actual = sut.data
-        self.assertEqual(actual, expected)
-
-
 class ClassificationSystemSerializerTestCase(TestCase):
     def test_classification_system_serializer(self):
         cs = factories.ClassificationSystemFactory()
@@ -59,7 +34,7 @@ class ClassificationSystemSerializerTestCase(TestCase):
             "id": cs.id,
             "slug": cs.slug,
             "name": cs.name,
-            "level_names": {"names": cs.level_names.names},
+            "level_names": cs.level_names,
             "created_at": cs.created_at.strftime(datetime_format),
             "updated_at": cs.updated_at.strftime(datetime_format),
         }

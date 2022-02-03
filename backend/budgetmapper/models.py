@@ -43,6 +43,9 @@ def jp_slugify(name: str) -> str:
 
 
 class JpSlugField(models.SlugField):
+    def __init__(self, *args, **kwargs):
+        super(JpSlugField, self).__init__(*args, **dict(kwargs, null=True, blank=True))
+
     def pre_save(self, model_instance, add):
         val = getattr(model_instance, self.attname)
         if val is None or len(val) == 0:
@@ -84,6 +87,18 @@ class LongitudeField(models.FloatField):
         )
 
 
+def get_default_level_name_list():
+    return ["款", "項", "目", "事業", "節", "節細"]
+
+
+class LevelNameListField(ArrayField):
+    def __init__(self, *args, **kwargs):
+        super(LevelNameListField, self).__init__(
+            *args,
+            **dict(kwargs, base_field=models.CharField(max_length=255), default=get_default_level_name_list, null=True),
+        )
+
+
 class Government(models.Model):
     id = PkField()
     name = NameField()
@@ -94,18 +109,11 @@ class Government(models.Model):
     updated_at = AutoUpdateCurrentDateTimeField()
 
 
-class ClassificationLevelNameList(models.Model):
-    id = PkField()
-    names = ArrayField(models.CharField(max_length=255))
-    created_at = CurrentDateTimeField()
-    updated_at = AutoUpdateCurrentDateTimeField()
-
-
 class ClassificationSystem(models.Model):
     id = PkField()
     name = NameField()
     slug = JpSlugField(unique=True)
-    level_names = models.ForeignKey(ClassificationLevelNameList, on_delete=models.SET_NULL, null=True)
+    level_names = LevelNameListField()
     created_at = CurrentDateTimeField()
     updated_at = AutoUpdateCurrentDateTimeField()
 
@@ -161,7 +169,7 @@ class Budget(models.Model):
     name = NameField()
     slug = JpSlugField(unique=True)
     year = models.IntegerField(null=False)
-    subtitle = models.TextField()
+    subtitle = models.TextField(null=True)
     classification_system = models.ForeignKey(ClassificationSystem, on_delete=models.CASCADE, db_index=True, null=False)
     government = models.ForeignKey(Government, on_delete=models.CASCADE, db_index=True, null=False)
     created_at = CurrentDateTimeField()

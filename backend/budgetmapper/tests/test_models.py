@@ -75,12 +75,6 @@ class ClassificationSystemTest(TestCase):
             self.assertEqual(a, e)
 
 
-class ClassificationLevelNameListTestCase(TestCase):
-    def test_cs_level_name(self):
-        sut = models.ClassificationLevelNameList(names=["a", "b", "c", "d"])
-        self.assertEqual(sut.names, ["a", "b", "c", "d"])
-
-
 class ClassificationTest(TestCase):
     def test_classification_has_name(self) -> None:
         cs = factories.ClassificationSystemFactory()
@@ -131,7 +125,7 @@ class BudgetTest(TestCase):
         sut.save()
         self.assertEqual(sut.name, "まほろ市 2101 年度予算")
         self.assertEqual(sut.slug, "a-slug")
-        self.assertEqual(sut.subtitle, "")
+        self.assertEqual(sut.subtitle, None)
         self.assertEqual(sut.year, 2101)
         self.assertEqual(sut.classification_system, cs)
         self.assertEqual(sut.government, gov)

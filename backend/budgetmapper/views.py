@@ -32,6 +32,11 @@ class ClassificationSystemViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ClassificationSystemSerializer
     pagination_class = CreatedAtPagination
 
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return serializers.ClassificationSystemDetailSerializer
+        return serializers.ClassificationSystemSerializer
+
 
 class ClassificationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
@@ -59,7 +64,7 @@ def download_xlsx_template_view(request):
 def download_csv_view(request, budget_id):
     budget = get_object_or_404(models.Budget, pk=budget_id)
     level_names = (
-        budget.classification_system.level_names.names if budget.classification_system.level_names is not None else []
+        budget.classification_system.level_names if budget.classification_system.level_names is not None else []
     )
     data = list(budget.iterate_items())
     max_level = max(len(d["classifications"]) for d in data)
