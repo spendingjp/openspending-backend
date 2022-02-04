@@ -57,6 +57,166 @@ class BudgetMapperTestUserAPITestCase(APITestCase):
         user.save()
 
 
+class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
+    def setUp(self):
+        super(WdmmgTestCase, self).setUp()
+        self.maxDiff = None
+
+    def test_no_list_route(self) -> None:
+        bud = factories.BudgetFactory(name="まほろ市2101年度予算", slug="mahoro-city-2101")
+        res = self.client.get(f"/api/v1/wdmmg/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_no_create_route(self) -> None:
+        res = self.client.post(f"/api/v1/wdmmg/", {}, format="json")
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_returns_unauthorized_error_for_non_member(self) -> None:
+        bud = factories.BudgetFactory(name="まほろ市2101年度予算", slug="mahoro-city-2101")
+        res = self.client.put(f"/api/v1/wdmmg/{bud.slug}/", {}, format="json")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_update_returns_method_not_allowed_error_for_member(self) -> None:
+        bud = factories.BudgetFactory(name="まほろ市2101年度予算", slug="mahoro-city-2101")
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.put(f"/api/v1/wdmmg/{bud.slug}/", {}, format="json")
+        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_delete_returns_unauthorized_error_for_non_member(self) -> None:
+        bud = factories.BudgetFactory(name="まほろ市2101年度予算", slug="mahoro-city-2101")
+        res = self.client.delete(f"/api/v1/wdmmg/{bud.slug}/", {}, format="json")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_delete_returns_method_not_allowed_error_for_member(self) -> None:
+        bud = factories.BudgetFactory(name="まほろ市2101年度予算", slug="mahoro-city-2101")
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.delete(f"/api/v1/wdmmg/{bud.slug}/", {}, format="json")
+        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_get(self) -> None:
+        gov = factories.GovernmentFactory(name="まほろ市", slug="mahoro-city")
+        cs = factories.ClassificationSystemFactory(name="まほろ市2101年一般会計", slug="mahoro-city-2101-ippan-kaikei")
+        cl0 = factories.ClassificationFactory(classification_system=cs, code="1")
+        cl00 = factories.ClassificationFactory(classification_system=cs, parent=cl0, code="1.1")
+        cl000 = factories.ClassificationFactory(classification_system=cs, parent=cl00, code="1.1.1")
+        cl001 = factories.ClassificationFactory(classification_system=cs, parent=cl00, code="1.1.2")
+        cl002 = factories.ClassificationFactory(classification_system=cs, parent=cl00, code="1.1.3")
+        cl01 = factories.ClassificationFactory(classification_system=cs, parent=cl0, code="1.2")
+        cl010 = factories.ClassificationFactory(classification_system=cs, parent=cl01, code="1.2.1")
+        cl1 = factories.ClassificationFactory(classification_system=cs, code="2")
+        cl10 = factories.ClassificationFactory(classification_system=cs, parent=cl1, code="2.1")
+        cl100 = factories.ClassificationFactory(classification_system=cs, parent=cl10, code="2.1.1")
+        bud = factories.BudgetFactory(
+            name="まほろ市2101年度予算", slug="mahoro-city-2101", government=gov, classification_system=cs
+        )
+
+        abi000 = factories.AtomicBudgetItemFactory(amount=123.0, budget=bud, classification=cl000)
+        abi001 = factories.AtomicBudgetItemFactory(amount=125.0, budget=bud, classification=cl001)
+        abi002 = factories.AtomicBudgetItemFactory(amount=127.0, budget=bud, classification=cl002)
+        abi010 = factories.AtomicBudgetItemFactory(amount=129.0, budget=bud, classification=cl010)
+        abi100 = factories.AtomicBudgetItemFactory(amount=131.0, budget=bud, classification=cl100)
+
+        res = self.client.get(f"/api/v1/wdmmg/{bud.slug}/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = {
+            "id": bud.id,
+            "name": bud.name,
+            "subtitle": bud.subtitle,
+            "slug": bud.slug,
+            "year": bud.year,
+            "createdAt": bud.created_at.strftime(datetime_format),
+            "updatedAt": bud.updated_at.strftime(datetime_format),
+            "budgets": [
+                {
+                    "id": cl0.id,
+                    "name": cl0.name,
+                    "code": cl0.code,
+                    "amount": 504.0,
+                    "children": [
+                        {
+                            "id": cl00.id,
+                            "name": cl00.name,
+                            "code": cl00.code,
+                            "amount": 375.0,
+                            "children": [
+                                {
+                                    "id": cl000.id,
+                                    "name": cl000.name,
+                                    "code": cl000.code,
+                                    "amount": 123.0,
+                                    "children": None,
+                                },
+                                {
+                                    "id": cl001.id,
+                                    "name": cl001.name,
+                                    "code": cl001.code,
+                                    "amount": 125.0,
+                                    "children": None,
+                                },
+                                {
+                                    "id": cl002.id,
+                                    "name": cl002.name,
+                                    "code": cl002.code,
+                                    "amount": 127.0,
+                                    "children": None,
+                                },
+                            ],
+                        },
+                        {
+                            "id": cl01.id,
+                            "name": cl01.name,
+                            "code": cl01.code,
+                            "amount": 129.0,
+                            "children": [
+                                {
+                                    "id": cl010.id,
+                                    "name": cl010.name,
+                                    "code": cl010.code,
+                                    "amount": 129.0,
+                                    "children": None,
+                                }
+                            ],
+                        },
+                    ],
+                },
+                {
+                    "id": cl1.id,
+                    "name": cl1.name,
+                    "code": cl1.code,
+                    "amount": 131.0,
+                    "children": [
+                        {
+                            "id": cl10.id,
+                            "name": cl10.name,
+                            "code": cl10.code,
+                            "amount": 131.0,
+                            "children": [
+                                {
+                                    "id": cl100.id,
+                                    "name": cl100.name,
+                                    "code": cl100.code,
+                                    "amount": 131.0,
+                                    "children": None,
+                                }
+                            ],
+                        }
+                    ],
+                },
+            ],
+            "government": {
+                "id": gov.id,
+                "name": gov.name,
+                "slug": gov.slug,
+                "latitude": gov.latitude,
+                "longitude": gov.longitude,
+                "createdAt": gov.created_at.strftime(datetime_format),
+                "updatedAt": gov.updated_at.strftime(datetime_format),
+            },
+        }
+        actual = res.json()
+        self.assertEqual(actual, expected)
+
+
 class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
     def test_list(self):
         ordering = CreatedAtPagination.ordering

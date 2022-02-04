@@ -105,3 +105,34 @@ class BudgetDetailSerializer(serializers.ModelSerializer):
         return BudgetItemSerializer(
             models.BudgetItemBase.objects.filter(budget=obj).prefetch_related("classification"), many=True
         ).data
+
+
+class BudgetNodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Classification
+        fields = ("id", "name", "code")
+
+    def to_representation(self, instance):
+        is_leaf = True
+        children = []
+        for c in instance.direct_children:
+            children.append(BudgetNodeSerializer(instance=c, context={"budget": self.context["budget"]}).data)
+            is_leaf = False
+        if is_leaf:
+            amount = self.context["budget"].get_value_of(instance)
+            children = None
+        else:
+            amount = sum((c["amount"] for c in children))
+        return dict(super().to_representation(instance), amount=amount, children=children)
+
+
+class WdmmgSerializer(serializers.ModelSerializer):
+    government = GovernmentSerializer()
+    budgets = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.Budget
+        fields = ("id", "name", "subtitle", "slug", "year", "created_at", "updated_at", "government", "budgets")
+
+    def get_budgets(self, obj: models.Budget):
+        return [BudgetNodeSerializer(instance=c, context={"budget": obj}).data for c in obj.classification_system.roots]

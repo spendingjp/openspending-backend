@@ -7,6 +7,7 @@ router = routers.DefaultRouter(trailing_slash='/?')
 router.register(r"governments", views.GovernmentViewSet)
 router.register(r"classification-systems", views.ClassificationSystemViewSet)
 router.register(r"budgets", views.BudgetViewSet)
+router.register(r"wdmmg", views.WdmmgView)
 
 classification_system_router = routers.NestedDefaultRouter(
     router, r"classification-systems", lookup=r"classification_system"

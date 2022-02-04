@@ -119,7 +119,7 @@ class ClassificationSystem(models.Model):
 
     @property
     def roots(self) -> models.QuerySet:
-        return Classification.objects.filter(classification_system=self, parent=None)
+        return Classification.objects.filter(classification_system=self, parent=None).order_by("code")
 
     @property
     def leaves(self) -> models.QuerySet:
@@ -144,7 +144,7 @@ class ClassificationSystem(models.Model):
 class Classification(models.Model):
     id = PkField()
     name = NameField()
-    code = models.CharField(max_length=64, null=True)
+    code = models.CharField(max_length=64, null=True, db_index=True)
     classification_system = models.ForeignKey(ClassificationSystem, on_delete=models.CASCADE)
     parent = models.ForeignKey("self", on_delete=models.CASCADE, null=True)
     created_at = CurrentDateTimeField()
@@ -162,6 +162,10 @@ class Classification(models.Model):
                 raise ValidationError(
                     {"classification_system": "classification_system must be the same as that of parent"}
                 )
+
+    @property
+    def direct_children(self) -> models.QuerySet:
+        return Classification.objects.filter(parent=self).order_by("code")
 
 
 class Budget(models.Model):
