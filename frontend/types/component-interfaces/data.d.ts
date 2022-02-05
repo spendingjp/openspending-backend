@@ -8,15 +8,15 @@ export interface Data {
   level3Id: string
   level3Code: string
   level3Name: string
-  level4Id: string
-  level4Code: string
-  level4Name: string
-  level5Id: string
-  level5Code: string
-  level5Name: string
-  level6Id: string
-  level6Code: string
-  level6Name: string
+  level4Id?: string
+  level4Code?: string
+  level4Name?: string
+  level5Id?: string
+  level5Code?: string
+  level5Name?: string
+  level6Id?: string
+  level6Code?: string
+  level6Name?: string
   value: number
 }
 

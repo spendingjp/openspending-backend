@@ -7,6 +7,36 @@
       class="elevation-1"
       dense
     >
+      <template #item.level4Code="{ item }">
+        <td v-if="item.level4Code" class="text-start">{{ item.level4Code }}</td>
+        <td v-else>-</td>
+      </template>
+      <template #item.level4Name="{ item }">
+        <td v-if="item.level4Name" class="text-start text-no-wrap">
+          {{ item.level4Name }}
+        </td>
+        <td v-else>-</td>
+      </template>
+      <template #item.level5Code="{ item }">
+        <td v-if="item.level5Code" class="text-start">{{ item.level5Code }}</td>
+        <td v-else>-</td>
+      </template>
+      <template #item.level5Name="{ item }">
+        <td v-if="item.level5Name" class="text-start text-no-wrap">
+          {{ item.level5Name }}
+        </td>
+        <td v-else>-</td>
+      </template>
+      <template #item.level6Code="{ item }">
+        <td v-if="item.level6Code" class="text-start">{{ item.level6Code }}</td>
+        <td v-else>-</td>
+      </template>
+      <template #item.level6Name="{ item }">
+        <td v-if="item.level6Name" class="text-start text-no-wrap">
+          {{ item.level6Name }}
+        </td>
+        <td v-else>-</td>
+      </template>
       <template #item.cofogLevel1="{ item }">
         <v-select
           v-model="item.cofogLevel1"
@@ -76,7 +106,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import cofog from '@/data/cofog_flatten.json'
-import data from '@/data/tsukuba_flatten.json'
+import data from '@/data/tsukuba_lv4_flatten.json'
 import mapping from '@/data/mapping.json'
 import { Data, Cofog, Map } from '@/types/component-interfaces/data'
 import { dataStore } from '@/store'
@@ -87,7 +117,9 @@ interface CofogItem {
 }
 
 interface Action {
+  [key: string]: any
   number: number
+  terminalLevelId: string
   cofogLevel1: string | null
   cofogLevel2: string | null
   cofogLevel3: string | null
@@ -171,8 +203,14 @@ export default Vue.extend({
       }
     })
     this.mappingData = mapping.data
-    this.originalData = data.data
+    this.originalData = data.results
     this.originalItems = this.originalData.map((item, index) => {
+      const terminalLevelId = Object.keys(item)
+        .filter((v) => {
+          return v.includes('level') && v.includes('Id')
+        })
+        .sort()
+        .pop()
       const matchedCofog = this.getMatchCofog(item)
       this.cofogLevel2Items[index] = this.cofogData
         .filter((v: Cofog) => {
@@ -196,17 +234,18 @@ export default Vue.extend({
         })
       return {
         number: index,
-        cofogLevel1: matchedCofog?.cofogLevel1Id || '',
-        cofogLevel2: matchedCofog?.cofogLevel2Id || '',
-        cofogLevel3: matchedCofog?.cofogLevel3Id || '',
+        terminalLevelId: terminalLevelId ?? '',
+        cofogLevel1: matchedCofog?.cofogLevel1Id ?? '',
+        cofogLevel2: matchedCofog?.cofogLevel2Id ?? '',
+        cofogLevel3: matchedCofog?.cofogLevel3Id ?? '',
         copyCofogLevel1: JSON.parse(
-          JSON.stringify(matchedCofog?.cofogLevel1Id || '')
+          JSON.stringify(matchedCofog?.cofogLevel1Id ?? '')
         ),
         copyCofogLevel2: JSON.parse(
-          JSON.stringify(matchedCofog?.cofogLevel2Id || '')
+          JSON.stringify(matchedCofog?.cofogLevel2Id ?? '')
         ),
         copyCofogLevel3: JSON.parse(
-          JSON.stringify(matchedCofog?.cofogLevel3Id || '')
+          JSON.stringify(matchedCofog?.cofogLevel3Id ?? '')
         ),
         rating: 0,
         ...item,
@@ -242,7 +281,7 @@ export default Vue.extend({
       const matched: Map | undefined = this.mappingData.find((v: Map) => {
         return v.sourceId === item.level6Id
       })
-      const matchedId = matched?.targetId || null
+      const matchedId = matched?.targetId ?? null
       return this.cofogData.find((v: Cofog) => {
         return v.cofogLevel3Id === matchedId
       })
@@ -255,12 +294,12 @@ export default Vue.extend({
       })
       this.setSelectItemsCofogLevel2(restoreItem)
       this.setSelectItemsCofogLevel3(restoreItem)
-      dataStore.removeMap(item.level6Id)
+      dataStore.removeMap(item[item.terminalLevelId])
     },
     registerMappingArray(item: DataItem) {
       if (item.cofogLevel3 && item.cofogLevel3 !== item.copyCofogLevel3) {
         dataStore.setMap({
-          sourceId: item.level6Id,
+          sourceId: item[item.terminalLevelId],
           targetId: item.cofogLevel3,
           rating: item.rating,
         })
