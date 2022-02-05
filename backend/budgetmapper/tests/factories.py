@@ -18,6 +18,7 @@ class ClassificationSystemFactory(DjangoModelFactory):
         model = models.ClassificationSystem
 
     name = fuzzy.FuzzyText(suffix="予算")
+    level_names = ["款", "項", "目", "事業", "節", "節細"]
 
 
 class ClassificationFactory(DjangoModelFactory):

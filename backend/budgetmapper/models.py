@@ -1,10 +1,9 @@
-import sys
 from io import BufferedIOBase, RawIOBase
-from typing import Any
 
 import pykakasi
 import shortuuidfield
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -44,6 +43,9 @@ def jp_slugify(name: str) -> str:
 
 
 class JpSlugField(models.SlugField):
+    def __init__(self, *args, **kwargs):
+        super(JpSlugField, self).__init__(*args, **dict(kwargs, null=True, blank=True))
+
     def pre_save(self, model_instance, add):
         val = getattr(model_instance, self.attname)
         if val is None or len(val) == 0:
@@ -85,6 +87,18 @@ class LongitudeField(models.FloatField):
         )
 
 
+def get_default_level_name_list():
+    return ["款", "項", "目", "事業", "節", "節細"]
+
+
+class LevelNameListField(ArrayField):
+    def __init__(self, *args, **kwargs):
+        super(LevelNameListField, self).__init__(
+            *args,
+            **dict(kwargs, base_field=models.CharField(max_length=255), default=get_default_level_name_list, null=True),
+        )
+
+
 class Government(models.Model):
     id = PkField()
     name = NameField()
@@ -99,12 +113,13 @@ class ClassificationSystem(models.Model):
     id = PkField()
     name = NameField()
     slug = JpSlugField(unique=True)
+    level_names = LevelNameListField()
     created_at = CurrentDateTimeField()
     updated_at = AutoUpdateCurrentDateTimeField()
 
     @property
     def roots(self) -> models.QuerySet:
-        return Classification.objects.filter(parent=None)
+        return Classification.objects.filter(classification_system=self, parent=None)
 
     @property
     def leaves(self) -> models.QuerySet:
@@ -112,6 +127,18 @@ class ClassificationSystem(models.Model):
             ~models.Exists(Classification.objects.filter(classification_system=self, parent=models.OuterRef("pk"))),
             classification_system=self,
         )
+
+    def __iterate_classifications_sub(self, buf):
+        is_leaf = True
+        for d in Classification.objects.filter(parent=buf[-1]):
+            is_leaf = False
+            yield from self.__iterate_classifications_sub(buf + [d])
+        if is_leaf:
+            yield buf
+
+    def iterate_classifications(self):
+        for r in self.roots:
+            yield from self.__iterate_classifications_sub([r])
 
 
 class Classification(models.Model):
@@ -142,7 +169,7 @@ class Budget(models.Model):
     name = NameField()
     slug = JpSlugField(unique=True)
     year = models.IntegerField(null=False)
-    subtitle = models.TextField()
+    subtitle = models.TextField(null=True)
     classification_system = models.ForeignKey(ClassificationSystem, on_delete=models.CASCADE, db_index=True, null=False)
     government = models.ForeignKey(Government, on_delete=models.CASCADE, db_index=True, null=False)
     created_at = CurrentDateTimeField()
@@ -156,6 +183,14 @@ class Budget(models.Model):
             return val.value
         except BudgetItemBase.DoesNotExist:
             return sum(self.get_value_of(c) for c in Classification.objects.filter(parent=classification))
+
+    def iterate_items(self):
+        for cl in self.classification_system.iterate_classifications():
+            try:
+                val = BudgetItemBase.objects.get(budget=self, classification=cl[-1])
+                yield {"classifications": cl, "budget_item": val}
+            except BudgetItemBase.DoesNotExist:
+                yield {"classifications": cl, "budget_item": None}
 
 
 class BudgetItemBase(PolymorphicModel):

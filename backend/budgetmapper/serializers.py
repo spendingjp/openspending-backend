@@ -25,7 +25,26 @@ class GovernmentSerializer(serializers.ModelSerializer):
 class ClassificationSystemSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ClassificationSystem
-        fields = ("id", "slug", "name", "created_at", "updated_at")
+        fields = ("id", "name", "slug", "level_names", "created_at", "updated_at")
+
+
+class ClassificationSystemDetailSerializer(serializers.ModelSerializer):
+    items = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.ClassificationSystem
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "level_names",
+            "created_at",
+            "updated_at",
+            "items",
+        )
+
+    def get_items(self, obj):
+        return ClassificationSerializer(models.Classification.objects.filter(classification_system=obj), many=True).data
 
 
 class ClassificationSerializer(serializers.ModelSerializer):

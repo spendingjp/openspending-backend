@@ -60,7 +60,7 @@ export default {
   build: {},
 
   publicRuntimeConfig: {
-    authURL: process.env.AUTH_URL || 'http://localhost:8000/api-token-auth/',
+    apiUrl: process.env.API_URL || 'http://localhost:8000',
     axios: {
       baseURL: process.env.API_URL || 'http://localhost:8000',
     },
