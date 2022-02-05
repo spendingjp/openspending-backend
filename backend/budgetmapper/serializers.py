@@ -113,6 +113,23 @@ class BudgetDetailSerializer(serializers.ModelSerializer):
         ).data
 
 
+class MappedBudgetItemSerializer(serializers.ModelSerializer):
+    classification = ClassificationSummarySerializer()
+    mapped_classifications = ClassificationSummarySerializer(many=True)
+    mapped_budget = BudgetSerializer()
+
+    class Meta:
+        model = models.MappedBudgetItem
+        fields = (
+            "id",
+            "classification",
+            "mapped_classifications",
+            "mapped_budget",
+            "created_at",
+            "updated_at",
+        )
+
+
 class BudgetNodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Classification
