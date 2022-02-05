@@ -117,6 +117,7 @@ interface CofogItem {
 }
 
 interface Action {
+  [key: string]: any
   number: number
   terminalLevelId: string
   cofogLevel1: string | null
@@ -128,11 +129,7 @@ interface Action {
   rating?: number
 }
 
-interface Key {
-  [key: string]: any
-}
-
-type DataItem = Data & Action & Key
+type DataItem = Data & Action
 
 export default Vue.extend({
   data() {
