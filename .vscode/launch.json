@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Test",
+      "type": "python",
+      "justMyCode": false,
+      "request": "launch",
+      "cwd": "${workspaceFolder}/backend",
+      "program": "${fileDirname}/backend/manage.py",
+      "args": ["test"],
+      "env": {
+        "APPLICATION_DEBUG": "True"
+      }
+      "django": true
+    },
+    {
+      "name": "Django",
+      "type": "python",
+      "justMyCode": false,
+      "request": "launch",
+      "cwd": "${workspaceFolder}/backend",
+      "program": "${workspaceFolder}/backend/manage.py",
+      "args": ["runserver"],
+      "env": {
+        "APPLICATION_DEBUG": "True"
+      }
+      "django": true
+    }
+  ]
+}
