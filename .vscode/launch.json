@@ -7,7 +7,7 @@
       "justMyCode": false,
       "request": "launch",
       "cwd": "${workspaceFolder}/backend",
-      "program": "${fileDirname}/backend/manage.py",
+      "program": "${workspaceFolder}/backend/manage.py",
       "args": ["test"],
       "env": {
         "APPLICATION_DEBUG": "True"
