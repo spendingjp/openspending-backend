@@ -11,7 +11,7 @@
       "args": ["test"],
       "env": {
         "APPLICATION_DEBUG": "True"
-      }
+      },
       "django": true
     },
     {
@@ -24,7 +24,7 @@
       "args": ["runserver"],
       "env": {
         "APPLICATION_DEBUG": "True"
-      }
+      },
       "django": true
     }
   ]
