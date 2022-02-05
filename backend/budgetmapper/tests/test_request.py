@@ -894,6 +894,17 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         expected = {
             "id": mbi01.id,
+            "budget": {
+                "id": mbi01.budget.id,
+                "name": mbi01.budget.name,
+                "slug": mbi01.budget.slug,
+                "year": mbi01.budget.year,
+                "subtitle": mbi01.budget.subtitle,
+                "classificationSystem": mbi01.budget.classification_system.id,
+                "government": mbi01.budget.government.id,
+                "createdAt": mbi01.budget.created_at.strftime(datetime_format),
+                "updatedAt": mbi01.budget.updated_at.strftime(datetime_format),
+            },
             "mappedBudget": {
                 "id": mbi01.mapped_budget.id,
                 "name": mbi01.mapped_budget.name,

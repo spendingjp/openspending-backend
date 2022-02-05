@@ -66,6 +66,8 @@ class BudgetItemViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if isinstance(self.get_queryset().first(), models.MappedBudgetItem):
+            if self.action == "retrieve":
+                return serializers.MappedBudgetItemDetailSerializer
             return serializers.MappedBudgetItemSerializer
         if self.action in {"update", "partial_update", "create"}:
             raise exceptions.MethodNotAllowed(self.action)
