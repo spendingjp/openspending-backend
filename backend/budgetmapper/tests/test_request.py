@@ -82,12 +82,12 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
         res = self.client.put(f"/api/v1/wdmmg/{bud.slug}/", {}, format="json")
         self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    def test_delete_returns_unauthorized_error_for_non_member(self) -> None:
+    def test_destroy_returns_unauthorized_error_for_non_member(self) -> None:
         bud = factories.BudgetFactory(name="まほろ市2101年度予算", slug="mahoro-city-2101")
         res = self.client.delete(f"/api/v1/wdmmg/{bud.slug}/", {}, format="json")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_delete_returns_method_not_allowed_error_for_member(self) -> None:
+    def test_destroy_returns_method_not_allowed_error_for_member(self) -> None:
         bud = factories.BudgetFactory(name="まほろ市2101年度予算", slug="mahoro-city-2101")
         self.client.login(username=self._user_username, password=self._user_password)
         res = self.client.delete(f"/api/v1/wdmmg/{bud.slug}/", {}, format="json")
@@ -733,7 +733,7 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
             )
             self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    def test_delete_requires_login(self):
+    def test_destroy_requires_login(self):
         cs = factories.ClassificationSystemFactory()
         budget = factories.BudgetFactory(classification_system=cs)
         budget_item = factories.AtomicBudgetItemFactory(
@@ -742,7 +742,7 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         res = self.client.delete(f"/api/v1/budgets/{budget.id}/items/{budget_item.id}/", format="json")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_cannot_delete(self):
+    def test_cannot_destroy(self):
         cs = factories.ClassificationSystemFactory()
         budget = factories.BudgetFactory(classification_system=cs)
         budget_item = factories.AtomicBudgetItemFactory(
