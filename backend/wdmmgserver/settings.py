@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'rest_framework.authtoken',
-    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -69,6 +68,7 @@ MIDDLEWARE = [
 
 if DEBUG:
     INSTALLED_APPS.append("corsheaders")
+    INSTALLED_APPS.append("django_extensions")
     MIDDLEWARE.append("corsheaders.middleware.CorsMiddleware")
     MIDDLEWARE.append("django.middleware.common.CommonMiddleware")
     CORS_ALLOW_ALL_ORIGINS = True

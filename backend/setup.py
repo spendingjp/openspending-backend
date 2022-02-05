@@ -22,9 +22,19 @@ setup(
         "pykakasi",
         "drf-nested-routers",
         "django-polymorphic",
+        "django",
     ],
     extras_require={
-        "dev": ["flake8", "black", "isort", "psycopg2-binary", "django-cors-headers", "factory-boy", "freezegun"],
+        "dev": [
+            "flake8",
+            "black",
+            "isort",
+            "psycopg2-binary",
+            "django-cors-headers",
+            "factory-boy",
+            "freezegun",
+            "django-extensions",
+        ],
         "prod": ["psycopg2"],
     },
 )
