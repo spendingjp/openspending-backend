@@ -15,10 +15,13 @@ classification_system_router = routers.NestedDefaultRouter(
 classification_system_router.register(
     r"classifications", views.ClassificationViewSet, basename="classification-system-classification"
 )
+budget_router = routers.NestedDefaultRouter(router, r"budgets", lookup="budget")
+budget_router.register(r"items", views.BudgetItemViewSet, basename="budget-item")
 
 urlpatterns = [
     path('api/v1/', include(router.urls)),
     path('api/v1/', include(classification_system_router.urls)),
+    path('api/v1/', include(budget_router.urls)),
     path('transfer/xlsx_template', views.download_xlsx_template_view),
     path('transfer/csv/<str:budget_id>', views.download_csv_view),
 ]

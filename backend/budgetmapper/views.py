@@ -5,8 +5,7 @@ import django_filters.rest_framework as drf_filters
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
-from rest_framework import viewsets
-from rest_framework.mixins import RetrieveModelMixin
+from rest_framework import viewsets, mixins
 from rest_framework.pagination import CursorPagination
 
 from . import models, serializers
@@ -57,7 +56,15 @@ class BudgetViewSet(viewsets.ModelViewSet):
         return serializers.BudgetSerializer
 
 
-class WdmmgView(RetrieveModelMixin, viewsets.GenericViewSet):
+class BudgetItemViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    serializer_class = serializers.BudgetItemSerializer
+    pagination_class = CreatedAtPagination
+
+    def get_queryset(self):
+        return models.BudgetItemBase.objects.filter(budget=self.kwargs["budget_pk"])
+
+
+class WdmmgView(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     queryset = models.Budget.objects.all()
     pagination_class = CreatedAtPagination
     serializer_class = serializers.WdmmgSerializer

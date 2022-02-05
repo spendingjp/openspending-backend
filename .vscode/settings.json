@@ -8,11 +8,14 @@
     "--target-version",
     "py39"
   ],
-  "python.sortImports.args": ["--profile", "black"],
+  "python.sortImports.args": [
+    "--profile",
+    "black"
+  ],
   "[python]": {
     "editor.codeActionsOnSave": {
       "source.organizeImports": true
     }
   },
-  "python.pythonPath": "backend/.venv/bin/python"
+  "python.defaultInterpreterPath": "backend/.venv/bin/python"
 }
