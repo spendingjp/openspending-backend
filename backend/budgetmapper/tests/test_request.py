@@ -1001,3 +1001,32 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
             models.MappedBudgetItem.objects.get(id=mbi0.id)
         models.MappedBudgetItem.objects.get(id=mbi1.id)
         models.MappedBudgetItem.objects.get(id=mbi2.id)
+
+    def test_update_requires_login(self):
+        mbi = factories.MappedBudgetItemFactory()
+        cl = factories.ClassificationFactory(classification_system=mbi.mapped_budget.classification_system)
+        query = {"mappedClassifications": [c.id for c in mbi.mapped_classifications.all()] + [cl.id]}
+        res = self.client.patch(f"/api/v1/budgets/{mbi.budget.id}/items/{mbi.id}/", query, format="json")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_update_adding_mapped_classifications(self):
+        mbi = factories.MappedBudgetItemFactory()
+        cl_orig = [c.id for c in mbi.mapped_classifications.all()]
+        cl = factories.ClassificationFactory(classification_system=mbi.mapped_budget.classification_system)
+        query = {"mappedClassifications": cl_orig + [cl.id]}
+        dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt):
+            self.client.login(username=self._user_username, password=self._user_password)
+            res = self.client.patch(f"/api/v1/budgets/{mbi.budget.id}/items/{mbi.id}/", query, format="json")
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            expected = {
+                "id": mbi.id,
+                "budget": mbi.budget.id,
+                "classification": mbi.classification.id,
+                "mappedBudget": mbi.mapped_budget.id,
+                "mappedClassifications": cl_orig + [cl.id],
+                "createdAt": mbi.created_at.strftime(datetime_format),
+                "updatedAt": dt.strftime(datetime_format),
+            }
+            actual = res.json()
+            self.assertEqual(actual, expected)

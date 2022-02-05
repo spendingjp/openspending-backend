@@ -149,7 +149,7 @@ class MappedBudgetItemDetailSerializer(serializers.ModelSerializer):
         )
 
 
-class MappedBudgetItemCreateSerializer(serializers.ModelSerializer):
+class MappedBudgetItemCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.MappedBudgetItem
         fields = (
