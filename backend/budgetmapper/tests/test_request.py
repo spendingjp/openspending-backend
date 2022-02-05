@@ -984,3 +984,20 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
                 }
                 actual = res.json()
                 self.assertEqual(actual, expected)
+
+    def test_destroy_requires_login(self):
+        mbi = factories.MappedBudgetItemFactory()
+        res = self.client.delete(f"/api/v1/budgets/{mbi.budget.id}/items/{mbi.id}/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_destroy_requires_login(self):
+        mbi0 = factories.MappedBudgetItemFactory()
+        mbi1 = factories.MappedBudgetItemFactory()
+        mbi2 = factories.MappedBudgetItemFactory()
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.delete(f"/api/v1/budgets/{mbi0.budget.id}/items/{mbi0.id}/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        with self.assertRaises(models.MappedBudgetItem.DoesNotExist):
+            models.MappedBudgetItem.objects.get(id=mbi0.id)
+        models.MappedBudgetItem.objects.get(id=mbi1.id)
+        models.MappedBudgetItem.objects.get(id=mbi2.id)
