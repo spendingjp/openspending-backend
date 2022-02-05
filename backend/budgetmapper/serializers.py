@@ -53,16 +53,22 @@ class ClassificationSerializer(serializers.ModelSerializer):
         fields = ("id", "code", "name", "classification_system", "parent", "created_at", "updated_at")
 
 
+class ClassificationSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Classification
+        fields = ("id", "name", "code")
+
+
 class BudgetItemSerializer(serializers.ModelSerializer):
-    classification = ClassificationSerializer()
+    classification = ClassificationSummarySerializer()
+    value = serializers.SerializerMethodField()
 
     class Meta:
         model = models.BudgetItemBase
-        fields = (
-            "id",
-            "classification",
-            "value",
-        )
+        fields = ("id", "classification", "value", "created_at", "updated_at")
+
+    def get_value(self, obj):
+        return obj.value
 
 
 class BudgetSerializer(serializers.ModelSerializer):

@@ -647,3 +647,66 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
             }
             actual = res.json()
             self.assertEqual(actual, expected)
+
+
+class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
+    def test_list(self):
+        ordering = CreatedAtPagination.ordering
+        page_size = CreatedAtPagination.page_size
+        cs = factories.ClassificationSystemFactory()
+        budget = factories.BudgetFactory(classification_system=cs)
+        budget_items = [
+            factories.AtomicBudgetItemFactory(
+                budget=budget, classification=factories.ClassificationFactory(classification_system=cs)
+            )
+            for _ in range(100)
+        ]
+        res = self.client.get(f"/api/v1/budgets/{budget.id}/items/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = [
+            {
+                "id": b.id,
+                "value": b.value,
+                "classification": {
+                    "id": b.classification.id,
+                    "name": b.classification.name,
+                    "code": b.classification.code,
+                },
+                "createdAt": b.created_at.strftime(datetime_format),
+                "updatedAt": b.updated_at.strftime(datetime_format),
+            }
+            for b in sorted(
+                budget_items, key=lambda b: getattr(b, ordering.strip("-")), reverse=ordering.startswith("-")
+            )[:page_size]
+        ]
+        res_json = res.json()
+        self.assertIn("results", res_json)
+        actual = res_json["results"]
+        self.assertEqual(actual, expected)
+
+    def test_update_requires_login(self):
+        cs = factories.ClassificationSystemFactory()
+        budget = factories.BudgetFactory(classification_system=cs)
+        budget_item = factories.AtomicBudgetItemFactory(
+            budget=budget, classification=factories.ClassificationFactory(classification_system=cs)
+        )
+        res = self.client.patch(f"/api/v1/budgets/{budget.id}/items/{budget_item.id}/", {}, format="json")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_update_cannot_modify_amount(self):
+        cs = factories.ClassificationSystemFactory()
+        budget = factories.BudgetFactory(classification_system=cs)
+        budget_item = factories.AtomicBudgetItemFactory(
+            budget=budget, classification=factories.ClassificationFactory(classification_system=cs)
+        )
+        self.client.login(username=self._user_username, password=self._user_password)
+        dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt):
+            res = self.client.patch(
+                f"/api/v1/budgets/{budget.id}/items/{budget_item.id}/",
+                {
+                    "amount": 100.0,
+                },
+                format="json",
+            )
+            self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
