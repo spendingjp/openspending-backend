@@ -6,6 +6,7 @@ from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
 from rest_framework import viewsets
+from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.pagination import CursorPagination
 
 from . import models, serializers
@@ -54,6 +55,13 @@ class BudgetViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return serializers.BudgetDetailSerializer
         return serializers.BudgetSerializer
+
+
+class WdmmgView(RetrieveModelMixin, viewsets.GenericViewSet):
+    queryset = models.Budget.objects.all()
+    pagination_class = CreatedAtPagination
+    serializer_class = serializers.WdmmgSerializer
+    lookup_field = "slug"
 
 
 def download_xlsx_template_view(request):

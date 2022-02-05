@@ -54,13 +54,13 @@ class ClassificationSystemTest(TestCase):
 
     def test_iterate_classifications(self) -> None:
         cs = factories.ClassificationSystemFactory()
-        cl0 = factories.ClassificationFactory(classification_system=cs)
-        cl00 = factories.ClassificationFactory(classification_system=cs, parent=cl0)
-        cl01 = factories.ClassificationFactory(classification_system=cs, parent=cl0)
-        cl1 = factories.ClassificationFactory(classification_system=cs)
-        cl10 = factories.ClassificationFactory(classification_system=cs, parent=cl1)
-        cl11 = factories.ClassificationFactory(classification_system=cs, parent=cl1)
-        cl12 = factories.ClassificationFactory(classification_system=cs, parent=cl1)
+        cl0 = factories.ClassificationFactory(classification_system=cs, code="1")
+        cl00 = factories.ClassificationFactory(classification_system=cs, code="1.1", parent=cl0)
+        cl01 = factories.ClassificationFactory(classification_system=cs, code="1.2", parent=cl0)
+        cl1 = factories.ClassificationFactory(classification_system=cs, code="2")
+        cl10 = factories.ClassificationFactory(classification_system=cs, code="2.1", parent=cl1)
+        cl11 = factories.ClassificationFactory(classification_system=cs, code="2.2", parent=cl1)
+        cl12 = factories.ClassificationFactory(classification_system=cs, code="2.3", parent=cl1)
 
         expected = [
             [cl0, cl00],
