@@ -8,34 +8,39 @@
       dense
     >
       <template #item.level4Code="{ item }">
-        <td v-if="item.level4Code" class="text-start">{{ item.level4Code }}</td>
-        <td v-else>-</td>
+        <td v-if="item.level4Code">{{ item.level4Code }}</td>
+        <td v-else class="text-center">-</td>
       </template>
       <template #item.level4Name="{ item }">
-        <td v-if="item.level4Name" class="text-start text-no-wrap">
+        <td v-if="item.level4Name" class="text-no-wrap">
           {{ item.level4Name }}
         </td>
-        <td v-else>-</td>
+        <td v-else class="text-center">-</td>
       </template>
       <template #item.level5Code="{ item }">
-        <td v-if="item.level5Code" class="text-start">{{ item.level5Code }}</td>
-        <td v-else>-</td>
+        <td v-if="item.level5Code">{{ item.level5Code }}</td>
+        <td v-else class="text-center">-</td>
       </template>
       <template #item.level5Name="{ item }">
-        <td v-if="item.level5Name" class="text-start text-no-wrap">
+        <td v-if="item.level5Name" class="text-no-wrap">
           {{ item.level5Name }}
         </td>
-        <td v-else>-</td>
+        <td v-else class="text-center">-</td>
       </template>
       <template #item.level6Code="{ item }">
-        <td v-if="item.level6Code" class="text-start">{{ item.level6Code }}</td>
-        <td v-else>-</td>
+        <td v-if="item.level6Code">{{ item.level6Code }}</td>
+        <td v-else class="text-center">-</td>
       </template>
       <template #item.level6Name="{ item }">
-        <td v-if="item.level6Name" class="text-start text-no-wrap">
+        <td v-if="item.level6Name" class="text-no-wrap">
           {{ item.level6Name }}
         </td>
-        <td v-else>-</td>
+        <td v-else class="text-center">-</td>
+      </template>
+      <template #item.value="{ item }">
+        <td class="text-right">
+          {{ item.value.toLocaleString() }}
+        </td>
       </template>
       <template #item.cofogLevel1="{ item }">
         <v-select
@@ -177,6 +182,7 @@ export default Vue.extend({
           sortable: false,
           cellClass: 'text-no-wrap',
         },
+        { text: '金額', value: 'value', sortable: false, align: 'center' },
         { text: 'cofogLevel1', value: 'cofogLevel1', sortable: false },
         { text: 'cofogLevel2', value: 'cofogLevel2', sortable: false },
         { text: 'cofogLevel3', value: 'cofogLevel3', sortable: false },
