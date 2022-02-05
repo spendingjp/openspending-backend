@@ -60,9 +60,9 @@ class MappedBudgetItemFactory(DjangoModelFactory):
     mapped_budget = factory.SubFactory(BudgetFactory)
 
     @factory.post_generation
-    def mapped_classificaitons(self, create, extracted, **kwargs):
-        if not create:
-            for _ in range(random.randint([1, 10])):
+    def mapped_classifications(self, create, extracted, **kwargs):
+        if create:
+            for _ in range(random.randint(1, 10)):
                 self.mapped_classifications.add(
                     ClassificationFactory(classification_system=self.mapped_budget.classification_system)
                 )
