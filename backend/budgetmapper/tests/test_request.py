@@ -852,3 +852,70 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertIn("results", res_json)
         actual = res_json["results"]
         self.assertEqual(actual, expected)
+
+    def test_retrieve(self):
+        cs0 = factories.ClassificationSystemFactory()
+        bud0 = factories.BudgetFactory(classification_system=cs0)
+        cl00 = factories.ClassificationFactory(classification_system=cs0)
+        cl000 = factories.ClassificationFactory(classification_system=cs0, parent=cl00)
+        cl001 = factories.ClassificationFactory(classification_system=cs0, parent=cl00)
+        cl01 = factories.ClassificationFactory(classification_system=cs0)
+        cl010 = factories.ClassificationFactory(classification_system=cs0, parent=cl01)
+        cl011 = factories.ClassificationFactory(classification_system=cs0, parent=cl01)
+        cl012 = factories.ClassificationFactory(classification_system=cs0, parent=cl01)
+
+        abi00 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl000)
+        abi01 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl001)
+        abi10 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl010)
+        abi11 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl011)
+        abi12 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl012)
+
+        cs1 = factories.ClassificationSystemFactory()
+        bud1 = factories.BudgetFactory(classification_system=cs1)
+        cl10 = factories.ClassificationFactory(classification_system=cs1)
+        cl100 = factories.ClassificationFactory(classification_system=cs1, parent=cl10)
+        cl101 = factories.ClassificationFactory(classification_system=cs1, parent=cl10)
+        cl11 = factories.ClassificationFactory(classification_system=cs1)
+        cl110 = factories.ClassificationFactory(classification_system=cs1, parent=cl11)
+
+        mbi00 = models.MappedBudgetItem(budget=bud1, classification=cl100, mapped_budget=bud0)
+        mbi00.save()
+        mbi00.mapped_classifications.set([cl000])
+
+        mbi01 = models.MappedBudgetItem(budget=bud1, classification=cl101, mapped_budget=bud0)
+        mbi01.save()
+        mbi01.mapped_classifications.set([cl010, cl011])
+
+        mbi10 = models.MappedBudgetItem(budget=bud1, classification=cl110, mapped_budget=bud0)
+        mbi10.save()
+        mbi10.mapped_classifications.set([cl001, cl012])
+
+        res = self.client.get(f"/api/v1/budgets/{bud1.id}/items/{mbi01.id}/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = {
+            "id": mbi01.id,
+            "mappedBudget": {
+                "id": mbi01.mapped_budget.id,
+                "name": mbi01.mapped_budget.name,
+                "slug": mbi01.mapped_budget.slug,
+                "year": mbi01.mapped_budget.year,
+                "subtitle": mbi01.mapped_budget.subtitle,
+                "classificationSystem": mbi01.mapped_budget.classification_system.id,
+                "government": mbi01.mapped_budget.government.id,
+                "createdAt": mbi01.mapped_budget.created_at.strftime(datetime_format),
+                "updatedAt": mbi01.mapped_budget.updated_at.strftime(datetime_format),
+            },
+            "mappedClassifications": [
+                {"id": cl010.id, "name": cl010.name, "code": cl010.code},
+                {"id": cl011.id, "name": cl011.name, "code": cl011.code},
+            ],
+            "classification": {
+                "id": mbi01.classification.id,
+                "name": mbi01.classification.name,
+                "code": mbi01.classification.code,
+            },
+            "createdAt": mbi01.created_at.strftime(datetime_format),
+            "updatedAt": mbi01.updated_at.strftime(datetime_format),
+        }
+        actual = res.json()
+        self.assertEqual(actual, expected)
