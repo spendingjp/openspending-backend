@@ -149,6 +149,20 @@ class MappedBudgetItemDetailSerializer(serializers.ModelSerializer):
         )
 
 
+class MappedBudgetItemCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.MappedBudgetItem
+        fields = (
+            "id",
+            "budget",
+            "mapped_budget",
+            "classification",
+            "mapped_classifications",
+            "created_at",
+            "updated_at",
+        )
+
+
 class BudgetNodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Classification

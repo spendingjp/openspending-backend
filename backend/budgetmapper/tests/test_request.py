@@ -930,3 +930,57 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         }
         actual = res.json()
         self.assertEqual(actual, expected)
+
+    def test_create_requires_authentication(self):
+        cs0 = factories.ClassificationSystemFactory()
+        bud0 = factories.BudgetFactory(classification_system=cs0)
+        cl00 = factories.ClassificationFactory(classification_system=cs0)
+        cl01 = factories.ClassificationFactory(classification_system=cs0)
+        abi00 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl00)
+        abi01 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl01)
+        cs1 = factories.ClassificationSystemFactory()
+        bud1 = factories.BudgetFactory(classification_system=cs1)
+        cl10 = factories.ClassificationFactory(classification_system=cs1)
+        query = {
+            "budget": bud1.id,
+            "classification": cl10.id,
+            "mappedBudget": bud0.id,
+            "mappedClassifications": [cl00.id, cl01.id],
+        }
+        res = self.client.post(f"/api/v1/budgets/{bud1.id}/items/", query, format="json")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_create(self):
+        cs0 = factories.ClassificationSystemFactory()
+        bud0 = factories.BudgetFactory(classification_system=cs0)
+        cl00 = factories.ClassificationFactory(classification_system=cs0)
+        cl01 = factories.ClassificationFactory(classification_system=cs0)
+        abi00 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl00)
+        abi01 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl01)
+        cs1 = factories.ClassificationSystemFactory()
+        bud1 = factories.BudgetFactory(classification_system=cs1)
+        cl10 = factories.ClassificationFactory(classification_system=cs1)
+        dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt):
+            self.client.login(username=self._user_username, password=self._user_password)
+            query = {
+                "classification": cl10.id,
+                "mappedBudget": bud0.id,
+                "mappedClassifications": [cl00.id, cl01.id],
+            }
+            with patch(
+                "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890"
+            ):
+                res = self.client.post(f"/api/v1/budgets/{bud1.id}/items/", query, format="json")
+                self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+                expected = {
+                    "id": "ab12345678901234567890",
+                    "budget": bud1.id,
+                    "classification": cl10.id,
+                    "mappedBudget": bud0.id,
+                    "mappedClassifications": [cl00.id, cl01.id],
+                    "createdAt": dt.strftime(datetime_format),
+                    "updatedAt": dt.strftime(datetime_format),
+                }
+                actual = res.json()
+                self.assertEqual(actual, expected)

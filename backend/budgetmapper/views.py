@@ -65,11 +65,17 @@ class BudgetItemViewSet(viewsets.ModelViewSet):
         raise exceptions.MethodNotAllowed(self.action)
 
     def get_serializer_class(self):
+        if self.action == "create":
+            if "amount" in self.request.data:
+                raise exceptions.MethodNotAllowed("create")
+            if "mapped_budget" in self.request.data and "mapped_classifications" in self.request.data:
+                self.request.data["budget"] = self.kwargs["budget_pk"]
+                return serializers.MappedBudgetItemCreateSerializer
         if isinstance(self.get_queryset().first(), models.MappedBudgetItem):
             if self.action == "retrieve":
                 return serializers.MappedBudgetItemDetailSerializer
             return serializers.MappedBudgetItemSerializer
-        if self.action in {"update", "partial_update", "create"}:
+        if self.action in {"update", "partial_update"}:
             raise exceptions.MethodNotAllowed(self.action)
         return serializers.BudgetItemSerializer
 
