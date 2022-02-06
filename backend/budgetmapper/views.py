@@ -62,17 +62,12 @@ class BudgetViewSet(viewsets.ModelViewSet):
 class BudgetItemViewSet(viewsets.ModelViewSet):
     pagination_class = CreatedAtPagination
 
-    def destroy(self, request, budget_pk, pk=None):
-        if isinstance(self.get_queryset().first(), models.MappedBudgetItem):
-            return super(BudgetItemViewSet, self).destroy(request, budget_pk=budget_pk, pk=pk)
-        raise exceptions.MethodNotAllowed(self.action)
-
     def get_serializer_class(self):
         if self.action == "create":
+            self.request.data["budget"] = self.kwargs["budget_pk"]
             if "amount" in self.request.data:
-                raise exceptions.MethodNotAllowed("create")
+                return serializers.AtomicBudgetItemCreateUpdateSerializer
             if "mapped_budget" in self.request.data and "mapped_classifications" in self.request.data:
-                self.request.data["budget"] = self.kwargs["budget_pk"]
                 return serializers.MappedBudgetItemCreateUpdateSerializer
         if isinstance(self.get_queryset().first(), models.MappedBudgetItem):
             if self.action == "retrieve":
@@ -81,7 +76,7 @@ class BudgetItemViewSet(viewsets.ModelViewSet):
                 return serializers.MappedBudgetItemCreateUpdateSerializer
             return serializers.MappedBudgetItemSerializer
         if self.action in {"update", "partial_update"}:
-            raise exceptions.MethodNotAllowed(self.action)
+            return serializers.AtomicBudgetItemCreateUpdateSerializer
         return serializers.BudgetItemSerializer
 
     def get_queryset(self):
