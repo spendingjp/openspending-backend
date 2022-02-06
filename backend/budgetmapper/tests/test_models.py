@@ -174,7 +174,7 @@ class BudgetTest(TestCase):
         self.assertEqual(sut.classification_system, cs)
         self.assertEqual(sut.government, gov)
 
-    def test_iterate_classifications(self) -> None:
+    def test_iterate_items(self) -> None:
         cs = factories.ClassificationSystemFactory()
         bud = factories.BudgetFactory(classification_system=cs)
         cl0 = factories.ClassificationFactory(classification_system=cs)
@@ -210,20 +210,20 @@ class AtomicBudgetItemTestCase(TestCase):
     def test_atomic_budget_item_default(self) -> None:
         bud = factories.BudgetFactory()
         cl = factories.ClassificationFactory(classification_system=bud.classification_system)
-        sut = models.AtomicBudgetItem(amount=123, classification=cl, budget=bud)
+        sut = models.AtomicBudgetItem(value=123, classification=cl, budget=bud)
         sut.save()
         self.assertEqual(sut.value, 123)
         self.assertEqual(sut.budget, bud)
         self.assertEqual(sut.classification, cl)
-
-        self.assertEqual(bud.get_value_of(cl), 123)
+        self.assertEqual(sut.amount, 123)
+        self.assertEqual(bud.get_amount_of(cl), 123)
 
     def test_cs_must_coincide(self) -> None:
         cs1 = factories.ClassificationSystemFactory()
         bud = factories.BudgetFactory(classification_system=cs1)
         cs2 = factories.ClassificationSystemFactory()
         cl = factories.ClassificationFactory(classification_system=cs2)
-        sut = models.AtomicBudgetItem(amount=10000, budget=bud, classification=cl)
+        sut = models.AtomicBudgetItem(value=10000, budget=bud, classification=cl)
         with self.assertRaises(ValidationError):
             sut.full_clean()
 
@@ -239,10 +239,10 @@ class MappedBudgetItemTestCase(TestCase):
         sut.save()
         sut.mapped_classifications.set([orig_cl])
         sut.save()
-        self.assertEqual(sut.value, atm.value)
+        self.assertEqual(sut.amount, atm.value)
         self.assertEqual(sut.budget, bud)
         self.assertEqual(sut.classification, cl)
-        self.assertEqual(bud.get_value_of(cl), atm.value)
+        self.assertEqual(bud.get_amount_of(cl), atm.value)
 
     def test_mapped_budget_item_mapped_to_many_budget_item(self) -> None:
         orig_bud = factories.BudgetFactory()
@@ -257,14 +257,14 @@ class MappedBudgetItemTestCase(TestCase):
         sut.save()
         sut.mapped_classifications.set([atm.classification for atm in atms])
         sut.save()
-        self.assertEqual(sut.value, sum(atm.value for atm in atms))
+        self.assertEqual(sut.amount, sum(atm.value for atm in atms))
         self.assertEqual(sut.budget, bud)
         self.assertEqual(sut.classification, cl)
-        self.assertEqual(bud.get_value_of(cl), sum(atm.value for atm in atms))
+        self.assertEqual(bud.get_amount_of(cl), sum(atm.value for atm in atms))
 
 
 class ComplexBudgetItemTestCase(TestCase):
-    def test_get_value_of_tree_nodes(self) -> None:
+    def test_get_amount_of_tree_nodes(self) -> None:
         cs = factories.ClassificationSystemFactory()
         bud = factories.BudgetFactory(classification_system=cs)
         cl0 = factories.ClassificationFactory(classification_system=cs)
@@ -273,21 +273,21 @@ class ComplexBudgetItemTestCase(TestCase):
         cl1 = factories.ClassificationFactory(classification_system=cs)
         cl10 = factories.ClassificationFactory(classification_system=cs, parent=cl1)
 
-        abi00 = models.AtomicBudgetItem(amount=123, budget=bud, classification=cl00)
-        abi01 = models.AtomicBudgetItem(amount=125, budget=bud, classification=cl01)
-        abi10 = models.AtomicBudgetItem(amount=127, budget=bud, classification=cl10)
+        abi00 = models.AtomicBudgetItem(value=123, budget=bud, classification=cl00)
+        abi01 = models.AtomicBudgetItem(value=125, budget=bud, classification=cl01)
+        abi10 = models.AtomicBudgetItem(value=127, budget=bud, classification=cl10)
 
         abi00.save()
         abi01.save()
         abi10.save()
 
-        self.assertEqual(bud.get_value_of(cl0), abi00.value + abi01.value)
-        self.assertEqual(bud.get_value_of(cl00), abi00.value)
-        self.assertEqual(bud.get_value_of(cl01), abi01.value)
-        self.assertEqual(bud.get_value_of(cl1), abi10.value)
-        self.assertEqual(bud.get_value_of(cl10), abi10.value)
+        self.assertEqual(bud.get_amount_of(cl0), abi00.value + abi01.value)
+        self.assertEqual(bud.get_amount_of(cl00), abi00.value)
+        self.assertEqual(bud.get_amount_of(cl01), abi01.value)
+        self.assertEqual(bud.get_amount_of(cl1), abi10.value)
+        self.assertEqual(bud.get_amount_of(cl10), abi10.value)
 
-    def test_get_value_of_mapped_tree_nodes(self) -> None:
+    def test_get_amount_of_mapped_tree_nodes(self) -> None:
         cs0 = factories.ClassificationSystemFactory()
         bud0 = factories.BudgetFactory(classification_system=cs0)
         cl00 = factories.ClassificationFactory(classification_system=cs0)
@@ -324,11 +324,11 @@ class ComplexBudgetItemTestCase(TestCase):
         mbi10.save()
         mbi10.mapped_classifications.set([cl001, cl012])
 
-        self.assertEqual(bud1.get_value_of(cl10), abi00.value + abi10.value + abi11.value)
-        self.assertEqual(bud1.get_value_of(cl100), abi00.value)
-        self.assertEqual(bud1.get_value_of(cl101), abi10.value + abi11.value)
-        self.assertEqual(bud1.get_value_of(cl11), abi01.value + abi12.value)
-        self.assertEqual(bud1.get_value_of(cl110), abi01.value + abi12.value)
+        self.assertEqual(bud1.get_amount_of(cl10), abi00.value + abi10.value + abi11.value)
+        self.assertEqual(bud1.get_amount_of(cl100), abi00.value)
+        self.assertEqual(bud1.get_amount_of(cl101), abi10.value + abi11.value)
+        self.assertEqual(bud1.get_amount_of(cl11), abi01.value + abi12.value)
+        self.assertEqual(bud1.get_amount_of(cl110), abi01.value + abi12.value)
 
 
 class BlobTestCase(TestCase):

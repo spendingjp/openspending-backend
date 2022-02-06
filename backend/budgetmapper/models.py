@@ -201,14 +201,14 @@ class Budget(models.Model):
     created_at = CurrentDateTimeField()
     updated_at = AutoUpdateCurrentDateTimeField()
 
-    def get_value_of(self, classification: Classification) -> float:
+    def get_amount_of(self, classification: Classification) -> float:
         if self.classification_system != classification.classification_system:
             raise ValueError
         try:
             val = BudgetItemBase.objects.get(budget=self, classification=classification)
-            return val.value
+            return val.amount
         except BudgetItemBase.DoesNotExist:
-            return sum(self.get_value_of(c) for c in Classification.objects.filter(parent=classification))
+            return sum(self.get_amount_of(c) for c in Classification.objects.filter(parent=classification))
 
     def iterate_items(self):
         for cl in self.classification_system.iterate_classifications():
@@ -232,7 +232,7 @@ class BudgetItemBase(PolymorphicModel):
     updated_at = AutoUpdateCurrentDateTimeField()
 
     @property
-    def value(self) -> float:
+    def amount(self) -> float:
         raise NotImplementedError
 
     class Meta:
@@ -249,11 +249,11 @@ class BudgetItemBase(PolymorphicModel):
 
 
 class AtomicBudgetItem(BudgetItemBase):
-    amount = BudgetAmountField()
+    value = BudgetAmountField()
 
     @property
-    def value(self) -> float:
-        return float(self.amount)
+    def amount(self) -> float:
+        return float(self.value)
 
 
 class MappedBudgetItem(BudgetItemBase):
@@ -261,8 +261,8 @@ class MappedBudgetItem(BudgetItemBase):
     mapped_classifications = models.ManyToManyField(Classification, related_name="mapping_classifications")
 
     @property
-    def value(self) -> float:
-        return sum(self.mapped_budget.get_value_of(c) for c in self.mapped_classifications.all())
+    def amount(self) -> float:
+        return sum(self.mapped_budget.get_amount_of(c) for c in self.mapped_classifications.all())
 
 
 class Blob(models.Model):

@@ -27,6 +27,7 @@ def get_max_item_order_plus_one():
         return 0
     return q[0].item_order + 1
 
+
 class ClassificationFactory(DjangoModelFactory):
     class Meta:
         model = models.Classification
@@ -53,7 +54,7 @@ class AtomicBudgetItemFactory(DjangoModelFactory):
     class Meta:
         model = models.AtomicBudgetItem
 
-    amount = fuzzy.FuzzyInteger(1000, high=1000000, step=1000)
+    value = fuzzy.FuzzyFloat(1000.0, high=1000000.0)
     budget = factory.SubFactory(BudgetFactory)
     classification = factory.SubFactory(ClassificationFactory)
 
