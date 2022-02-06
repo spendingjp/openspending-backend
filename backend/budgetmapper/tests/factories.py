@@ -49,3 +49,21 @@ class AtomicBudgetItemFactory(DjangoModelFactory):
     amount = fuzzy.FuzzyInteger(1000, high=1000000, step=1000)
     budget = factory.SubFactory(BudgetFactory)
     classification = factory.SubFactory(ClassificationFactory)
+
+
+class MappedBudgetItemFactory(DjangoModelFactory):
+    class Meta:
+        model = models.MappedBudgetItem
+
+    budget = factory.SubFactory(BudgetFactory)
+    classification = factory.SubFactory(ClassificationFactory)
+    mapped_budget = factory.SubFactory(BudgetFactory)
+
+    @factory.post_generation
+    def mapped_classifications(self, create, extracted, **kwargs):
+        if create:
+            for _ in range(random.randint(1, 10)):
+                self.mapped_classifications.add(
+                    ClassificationFactory(classification_system=self.mapped_budget.classification_system)
+                )
+            return
