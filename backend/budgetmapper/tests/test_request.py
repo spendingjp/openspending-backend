@@ -830,15 +830,23 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         res = self.client.patch(f"/api/v1/budgets/{budget.id}/items/{budget_item.id}/", {}, format="json")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_update_cannot_modify_amount(self):
+    def test_update_modify_amount(self):
         cs = factories.ClassificationSystemFactory()
         budget = factories.BudgetFactory(classification_system=cs)
         budget_item = factories.AtomicBudgetItemFactory(
-            budget=budget, classification=factories.ClassificationFactory(classification_system=cs)
+            budget=budget, classification=factories.ClassificationFactory(classification_system=cs), amount=20.0
         )
         self.client.login(username=self._user_username, password=self._user_password)
         dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt):
+            expected = {
+                "id": budget_item.id,
+                "budget": budget.id,
+                "classification": budget_item.classification.id,
+                "amount": 100.0,
+                "createdAt": budget_item.created_at.strftime(datetime_format),
+                "updatedAt": dt.strftime(datetime_format),
+            }
             res = self.client.patch(
                 f"/api/v1/budgets/{budget.id}/items/{budget_item.id}/",
                 {
@@ -846,7 +854,9 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
                 },
                 format="json",
             )
-            self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            actual = res.json()
+            self.assertEqual(actual, expected)
 
     def test_destroy_requires_login(self):
         cs = factories.ClassificationSystemFactory()
@@ -857,7 +867,7 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         res = self.client.delete(f"/api/v1/budgets/{budget.id}/items/{budget_item.id}/", format="json")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_cannot_destroy(self):
+    def test_destroy(self):
         cs = factories.ClassificationSystemFactory()
         budget = factories.BudgetFactory(classification_system=cs)
         budget_item = factories.AtomicBudgetItemFactory(
@@ -865,7 +875,7 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         )
         self.client.login(username=self._user_username, password=self._user_password)
         res = self.client.delete(f"/api/v1/budgets/{budget.id}/items/{budget_item.id}/", format="json")
-        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_create_requires_login(self):
         cs = factories.ClassificationSystemFactory()
@@ -878,17 +888,32 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         )
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_cannot_create(self):
+    def test_create(self):
         cs = factories.ClassificationSystemFactory()
         c = factories.ClassificationFactory(classification_system=cs)
         budget = factories.BudgetFactory(classification_system=cs)
         self.client.login(username=self._user_username, password=self._user_password)
-        res = self.client.post(
-            f"/api/v1/budgets/{budget.id}/items/",
-            {"classification": c.id, "budget": budget.id, "amount": 3.14},
-            format="json",
-        )
-        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt):
+            expected = {
+                "id": "ab12345678901234567890",
+                "budget": budget.id,
+                "classification": c.id,
+                "amount": 3.14,
+                "createdAt": dt.strftime(datetime_format),
+                "updatedAt": dt.strftime(datetime_format),
+            }
+            with patch(
+                "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890"
+            ):
+                res = self.client.post(
+                    f"/api/v1/budgets/{budget.id}/items/",
+                    {"classification": c.id, "amount": 3.14},
+                    format="json",
+                )
+            self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+            actual = res.json()
+            self.assertEqual(actual, expected)
 
 
 class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
