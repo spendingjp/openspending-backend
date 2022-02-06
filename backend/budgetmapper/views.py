@@ -5,7 +5,7 @@ import django_filters.rest_framework as drf_filters
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
-from rest_framework import viewsets, mixins
+from rest_framework import exceptions, mixins, viewsets
 from rest_framework.pagination import CursorPagination
 
 from . import models, serializers
@@ -56,9 +56,30 @@ class BudgetViewSet(viewsets.ModelViewSet):
         return serializers.BudgetSerializer
 
 
-class BudgetItemViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-    serializer_class = serializers.BudgetItemSerializer
+class BudgetItemViewSet(viewsets.ModelViewSet):
     pagination_class = CreatedAtPagination
+
+    def destroy(self, request, budget_pk, pk=None):
+        if isinstance(self.get_queryset().first(), models.MappedBudgetItem):
+            return super(BudgetItemViewSet, self).destroy(request, budget_pk=budget_pk, pk=pk)
+        raise exceptions.MethodNotAllowed(self.action)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            if "amount" in self.request.data:
+                raise exceptions.MethodNotAllowed("create")
+            if "mapped_budget" in self.request.data and "mapped_classifications" in self.request.data:
+                self.request.data["budget"] = self.kwargs["budget_pk"]
+                return serializers.MappedBudgetItemCreateUpdateSerializer
+        if isinstance(self.get_queryset().first(), models.MappedBudgetItem):
+            if self.action == "retrieve":
+                return serializers.MappedBudgetItemDetailSerializer
+            if self.action in {"update", "partial_update"}:
+                return serializers.MappedBudgetItemCreateUpdateSerializer
+            return serializers.MappedBudgetItemSerializer
+        if self.action in {"update", "partial_update"}:
+            raise exceptions.MethodNotAllowed(self.action)
+        return serializers.BudgetItemSerializer
 
     def get_queryset(self):
         return models.BudgetItemBase.objects.filter(budget=self.kwargs["budget_pk"])
