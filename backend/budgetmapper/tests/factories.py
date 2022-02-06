@@ -21,6 +21,12 @@ class ClassificationSystemFactory(DjangoModelFactory):
     level_names = ["款", "項", "目", "事業", "節", "節細"]
 
 
+def get_max_item_order_plus_one():
+    q = models.Classification.objects.order_by("-item_order")
+    if q.count() == 0:
+        return 0
+    return q[0].item_order + 1
+
 class ClassificationFactory(DjangoModelFactory):
     class Meta:
         model = models.Classification
@@ -28,6 +34,7 @@ class ClassificationFactory(DjangoModelFactory):
     name = fuzzy.FuzzyText(length=5, suffix="費")
     code = factory.LazyFunction(lambda: None if random.randint(0, 2) % 2 else str(random.randint(1, 15)))
     classification_system = factory.SubFactory(ClassificationSystemFactory)
+    item_order = fuzzy.FuzzyAttribute(get_max_item_order_plus_one)
     parent = None
 
 

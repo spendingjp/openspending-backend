@@ -106,6 +106,9 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
         cl1 = factories.ClassificationFactory(classification_system=cs, code="2")
         cl10 = factories.ClassificationFactory(classification_system=cs, parent=cl1, code="2.1")
         cl100 = factories.ClassificationFactory(classification_system=cs, parent=cl10, code="2.1.1")
+        cl2 = factories.ClassificationFactory(classification_system=cs, code="10")
+        cl20 = factories.ClassificationFactory(classification_system=cs, parent=cl2, code="10.1")
+        cl200 = factories.ClassificationFactory(classification_system=cs, parent=cl20, code="10.1.1")
         bud = factories.BudgetFactory(
             name="まほろ市2101年度予算", slug="mahoro-city-2101", government=gov, classification_system=cs
         )
@@ -196,6 +199,29 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                                     "name": cl100.name,
                                     "code": cl100.code,
                                     "amount": 131.0,
+                                    "children": None,
+                                }
+                            ],
+                        }
+                    ],
+                },
+                {
+                    "id": cl2.id,
+                    "name": cl2.name,
+                    "code": cl2.code,
+                    "amount": 0,
+                    "children": [
+                        {
+                            "id": cl20.id,
+                            "name": cl20.name,
+                            "code": cl20.code,
+                            "amount": 0,
+                            "children": [
+                                {
+                                    "id": cl200.id,
+                                    "name": cl200.name,
+                                    "code": cl200.code,
+                                    "amount": 0,
                                     "children": None,
                                 }
                             ],
