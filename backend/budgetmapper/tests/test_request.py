@@ -505,6 +505,95 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
         actual = res_json["results"]
         self.assertEqual(actual, expected)
 
+    def test_list_can_filter_by_government(self):
+        ordering = CreatedAtPagination.ordering
+        page_size = CreatedAtPagination.page_size
+        govs = [factories.GovernmentFactory() for _ in range(4)]
+        bs = [factories.BudgetFactory(government=govs[i % 4]) for i in range(100)]
+        res = self.client.get(f"/api/v1/budgets/?government={govs[0].id}", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = [
+            {
+                "id": b.id,
+                "name": b.name,
+                "slug": b.slug,
+                "year": b.year,
+                "subtitle": b.subtitle,
+                "classificationSystem": b.classification_system.id,
+                "government": govs[0].id,
+                "createdAt": b.created_at.strftime(datetime_format),
+                "updatedAt": b.updated_at.strftime(datetime_format),
+            }
+            for b in sorted(
+                [b for b in bs if b.government.id == govs[0].id],
+                key=lambda b: getattr(b, ordering.strip("-")),
+                reverse=ordering.startswith("-"),
+            )[:page_size]
+        ]
+        res_json = res.json()
+        self.assertIn("results", res_json)
+        actual = res_json["results"]
+        self.assertEqual(actual, expected)
+
+    def test_list_can_filter_by_year(self):
+        ordering = CreatedAtPagination.ordering
+        page_size = CreatedAtPagination.page_size
+        bs = [factories.BudgetFactory(year=(2000 + i // 10)) for i in range(100)]
+        res = self.client.get(f"/api/v1/budgets/?year=2001", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = [
+            {
+                "id": b.id,
+                "name": b.name,
+                "slug": b.slug,
+                "year": 2001,
+                "subtitle": b.subtitle,
+                "classificationSystem": b.classification_system.id,
+                "government": b.government.id,
+                "createdAt": b.created_at.strftime(datetime_format),
+                "updatedAt": b.updated_at.strftime(datetime_format),
+            }
+            for b in sorted(
+                [b for b in bs if b.year == 2001],
+                key=lambda b: getattr(b, ordering.strip("-")),
+                reverse=ordering.startswith("-"),
+            )[:page_size]
+        ]
+        res_json = res.json()
+        self.assertIn("results", res_json)
+        actual = res_json["results"]
+        self.assertEqual(actual, expected)
+
+    def test_list_can_filter_by_government_and_year(self):
+        ordering = CreatedAtPagination.ordering
+        page_size = CreatedAtPagination.page_size
+        govs = [factories.GovernmentFactory() for _ in range(4)]
+        bs = [factories.BudgetFactory(government=govs[i % 4], year=(2000 + (i // 10))) for i in range(100)]
+        res = self.client.get(f"/api/v1/budgets/?government={govs[0].id}&year=2001", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = [
+            {
+                "id": b.id,
+                "name": b.name,
+                "slug": b.slug,
+                "year": 2001,
+                "subtitle": b.subtitle,
+                "classificationSystem": b.classification_system.id,
+                "government": govs[0].id,
+                "createdAt": b.created_at.strftime(datetime_format),
+                "updatedAt": b.updated_at.strftime(datetime_format),
+            }
+            for b in sorted(
+                [b for b in bs if b.government.id == govs[0].id and b.year == 2001],
+                key=lambda b: getattr(b, ordering.strip("-")),
+                reverse=ordering.startswith("-"),
+            )[:page_size]
+        ]
+        res_json = res.json()
+        self.assertIn("results", res_json)
+        actual = res_json["results"]
+        self.assertEqual(actual, expected)
+
     def test_retrieve(self):
         bs = [factories.BudgetFactory() for i in range(100)]
         b = bs[random.randint(0, 99)]

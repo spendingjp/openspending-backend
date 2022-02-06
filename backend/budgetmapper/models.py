@@ -172,7 +172,7 @@ class Budget(models.Model):
     id = PkField()
     name = NameField()
     slug = JpSlugField(unique=True)
-    year = models.IntegerField(null=False)
+    year = models.IntegerField(null=False, db_index=True)
     subtitle = models.TextField(null=True)
     classification_system = models.ForeignKey(ClassificationSystem, on_delete=models.CASCADE, db_index=True, null=False)
     government = models.ForeignKey(Government, on_delete=models.CASCADE, db_index=True, null=False)
@@ -195,6 +195,11 @@ class Budget(models.Model):
                 yield {"classifications": cl, "budget_item": val}
             except BudgetItemBase.DoesNotExist:
                 yield {"classifications": cl, "budget_item": None}
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["government", "year"]),
+        ]
 
 
 class BudgetItemBase(PolymorphicModel):

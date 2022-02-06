@@ -5,7 +5,8 @@ import django_filters.rest_framework as drf_filters
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
-from rest_framework import viewsets, mixins
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import mixins, viewsets
 from rest_framework.pagination import CursorPagination
 
 from . import models, serializers
@@ -49,6 +50,8 @@ class ClassificationViewSet(viewsets.ModelViewSet):
 class BudgetViewSet(viewsets.ModelViewSet):
     queryset = models.Budget.objects.all()
     pagination_class = CreatedAtPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ("government", "year")
 
     def get_serializer_class(self):
         if self.action == "retrieve":
