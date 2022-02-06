@@ -99,6 +99,24 @@ class LevelNameListField(ArrayField):
         )
 
 
+class ItemOrderField(models.IntegerField):
+    def __init__(self, *args, **kwargs):
+        super(ItemOrderField, self).__init__(*args, **dict(kwargs, null=True, db_index=True))
+
+    def pre_save(self, model_instance, add):
+        val = getattr(model_instance, self.attname)
+        if val is None:
+            qs = Classification.objects.filter(classification_system=model_instance.classification_system).order_by(
+                "-item_order"
+            )
+            if qs.count() == 0:
+                val = 0
+            else:
+                val = qs[0].item_order + 1
+            setattr(model_instance, self.attname, val)
+        return val
+
+
 class Government(models.Model):
     id = PkField()
     name = NameField()
@@ -119,7 +137,7 @@ class ClassificationSystem(models.Model):
 
     @property
     def roots(self) -> models.QuerySet:
-        return Classification.objects.filter(classification_system=self, parent=None).order_by("code")
+        return Classification.objects.filter(classification_system=self, parent=None).order_by("item_order")
 
     @property
     def leaves(self) -> models.QuerySet:
@@ -147,6 +165,7 @@ class Classification(models.Model):
     code = models.CharField(max_length=64, null=True, db_index=True)
     classification_system = models.ForeignKey(ClassificationSystem, on_delete=models.CASCADE)
     parent = models.ForeignKey("self", on_delete=models.CASCADE, null=True)
+    item_order = ItemOrderField()
     created_at = CurrentDateTimeField()
     updated_at = AutoUpdateCurrentDateTimeField()
 
@@ -165,7 +184,10 @@ class Classification(models.Model):
 
     @property
     def direct_children(self) -> models.QuerySet:
-        return Classification.objects.filter(parent=self).order_by("code")
+        return Classification.objects.filter(parent=self).order_by("item_order")
+
+    class Meta:
+        unique_together = ("classification_system", "item_order")
 
 
 class Budget(models.Model):

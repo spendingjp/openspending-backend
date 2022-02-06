@@ -4,7 +4,8 @@ from unittest.mock import MagicMock, patch
 
 from budgetmapper import models
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.db.utils import IntegrityError
+from django.test import TestCase, TransactionTestCase
 
 from . import factories
 
@@ -75,7 +76,7 @@ class ClassificationSystemTest(TestCase):
             self.assertEqual(a, e)
 
 
-class ClassificationTest(TestCase):
+class ClassificationTest(TransactionTestCase):
     def test_classification_has_name(self) -> None:
         cs = factories.ClassificationSystemFactory()
         sut = models.Classification(name="総務費", classification_system=cs)
@@ -106,6 +107,7 @@ class ClassificationTest(TestCase):
         sut = models.Classification(
             name="総務雑費", classification_system=root.classification_system, code="3", parent=root
         )
+        sut.save()
         sut.full_clean()
 
         cs1 = factories.ClassificationSystemFactory()
@@ -113,7 +115,30 @@ class ClassificationTest(TestCase):
         root = factories.ClassificationFactory(classification_system=cs1)
         sut = models.Classification(name="不整合あり", classification_system=cs2, parent=root)
         with self.assertRaises(ValidationError):
+            sut.save()
             sut.full_clean()
+
+    def test_classification_has_item_order(self) -> None:
+        cs = factories.ClassificationSystemFactory()
+        sut0 = models.Classification(name="総務費", classification_system=cs)
+        sut1 = models.Classification(name="総務雑貨", classification_system=cs)
+        sut0.save()
+        sut1.save()
+        self.assertEqual(sut0.item_order, 0)
+        self.assertEqual(sut1.item_order, 1)
+        sut2 = models.Classification(name="上書き不可", classification_system=cs, item_order=1)
+        with self.assertRaises(IntegrityError):
+            sut2.save()
+        sut10 = models.Classification(name="議会費", classification_system=cs, item_order=10)
+        sut11 = models.Classification(name="民生貨", classification_system=cs)
+        sut10.save()
+        sut11.save()
+        self.assertEqual(sut10.item_order, 10)
+        self.assertEqual(sut11.item_order, 11)
+        cs2 = factories.ClassificationSystemFactory()
+        sut = models.Classification(name="農林水産業費", classification_system=cs2)
+        sut.save()
+        self.assertEqual(sut.item_order, 0)
 
 
 class BudgetTest(TestCase):
