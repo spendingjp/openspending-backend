@@ -61,17 +61,32 @@ class ClassificationSummarySerializer(serializers.ModelSerializer):
 
 class BudgetItemSerializer(serializers.ModelSerializer):
     classification = ClassificationSummarySerializer()
-    value = serializers.SerializerMethodField()
 
     class Meta:
         model = models.BudgetItemBase
-        fields = ("id", "classification", "value", "created_at", "updated_at")
-
-    def get_value(self, obj):
-        return obj.value
+        fields = ("id", "classification", "created_at", "updated_at")
 
 
 class BudgetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Budget
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "year",
+            "subtitle",
+            "classification_system",
+            "government",
+            "created_at",
+            "updated_at",
+        )
+
+
+class BudgetRetrieveSerializer(serializers.ModelSerializer):
+    classification_system = ClassificationSystemSerializer()
+    government = GovernmentSerializer()
+
     class Meta:
         model = models.Budget
         fields = (
@@ -113,32 +128,44 @@ class BudgetDetailSerializer(serializers.ModelSerializer):
         ).data
 
 
+class AtomicBudgetItemListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.AtomicBudgetItem
+        fields = ("id", "budget", "classification", "value", "created_at", "updated_at")
+
+
+class AtomicBudgetItemRetrieveSerializer(serializers.ModelSerializer):
+    budget = BudgetSerializer()
+    classification = ClassificationSerializer()
+
+    class Meta:
+        model = models.AtomicBudgetItem
+        fields = ("id", "budget", "classification", "value", "created_at", "updated_at")
+
+
 class AtomicBudgetItemCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AtomicBudgetItem
-        fields = ("id", "budget", "classification", "amount", "created_at", "updated_at")
+        fields = ("id", "budget", "classification", "value", "created_at", "updated_at")
 
 
-class MappedBudgetItemSerializer(serializers.ModelSerializer):
-    classification = ClassificationSummarySerializer()
-    mapped_classifications = ClassificationSummarySerializer(many=True)
-    mapped_budget = BudgetSerializer()
-
+class MappedBudgetItemListSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.MappedBudgetItem
         fields = (
             "id",
+            "budget",
+            "classification",
             "mapped_budget",
             "mapped_classifications",
-            "classification",
             "created_at",
             "updated_at",
         )
 
 
-class MappedBudgetItemDetailSerializer(serializers.ModelSerializer):
-    classification = ClassificationSummarySerializer()
-    mapped_classifications = ClassificationSummarySerializer(many=True)
+class MappedBudgetItemRetrieveSerializer(serializers.ModelSerializer):
+    classification = ClassificationSerializer()
+    mapped_classifications = ClassificationSerializer(many=True)
     mapped_budget = BudgetSerializer()
     budget = BudgetSerializer()
 
@@ -147,8 +174,8 @@ class MappedBudgetItemDetailSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "budget",
-            "mapped_budget",
             "classification",
+            "mapped_budget",
             "mapped_classifications",
             "created_at",
             "updated_at",
@@ -181,7 +208,7 @@ class BudgetNodeSerializer(serializers.ModelSerializer):
             children.append(BudgetNodeSerializer(instance=c, context={"budget": self.context["budget"]}).data)
             is_leaf = False
         if is_leaf:
-            amount = self.context["budget"].get_value_of(instance)
+            amount = self.context["budget"].get_amount_of(instance)
             children = None
         else:
             amount = sum((c["amount"] for c in children))

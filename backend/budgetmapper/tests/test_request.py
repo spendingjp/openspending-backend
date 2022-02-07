@@ -29,9 +29,9 @@ class TestCsvDownload(TestCase):
         cl01 = factories.ClassificationFactory(classification_system=cs, parent=cl0, code="1.2")
         cl1 = factories.ClassificationFactory(classification_system=cs, code="2")
         cl10 = factories.ClassificationFactory(classification_system=cs, parent=cl1, code="2.1")
-        abi00 = factories.AtomicBudgetItemFactory(amount=123, budget=bud, classification=cl00)
-        abi01 = factories.AtomicBudgetItemFactory(amount=125, budget=bud, classification=cl01)
-        abi10 = factories.AtomicBudgetItemFactory(amount=127, budget=bud, classification=cl10)
+        abi00 = factories.AtomicBudgetItemFactory(value=123, budget=bud, classification=cl00)
+        abi01 = factories.AtomicBudgetItemFactory(value=125, budget=bud, classification=cl01)
+        abi10 = factories.AtomicBudgetItemFactory(value=127, budget=bud, classification=cl10)
 
         c = Client()
         res = c.get(f"/transfer/csv/{bud.id}")
@@ -39,9 +39,9 @@ class TestCsvDownload(TestCase):
         self.assertTrue(res.streaming)
         expected = [
             ["a", "a名称", "b", "b名称", "金額"],
-            [cl0.code, cl0.name, cl00.code, cl00.name, str(abi00.value)],
-            [cl0.code, cl0.name, cl01.code, cl01.name, str(abi01.value)],
-            [cl1.code, cl1.name, cl10.code, cl10.name, str(abi10.value)],
+            [cl0.code, cl0.name, cl00.code, cl00.name, str(abi00.amount)],
+            [cl0.code, cl0.name, cl01.code, cl01.name, str(abi01.amount)],
+            [cl1.code, cl1.name, cl10.code, cl10.name, str(abi10.amount)],
         ]
         actual = list(csv.reader(getreader("utf-8")(io.BytesIO(res.getvalue()))))
         self.assertEqual(actual, expected)
@@ -60,7 +60,6 @@ class BudgetMapperTestUserAPITestCase(APITestCase):
 class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
     def setUp(self):
         super(WdmmgTestCase, self).setUp()
-        self.maxDiff = None
 
     def test_no_list_route(self) -> None:
         bud = factories.BudgetFactory(name="まほろ市2101年度予算", slug="mahoro-city-2101")
@@ -113,11 +112,11 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
             name="まほろ市2101年度予算", slug="mahoro-city-2101", government=gov, classification_system=cs
         )
 
-        abi000 = factories.AtomicBudgetItemFactory(amount=123.0, budget=bud, classification=cl000)
-        abi001 = factories.AtomicBudgetItemFactory(amount=125.0, budget=bud, classification=cl001)
-        abi002 = factories.AtomicBudgetItemFactory(amount=127.0, budget=bud, classification=cl002)
-        abi010 = factories.AtomicBudgetItemFactory(amount=129.0, budget=bud, classification=cl010)
-        abi100 = factories.AtomicBudgetItemFactory(amount=131.0, budget=bud, classification=cl100)
+        abi000 = factories.AtomicBudgetItemFactory(value=123.0, budget=bud, classification=cl000)
+        abi001 = factories.AtomicBudgetItemFactory(value=125.0, budget=bud, classification=cl001)
+        abi002 = factories.AtomicBudgetItemFactory(value=127.0, budget=bud, classification=cl002)
+        abi010 = factories.AtomicBudgetItemFactory(value=129.0, budget=bud, classification=cl010)
+        abi100 = factories.AtomicBudgetItemFactory(value=131.0, budget=bud, classification=cl100)
 
         res = self.client.get(f"/api/v1/wdmmg/{bud.slug}/", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -782,11 +781,8 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
             {
                 "id": b.id,
                 "value": b.value,
-                "classification": {
-                    "id": b.classification.id,
-                    "name": b.classification.name,
-                    "code": b.classification.code,
-                },
+                "budget": budget.id,
+                "classification": b.classification.id,
                 "createdAt": b.created_at.strftime(datetime_format),
                 "updatedAt": b.updated_at.strftime(datetime_format),
             }
@@ -810,10 +806,25 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         expected = {
             "id": budget_item.id,
             "value": budget_item.value,
+            "budget": {
+                "id": budget.id,
+                "name": budget.name,
+                "slug": budget.slug,
+                "year": budget.year,
+                "subtitle": budget.subtitle,
+                "classificationSystem": cs.id,
+                "government": budget.government.id,
+                "createdAt": budget.created_at.strftime(datetime_format),
+                "updatedAt": budget.updated_at.strftime(datetime_format),
+            },
             "classification": {
                 "id": budget_item.classification.id,
                 "name": budget_item.classification.name,
                 "code": budget_item.classification.code,
+                "classificationSystem": cs.id,
+                "parent": None,
+                "createdAt": budget_item.classification.created_at.strftime(datetime_format),
+                "updatedAt": budget_item.classification.updated_at.strftime(datetime_format),
             },
             "createdAt": budget_item.created_at.strftime(datetime_format),
             "updatedAt": budget_item.updated_at.strftime(datetime_format),
@@ -830,11 +841,11 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         res = self.client.patch(f"/api/v1/budgets/{budget.id}/items/{budget_item.id}/", {}, format="json")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_update_modify_amount(self):
+    def test_update_modify_value(self):
         cs = factories.ClassificationSystemFactory()
         budget = factories.BudgetFactory(classification_system=cs)
         budget_item = factories.AtomicBudgetItemFactory(
-            budget=budget, classification=factories.ClassificationFactory(classification_system=cs), amount=20.0
+            budget=budget, classification=factories.ClassificationFactory(classification_system=cs), value=20.0
         )
         self.client.login(username=self._user_username, password=self._user_password)
         dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
@@ -843,14 +854,14 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "id": budget_item.id,
                 "budget": budget.id,
                 "classification": budget_item.classification.id,
-                "amount": 100.0,
+                "value": 100.0,
                 "createdAt": budget_item.created_at.strftime(datetime_format),
                 "updatedAt": dt.strftime(datetime_format),
             }
             res = self.client.patch(
                 f"/api/v1/budgets/{budget.id}/items/{budget_item.id}/",
                 {
-                    "amount": 100.0,
+                    "value": 100.0,
                 },
                 format="json",
             )
@@ -883,7 +894,7 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         budget = factories.BudgetFactory(classification_system=cs)
         res = self.client.post(
             f"/api/v1/budgets/{budget.id}/items/",
-            {"classification": c.id, "budget": budget.id, "amount": 3.14},
+            {"classification": c.id, "budget": budget.id, "value": 3.14},
             format="json",
         )
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -899,7 +910,7 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "id": "ab12345678901234567890",
                 "budget": budget.id,
                 "classification": c.id,
-                "amount": 3.14,
+                "value": 3.14,
                 "createdAt": dt.strftime(datetime_format),
                 "updatedAt": dt.strftime(datetime_format),
             }
@@ -908,7 +919,7 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
             ):
                 res = self.client.post(
                     f"/api/v1/budgets/{budget.id}/items/",
-                    {"classification": c.id, "amount": 3.14},
+                    {"classification": c.id, "value": 3.14},
                     format="json",
                 )
             self.assertEqual(res.status_code, status.HTTP_201_CREATED)
@@ -962,25 +973,10 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         expected = [
             {
                 "id": b.id,
-                "mappedBudget": {
-                    "id": b.mapped_budget.id,
-                    "name": b.mapped_budget.name,
-                    "slug": b.mapped_budget.slug,
-                    "year": b.mapped_budget.year,
-                    "subtitle": b.mapped_budget.subtitle,
-                    "classificationSystem": b.mapped_budget.classification_system.id,
-                    "government": b.mapped_budget.government.id,
-                    "createdAt": b.mapped_budget.created_at.strftime(datetime_format),
-                    "updatedAt": b.mapped_budget.updated_at.strftime(datetime_format),
-                },
-                "mappedClassifications": [
-                    {"id": c.id, "name": c.name, "code": c.code} for c in b.mapped_classifications.all()
-                ],
-                "classification": {
-                    "id": b.classification.id,
-                    "name": b.classification.name,
-                    "code": b.classification.code,
-                },
+                "budget": bud1.id,
+                "mappedBudget": b.mapped_budget.id,
+                "mappedClassifications": [c.id for c in b.mapped_classifications.all()],
+                "classification": b.classification.id,
                 "createdAt": b.created_at.strftime(datetime_format),
                 "updatedAt": b.updated_at.strftime(datetime_format),
             }
@@ -1034,36 +1030,56 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         expected = {
             "id": mbi01.id,
-            "budget": {
-                "id": mbi01.budget.id,
-                "name": mbi01.budget.name,
-                "slug": mbi01.budget.slug,
-                "year": mbi01.budget.year,
-                "subtitle": mbi01.budget.subtitle,
-                "classificationSystem": mbi01.budget.classification_system.id,
-                "government": mbi01.budget.government.id,
-                "createdAt": mbi01.budget.created_at.strftime(datetime_format),
-                "updatedAt": mbi01.budget.updated_at.strftime(datetime_format),
-            },
             "mappedBudget": {
                 "id": mbi01.mapped_budget.id,
                 "name": mbi01.mapped_budget.name,
                 "slug": mbi01.mapped_budget.slug,
                 "year": mbi01.mapped_budget.year,
                 "subtitle": mbi01.mapped_budget.subtitle,
-                "classificationSystem": mbi01.mapped_budget.classification_system.id,
+                "classificationSystem": cs0.id,
                 "government": mbi01.mapped_budget.government.id,
                 "createdAt": mbi01.mapped_budget.created_at.strftime(datetime_format),
                 "updatedAt": mbi01.mapped_budget.updated_at.strftime(datetime_format),
             },
             "mappedClassifications": [
-                {"id": cl010.id, "name": cl010.name, "code": cl010.code},
-                {"id": cl011.id, "name": cl011.name, "code": cl011.code},
+                {
+                    "id": cl010.id,
+                    "name": cl010.name,
+                    "code": cl010.code,
+                    "classificationSystem": cs0.id,
+                    "parent": cl01.id,
+                    "createdAt": cl010.created_at.strftime(datetime_format),
+                    "updatedAt": cl010.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": cl011.id,
+                    "name": cl011.name,
+                    "code": cl011.code,
+                    "classificationSystem": cs0.id,
+                    "parent": cl01.id,
+                    "createdAt": cl011.created_at.strftime(datetime_format),
+                    "updatedAt": cl011.updated_at.strftime(datetime_format),
+                },
             ],
+            "budget": {
+                "id": bud1.id,
+                "name": bud1.name,
+                "slug": bud1.slug,
+                "year": bud1.year,
+                "subtitle": bud1.subtitle,
+                "classificationSystem": cs1.id,
+                "government": bud1.government.id,
+                "createdAt": bud1.created_at.strftime(datetime_format),
+                "updatedAt": bud1.updated_at.strftime(datetime_format),
+            },
             "classification": {
-                "id": mbi01.classification.id,
-                "name": mbi01.classification.name,
-                "code": mbi01.classification.code,
+                "id": cl101.id,
+                "name": cl101.name,
+                "code": cl101.code,
+                "parent": cl10.id,
+                "classificationSystem": cs1.id,
+                "createdAt": cl101.created_at.strftime(datetime_format),
+                "updatedAt": cl101.updated_at.strftime(datetime_format),
             },
             "createdAt": mbi01.created_at.strftime(datetime_format),
             "updatedAt": mbi01.updated_at.strftime(datetime_format),

@@ -65,19 +65,20 @@ class BudgetItemViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "create":
             self.request.data["budget"] = self.kwargs["budget_pk"]
-            if "amount" in self.request.data:
-                return serializers.AtomicBudgetItemCreateUpdateSerializer
             if "mapped_budget" in self.request.data and "mapped_classifications" in self.request.data:
                 return serializers.MappedBudgetItemCreateUpdateSerializer
+            return serializers.AtomicBudgetItemCreateUpdateSerializer
         if isinstance(self.get_queryset().first(), models.MappedBudgetItem):
             if self.action == "retrieve":
-                return serializers.MappedBudgetItemDetailSerializer
+                return serializers.MappedBudgetItemRetrieveSerializer
             if self.action in {"update", "partial_update"}:
                 return serializers.MappedBudgetItemCreateUpdateSerializer
-            return serializers.MappedBudgetItemSerializer
+            return serializers.MappedBudgetItemListSerializer
+        if self.action == "retrieve":
+            return serializers.AtomicBudgetItemRetrieveSerializer
         if self.action in {"update", "partial_update"}:
             return serializers.AtomicBudgetItemCreateUpdateSerializer
-        return serializers.BudgetItemSerializer
+        return serializers.AtomicBudgetItemListSerializer
 
     def get_queryset(self):
         return models.BudgetItemBase.objects.filter(budget=self.kwargs["budget_pk"])
@@ -110,7 +111,7 @@ def download_csv_view(request, budget_id):
         writer.writerow(
             sum(([c.code, c.name] for c in d["classifications"]), [])
             + [["", ""] for i in range(len(d["classifications"]), max_level, 1)]
-            + [d["budget_item"].value if d["budget_item"] is not None else 0]
+            + [d["budget_item"].amount if d["budget_item"] is not None else 0]
         )
 
     return FileResponse(BytesIO(buf.getvalue().encode("utf-8")), as_attachment=True, filename=f"{budget.slug}.csv")
