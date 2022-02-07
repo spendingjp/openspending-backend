@@ -11,9 +11,7 @@
   "python.formatting.blackArgs": [
     "--line-length",
     "120",
-    "--skip-string-normalization",
-    "--target-version",
-    "py39"
+    "--skip-string-normalization"
   ],
   "python.sortImports.args": ["--profile", "black"],
   "[python]": {
