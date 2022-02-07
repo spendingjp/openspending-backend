@@ -324,11 +324,11 @@ class ComplexBudgetItemTestCase(TestCase):
         mbi10.save()
         mbi10.mapped_classifications.set([cl001, cl012])
 
-        self.assertEqual(bud1.get_amount_of(cl10), abi00.value + abi10.value + abi11.value)
-        self.assertEqual(bud1.get_amount_of(cl100), abi00.value)
-        self.assertEqual(bud1.get_amount_of(cl101), abi10.value + abi11.value)
-        self.assertEqual(bud1.get_amount_of(cl11), abi01.value + abi12.value)
-        self.assertEqual(bud1.get_amount_of(cl110), abi01.value + abi12.value)
+        self.assertAlmostEqual(bud1.get_amount_of(cl10), abi00.value + abi10.value + abi11.value)
+        self.assertAlmostEqual(bud1.get_amount_of(cl100), abi00.value)
+        self.assertAlmostEqual(bud1.get_amount_of(cl101), abi10.value + abi11.value)
+        self.assertAlmostEqual(bud1.get_amount_of(cl11), abi01.value + abi12.value)
+        self.assertAlmostEqual(bud1.get_amount_of(cl110), abi01.value + abi12.value)
 
 
 class BlobTestCase(TestCase):
