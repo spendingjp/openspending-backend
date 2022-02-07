@@ -1,4 +1,11 @@
 {
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": false,
+  "python.linting.flake8Enabled": true,
+  "python.linting.flake8Args": [
+    "--max-line-length=120",
+    "--ignore=E203,W503,W504"
+  ],
   "editor.formatOnSave": true,
   "python.formatting.provider": "black",
   "python.formatting.blackArgs": [
@@ -8,10 +15,7 @@
     "--target-version",
     "py39"
   ],
-  "python.sortImports.args": [
-    "--profile",
-    "black"
-  ],
+  "python.sortImports.args": ["--profile", "black"],
   "[python]": {
     "editor.codeActionsOnSave": {
       "source.organizeImports": true
