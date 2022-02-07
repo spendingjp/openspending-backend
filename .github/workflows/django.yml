@@ -1,0 +1,46 @@
+name: Django CI
+
+on: push
+
+env:
+  APPLICATION_SECRET_KEY: key
+  APPLICATION_DATABASE_PASSWORD: postgres
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.8, 3.9]
+    services:
+      db:
+        image: postgres
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+      - name: Setup Django
+        working-directory: ./backend
+        run: |
+          python manage.py makemigrations
+          python manage.py makemigrations budgetmapper
+          python manage.py migrate
+          python manage.py collectstatic
+      - name: Run Tests
+        working-directory: ./backend
+        run: |
+          python manage.py test
