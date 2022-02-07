@@ -27,6 +27,7 @@ def get_max_item_order_plus_one():
         return 0
     return q[0].item_order + 1
 
+
 class ClassificationFactory(DjangoModelFactory):
     class Meta:
         model = models.Classification
