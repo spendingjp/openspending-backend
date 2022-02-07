@@ -7,7 +7,7 @@ env:
   APPLICATION_DATABASE_PASSWORD: postgres
 
 jobs:
-  lint_and_test:
+  build:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
