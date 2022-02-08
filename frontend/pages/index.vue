@@ -1,22 +1,37 @@
 <template>
-  <budget-list :budgets="budgetList"></budget-list>
+  <budget-list
+    :budgets="state.budgetList"
+    @delete-budget="handleDeleteBudget"
+  ></budget-list>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import { defineComponent, reactive, useAsync } from '@nuxtjs/composition-api'
+import { $axios } from '@/utils/api-accessor'
 import BudgetList from '@/components/BudgetList.vue'
+import { Budget } from '@/types/budget'
 import { BudgetListResponse } from '@/types/budget-list-response'
-import '@nuxtjs/axios'
 
-export default Vue.extend({
+type State = {
+  budgetList: Budget[]
+}
+export default defineComponent({
   components: {
     BudgetList,
   },
-  async asyncData({ $axios }) {
-    const budgetResponse = (
-      await $axios.get<BudgetListResponse>('/api/v1/budgets/')
-    ).data
-    return { budgetList: budgetResponse.results }
+  setup() {
+    const state = reactive<State>({
+      budgetList: [],
+    })
+    useAsync(async () => {
+      state.budgetList = reactive<Budget[]>(
+        (await $axios.get<BudgetListResponse>('/api/v1/budgets/')).data.results
+      )
+    })
+    const handleDeleteBudget = (e: number): void => {
+      state.budgetList.splice(e, 1)
+    }
+    return { state, handleDeleteBudget }
   },
 })
 </script>

@@ -1,12 +1,17 @@
 <template>
   <v-list>
-    <budget-list-item v-for="b in budgets" :key="b.id" :budget="b">
+    <budget-list-item
+      v-for="b in budgets"
+      :key="b.id"
+      :budget="b"
+      @delete-budget="handleDeleteBudget"
+    >
     </budget-list-item>
   </v-list>
 </template>
 
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api'
+import { defineComponent, SetupContext } from '@vue/composition-api'
 import BudgetListItem from './BudgetListItem.vue'
 import { Budget } from '@/types/budget'
 
@@ -18,8 +23,11 @@ export default defineComponent({
       required: true,
     },
   },
-  setup({ budgets }) {
-    return budgets
+  setup({ budgets }, context: SetupContext) {
+    const handleDeleteBudget = (e: string): void => {
+      context.emit('delete-budget', budgets.map((d) => d.id).indexOf(e))
+    }
+    return { handleDeleteBudget }
   },
 })
 </script>
