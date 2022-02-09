@@ -33,10 +33,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .[dev]
-      - name: Lint
+      - name: Lint with black
         working-directory: ./backend
         run: |
           python -m black --check --diff --line-length 120 --skip-string-normalization .
+      - name: Lint with flake8
+        working-directory: ./backend
+        run: |
+          python -m flake8 --exit-zero --max-line-length=120 --exclude .venv
       - name: Setup
         working-directory: ./backend
         run: |
