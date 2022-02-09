@@ -1,24 +1,42 @@
 <template>
   <v-container>
     <v-row>
-      <government-selector
-        v-model="state.selectedGovernment"
-        :government-list="state.governmentList"
-        @input="handleSelectGovernment"
-      ></government-selector>
+      <v-col cols="8">
+        <government-selector
+          v-model="state.selectedGovernmentId"
+          :government-list="state.governmentList"
+          @input="handleFilterChange"
+          @change="handleFilterChange"
+        ></government-selector>
+      </v-col>
+      <v-col cols="4">
+        <year-selector
+          v-model="state.selectedYear"
+          @input="handleFilterChange"
+          @change="handleFilterChange"
+        ></year-selector>
+      </v-col>
     </v-row>
     <v-row>
-      <budget-list
-        :budgets="state.budgetList"
-        @delete-budget="handleDeleteBudget"
-      ></budget-list>
+      <v-col>
+        <budget-list
+          :budgets="state.budgetList"
+          @delete-budget="handleDeleteBudget"
+        ></budget-list>
+      </v-col>
     </v-row>
   </v-container>
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, useAsync } from '@nuxtjs/composition-api'
+import {
+  computed,
+  defineComponent,
+  reactive,
+  useAsync,
+} from '@nuxtjs/composition-api'
 import GovernmentSelector from '../components/GovernmentSelector.vue'
+import YearSelector from '../components/YearSelector.vue'
 import { $axios } from '@/utils/api-accessor'
 import BudgetList from '@/components/BudgetList.vue'
 import { Budget } from '@/types/budget'
@@ -30,17 +48,20 @@ type State = {
   budgetList: Budget[]
   governmentList: Government[]
   selectedGovernmentId: String | null
+  selectedYear: Number | null
 }
 export default defineComponent({
   components: {
     BudgetList,
     GovernmentSelector,
+    YearSelector,
   },
   setup() {
     const state = reactive<State>({
       budgetList: [],
       governmentList: [],
       selectedGovernmentId: null,
+      selectedYear: null,
     })
     useAsync(async () => {
       state.governmentList = (
@@ -50,26 +71,31 @@ export default defineComponent({
         (await $axios.get<BudgetListResponse>('/api/v1/budgets/')).data.results
       )
     })
+    const queryParam = computed((): string =>
+      state.selectedGovernmentId === null
+        ? state.selectedYear === null
+          ? ''
+          : `?year=${state.selectedYear}`
+        : state.selectedYear === null
+        ? `?government=${state.selectedGovernmentId}`
+        : `?government=${state.selectedGovernmentId}&year=${state.selectedYear}`
+    )
+
     const handleDeleteBudget = (e: number): void => {
       state.budgetList.splice(e, 1)
     }
-    const handleSelectGovernment = (e: string | null): void => {
-      state.selectedGovernmentId = e
+    const handleFilterChange = (_): void => {
       useAsync(async () => {
         state.budgetList = reactive<Budget[]>(
           (
             await $axios.get<BudgetListResponse>(
-              `/api/v1/budgets/${
-                state.selectedGovernmentId !== null
-                  ? '?government=' + state.selectedGovernmentId
-                  : ''
-              }`
+              `/api/v1/budgets/${queryParam.value}`
             )
           ).data.results
         )
       })
     }
-    return { state, handleDeleteBudget, handleSelectGovernment }
+    return { state, handleDeleteBudget, handleFilterChange }
   },
 })
 </script>
