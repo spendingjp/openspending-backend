@@ -40,7 +40,11 @@ jobs:
       - name: Lint with flake8
         working-directory: ./backend
         run: |
+<<<<<<< HEAD
           python -m flake8 --exclude .venv,budgetmapper/migrations --max-line-length=120
+=======
+          python -m flake8 --exit-zero --exclude .venv --max-line-length=120
+>>>>>>> fix arguments order
       - name: Setup
         working-directory: ./backend
         run: |
