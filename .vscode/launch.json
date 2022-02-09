@@ -2,6 +2,15 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Lint",
+      "type": "python",
+      "justMyCode": false,
+      "request": "launch",
+      "cwd": "${workspaceFolder}/backend",
+      "program": "${workspaceFolder}/backend/.venv/bin/flake8",
+      "args": ["--exit-zero", "--exclude", ".venv", "--max-line-length=120"]
+    },
+    {
       "name": "Test",
       "type": "python",
       "justMyCode": false,
