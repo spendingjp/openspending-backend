@@ -84,7 +84,7 @@ export default defineComponent({
     const handleDeleteBudget = (e: number): void => {
       state.budgetList.splice(e, 1)
     }
-    const handleFilterChange = (_): void => {
+    const handleFilterChange = (): void => {
       useAsync(async () => {
         state.budgetList = reactive<Budget[]>(
           (

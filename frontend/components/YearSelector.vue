@@ -25,10 +25,11 @@ export default defineComponent({
     const handleChange = (e: string | null) => {
       if (e === null) {
         ctx.emit('input', null)
-      }
-      const theValue = parseInt(e)
-      if (!Number.isNaN(theValue)) {
-        ctx.emit('input', theValue)
+      } else {
+        const theValue = parseInt(e)
+        if (!Number.isNaN(theValue)) {
+          ctx.emit('input', theValue)
+        }
       }
     }
     return { handleChange }
