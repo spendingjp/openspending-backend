@@ -33,6 +33,30 @@ pip install -e ".[dev]"
 python manage.py migrate
 ```
 
+#### Setup initial data for the database
+
+##### nested_tsukuba
+
+```
+python setup_data/tsukuba_nested.py setup_data/tsukuba_nested.json
+
+```
+
+##### cofog_nested
+
+
+```
+python setup_data/cofog_nested.py setup_data/cofog_nested.json
+
+```
+
+##### tsukuba
+
+```
+python setup_data/tsukuba.py setup_data/tsukuba.json
+
+```
+
 #### Run the development server
 
 ```
