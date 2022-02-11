@@ -11,7 +11,7 @@ def custom_exception_handler(exc, context):
     print(context)
 
     if isinstance(exc, IntegrityError) and not response:
-        response = Response({'message': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        response = Response({"message": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
     return response
 
@@ -19,7 +19,15 @@ def custom_exception_handler(exc, context):
 class GovernmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Government
-        fields = ("id", "name", "slug", "latitude", "longitude", "created_at", "updated_at")
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "latitude",
+            "longitude",
+            "created_at",
+            "updated_at",
+        )
 
 
 class ClassificationSystemSerializer(serializers.ModelSerializer):
@@ -50,7 +58,15 @@ class ClassificationSystemDetailSerializer(serializers.ModelSerializer):
 class ClassificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Classification
-        fields = ("id", "code", "name", "classification_system", "parent", "created_at", "updated_at")
+        fields = (
+            "id",
+            "code",
+            "name",
+            "classification_system",
+            "parent",
+            "created_at",
+            "updated_at",
+        )
 
 
 class ClassificationListItemSerializer(serializers.ModelSerializer):
@@ -58,7 +74,15 @@ class ClassificationListItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Classification
-        fields = ("id", "code", "name", "classification_system", "parent", "created_at", "updated_at")
+        fields = (
+            "id",
+            "code",
+            "name",
+            "classification_system",
+            "parent",
+            "created_at",
+            "updated_at",
+        )
 
 
 class ClassificationSummarySerializer(serializers.ModelSerializer):
@@ -132,7 +156,8 @@ class BudgetDetailSerializer(serializers.ModelSerializer):
 
     def get_items(self, obj):
         return BudgetItemSerializer(
-            models.BudgetItemBase.objects.filter(budget=obj).prefetch_related("classification"), many=True
+            models.BudgetItemBase.objects.filter(budget=obj).prefetch_related("classification"),
+            many=True,
         ).data
 
 
@@ -229,7 +254,17 @@ class WdmmgSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Budget
-        fields = ("id", "name", "subtitle", "slug", "year", "created_at", "updated_at", "government", "budgets")
+        fields = (
+            "id",
+            "name",
+            "subtitle",
+            "slug",
+            "year",
+            "created_at",
+            "updated_at",
+            "government",
+            "budgets",
+        )
 
     def get_budgets(self, obj: models.Budget):
         res = models.WdmmgTreeCache.get_or_none(obj)

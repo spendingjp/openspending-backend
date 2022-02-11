@@ -32,7 +32,10 @@ class GovernmentTest(TestCase):
         sut.save()
         self.assertEqual(sut.slug, "mahoro-shi")
 
-    @patch("budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890")
+    @patch(
+        "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
+        return_value="ab12345678901234567890",
+    )
     def test_government_has_short_uuid_id(self, _: MagicMock) -> None:
         sut = models.Government(name="まほろ市")
         sut.save()
@@ -40,7 +43,10 @@ class GovernmentTest(TestCase):
 
 
 class ClassificationSystemTest(TestCase):
-    @patch("budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890")
+    @patch(
+        "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
+        return_value="ab12345678901234567890",
+    )
     def test_cs_has_short_uuid_id(self, _: MagicMock) -> None:
         sut = models.ClassificationSystem(name="まほろ市2101年度予算")
         sut.save()
@@ -100,7 +106,10 @@ class ClassificationTest(TransactionTestCase):
     def test_branch_classification(self) -> None:
         root = factories.ClassificationFactory()
         sut = models.Classification(
-            name="総務雑費", classification_system=root.classification_system, code="3", parent=root
+            name="総務雑費",
+            classification_system=root.classification_system,
+            code="3",
+            parent=root,
         )
         sut.save()
         self.assertEqual(sut.parent, root)
@@ -109,7 +118,10 @@ class ClassificationTest(TransactionTestCase):
     def test_cs_coincides(self) -> None:
         root = factories.ClassificationFactory()
         sut = models.Classification(
-            name="総務雑費", classification_system=root.classification_system, code="3", parent=root
+            name="総務雑費",
+            classification_system=root.classification_system,
+            code="3",
+            parent=root,
         )
         sut.save()
         sut.full_clean()
@@ -338,7 +350,11 @@ class ComplexBudgetItemTestCase(TestCase):
 class BlobTestCase(TestCase):
     @patch(
         "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
-        side_effect=["ab12345678901234567890", "ab12345678901234567891", "ab12345678901234567892"],
+        side_effect=[
+            "ab12345678901234567890",
+            "ab12345678901234567891",
+            "ab12345678901234567892",
+        ],
     )
     def test_blob_write_and_reader(self, _):
         raw_data = BytesIO(b"F" * 65537)
@@ -371,15 +387,22 @@ class WdmmgTreeCacheTestCase(TransactionTestCase):
         budget = factories.BudgetFactory()
         dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt), patch(
-            "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890"
+            "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
+            return_value="ab12345678901234567890",
         ):
             actual = models.WdmmgTreeCache(budget=budget, blob=blob)
             actual.save()
             self.assertEqual(actual.id, "ab12345678901234567890")
             self.assertEqual(actual.blob.id, blob.id)
             self.assertEqual(actual.budget.id, budget.id)
-            self.assertEqual(actual.created_at.strftime("%Y%m%d%H%M%S%f"), dt.strftime("%Y%m%d%H%M%S%f"))
-            self.assertEqual(actual.updated_at.strftime("%Y%m%d%H%M%S%f"), dt.strftime("%Y%m%d%H%M%S%f"))
+            self.assertEqual(
+                actual.created_at.strftime("%Y%m%d%H%M%S%f"),
+                dt.strftime("%Y%m%d%H%M%S%f"),
+            )
+            self.assertEqual(
+                actual.updated_at.strftime("%Y%m%d%H%M%S%f"),
+                dt.strftime("%Y%m%d%H%M%S%f"),
+            )
 
     @patch("budgetmapper.models.BytesIO")
     @patch("budgetmapper.models.Blob.write")
@@ -397,7 +420,10 @@ class WdmmgTreeCacheTestCase(TransactionTestCase):
         self.assertEqual(actual1.blob.id, blob1.id)
         self.assertEqual(actual1.id, actual0.id)
         Blob_write.assert_has_calls(
-            [call(BytesIO.return_value, name=bud.name), call(BytesIO.return_value, name=bud.name)]
+            [
+                call(BytesIO.return_value, name=bud.name),
+                call(BytesIO.return_value, name=bud.name),
+            ]
         )
         BytesIO.assert_has_calls(
             [

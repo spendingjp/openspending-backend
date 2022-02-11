@@ -60,7 +60,10 @@ class WdmmgSerializerTestCase(TestCase):
         cl20 = factories.ClassificationFactory(classification_system=cs, parent=cl2, code="10.1")
         cl200 = factories.ClassificationFactory(classification_system=cs, parent=cl20, code="10.1.1")
         bud = factories.BudgetFactory(
-            name="まほろ市2101年度予算", slug="mahoro-city-2101", government=gov, classification_system=cs
+            name="まほろ市2101年度予算",
+            slug="mahoro-city-2101",
+            government=gov,
+            classification_system=cs,
         )
 
         abi000 = factories.AtomicBudgetItemFactory(value=123.0, budget=bud, classification=cl000)
@@ -180,7 +183,10 @@ class WdmmgSerializerTestCase(TestCase):
         cache_tree.assert_called_once_with([], bud)
         get_or_none.assert_called_once_with(bud)
 
-    @patch("budgetmapper.serializers.models.WdmmgTreeCache.get_or_none", return_value=[{"a": 1}])
+    @patch(
+        "budgetmapper.serializers.models.WdmmgTreeCache.get_or_none",
+        return_value=[{"a": 1}],
+    )
     def test_get_budgets_uses_cache_when_available(self, get_or_none):
         bud = factories.BudgetFactory()
         expected = [{"a": 1}]

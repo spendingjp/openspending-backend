@@ -77,14 +77,24 @@ class BudgetAmountField(models.FloatField):
 class LatitudeField(models.FloatField):
     def __init__(self, *args, **kwargs):
         super(LatitudeField, self).__init__(
-            *args, **dict(kwargs, validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)], null=True)
+            *args,
+            **dict(
+                kwargs,
+                validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)],
+                null=True,
+            ),
         )
 
 
 class LongitudeField(models.FloatField):
     def __init__(self, *args, **kwargs):
         super(LongitudeField, self).__init__(
-            *args, **dict(kwargs, validators=[MinValueValidator(0.0), MaxValueValidator(180.0)], null=True)
+            *args,
+            **dict(
+                kwargs,
+                validators=[MinValueValidator(0.0), MaxValueValidator(180.0)],
+                null=True,
+            ),
         )
 
 
@@ -96,7 +106,12 @@ class LevelNameListField(ArrayField):
     def __init__(self, *args, **kwargs):
         super(LevelNameListField, self).__init__(
             *args,
-            **dict(kwargs, base_field=models.CharField(max_length=255), default=get_default_level_name_list, null=True),
+            **dict(
+                kwargs,
+                base_field=models.CharField(max_length=255),
+                default=get_default_level_name_list,
+                null=True,
+            ),
         )
 
 
@@ -299,7 +314,7 @@ class BlobChunk(models.Model):
 class BlobReader(BufferedIOBase):
     def __init__(self, blob: Blob):
         self._fp = BlobChunk.objects.filter(blob=blob).order_by("index")
-        self._buffer = b''
+        self._buffer = b""
         self._gen = self._next()
 
     def _next(self) -> BlobChunk:
