@@ -43,8 +43,12 @@ class ClassificationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return models.Classification.objects.filter(classification_system=self.kwargs['classification_system_pk'])
 
-    serializer_class = serializers.ClassificationSerializer
     pagination_class = CreatedAtPagination
+
+    def get_serializer_class(self):
+        if self.action == "list" or self.action == "retrieve":
+            return serializers.ClassificationListItemSerializer
+        return serializers.ClassificationSerializer
 
 
 class BudgetViewSet(viewsets.ModelViewSet):

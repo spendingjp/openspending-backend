@@ -53,6 +53,14 @@ class ClassificationSerializer(serializers.ModelSerializer):
         fields = ("id", "code", "name", "classification_system", "parent", "created_at", "updated_at")
 
 
+class ClassificationListItemSerializer(serializers.ModelSerializer):
+    classification_system = ClassificationSystemSerializer()
+
+    class Meta:
+        model = models.Classification
+        fields = ("id", "code", "name", "classification_system", "parent", "created_at", "updated_at")
+
+
 class ClassificationSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Classification

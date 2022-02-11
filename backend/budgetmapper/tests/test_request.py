@@ -2,7 +2,7 @@ import csv
 import io
 import random
 from codecs import getreader
-from datetime import datetime
+from datetime import date, datetime
 from unittest.mock import patch
 
 import freezegun
@@ -500,6 +500,196 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
             }
             actual = res.json()
             self.assertEqual(actual, expected)
+
+
+class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
+    def test_list(self):
+        ordering = CreatedAtPagination.ordering
+        page_size = CreatedAtPagination.page_size
+        cs = factories.ClassificationSystemFactory()
+        classifications = [factories.ClassificationFactory(classification_system=cs) for _ in range(100)]
+        res = self.client.get(f"/api/v1/classification-systems/{cs.id}/classifications/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = [
+            {
+                "id": b.id,
+                "code": b.code,
+                "name": b.name,
+                "classificationSystem": {
+                    "id": cs.id,
+                    "name": cs.name,
+                    "slug": cs.slug,
+                    "levelNames": cs.level_names,
+                    "createdAt": cs.created_at.strftime(datetime_format),
+                    "updatedAt": cs.updated_at.strftime(datetime_format),
+                },
+                "parent": b.parent,
+                "createdAt": b.created_at.strftime(datetime_format),
+                "updatedAt": b.updated_at.strftime(datetime_format),
+            }
+            for b in sorted(
+                classifications, key=lambda b: getattr(b, ordering.strip("-")), reverse=ordering.startswith("-")
+            )[:page_size]
+        ]
+        res_json = res.json()
+        self.assertIn("results", res_json)
+        actual = res_json["results"]
+        self.assertEqual(actual, expected)
+
+    def test_get(self):
+        self.maxDiff = None
+        cs = factories.ClassificationSystemFactory()
+        classification_parent_a = factories.ClassificationFactory(classification_system=cs)
+        c = factories.ClassificationFactory(classification_system=cs, parent=classification_parent_a)
+        res = self.client.get(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{c.id}/",
+            format="json",
+        )
+        expected = {
+            "id": c.id,
+            "code": c.code,
+            "name": c.name,
+            "classificationSystem": {
+                "id": cs.id,
+                "name": cs.name,
+                "slug": cs.slug,
+                "levelNames": cs.level_names,
+                "createdAt": cs.created_at.strftime(datetime_format),
+                "updatedAt": cs.updated_at.strftime(datetime_format),
+            },
+            "parent": c.parent.id,
+            "createdAt": c.created_at.strftime(datetime_format),
+            "updatedAt": c.updated_at.strftime(datetime_format),
+        }
+        res_cs = res.json()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_cs, expected)
+
+    def test_post_requires_login(self):
+        cs = factories.ClassificationSystemFactory()
+        classification = factories.ClassificationFactory(classification_system=cs)
+        res = self.client.post(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/", format="json"
+        )
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_post(self):
+        cs = factories.ClassificationSystemFactory()
+        classification_parent_b = factories.ClassificationFactory(classification_system=cs)
+        expected_name = "HOGEHOGEHOGE"
+        expected_code = "codecode"
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.post(
+            f"/api/v1/classification-systems/{cs.id}/classifications/",
+            {
+                "classification_system": cs.id,
+                "name": expected_name,
+                "code": expected_code,
+                "parent": classification_parent_b.id,
+            },
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        cs_id = res.json()["id"]
+        c = models.Classification.objects.get(id=cs_id)
+        self.assertEqual(c.classification_system.id, cs.id)
+        self.assertEqual(c.name, expected_name)
+        self.assertEqual(c.code, expected_code)
+        self.assertEqual(c.parent.id, classification_parent_b.id)
+
+    def test_partial_update_requires_login(self):
+        cs = factories.ClassificationSystemFactory()
+        classification = factories.ClassificationFactory(classification_system=cs)
+        res = self.client.patch(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/", format="json"
+        )
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_partial_update(self):
+        cs = factories.ClassificationSystemFactory()
+        classification = factories.ClassificationFactory(classification_system=cs)
+        expected_name = "HOGEHOGEHOGE"
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.patch(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/",
+            {"name": expected_name},
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        c = models.Classification.objects.get(id=classification.id)
+        self.assertEqual(c.name, expected_name)
+
+    def test_partial_update_parent(self):
+        cs = factories.ClassificationSystemFactory()
+        classification_parent_a = factories.ClassificationFactory(classification_system=cs)
+        classification_parent_b = factories.ClassificationFactory(classification_system=cs)
+        classification = factories.ClassificationFactory(classification_system=cs, parent=classification_parent_a)
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.patch(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/",
+            {
+                "parent": classification_parent_b.id,
+            },
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        c = models.Classification.objects.get(id=classification.id)
+        self.assertEqual(c.parent.id, classification_parent_b.id)
+
+    def test_update_requires_login(self):
+        cs = factories.ClassificationSystemFactory()
+        classification = factories.ClassificationFactory(classification_system=cs)
+        res = self.client.put(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/", format="json"
+        )
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_update(self):
+        cs = factories.ClassificationSystemFactory()
+        classification_parent_a = factories.ClassificationFactory(classification_system=cs)
+        classification_parent_b = factories.ClassificationFactory(classification_system=cs)
+        classification = factories.ClassificationFactory(classification_system=cs, parent=classification_parent_a)
+        expected_name = "HOGEHOGEHOGE"
+        expected_code = "codecode"
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.put(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/",
+            {
+                "classification_system": cs.id,
+                "name": expected_name,
+                "code": expected_code,
+                "parent": classification_parent_b.id,
+            },
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        c = models.Classification.objects.get(id=classification.id)
+        self.assertEqual(c.name, expected_name)
+        self.assertEqual(c.code, expected_code)
+        self.assertEqual(c.parent.id, classification_parent_b.id)
+
+    def test_delete_requires_login(self):
+        cs = factories.ClassificationSystemFactory()
+        classification = factories.ClassificationFactory(classification_system=cs)
+        res = self.client.delete(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/", format="json"
+        )
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+        try:
+            models.Classification.objects.get(id=classification.id)
+        except Exception as e:
+            self.fail(str(e))
+
+    def test_destroy(self):
+        cs = factories.ClassificationSystemFactory()
+        classification = factories.ClassificationFactory(classification_system=cs)
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.delete(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/", format="json"
+        )
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        with self.assertRaises(models.Classification.DoesNotExist):
+            models.Classification.objects.get(id=classification.id)
 
 
 class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
