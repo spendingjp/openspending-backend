@@ -1,8 +1,6 @@
-from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import freezegun
-from budgetmapper import models, serializers
+from budgetmapper import serializers
 from django.conf import settings
 from django.test import TestCase
 
@@ -174,35 +172,18 @@ class WdmmgSerializerTestCase(TestCase):
         actual = serializers.WdmmgSerializer().get_budgets(obj=bud)
         self.assertEqual(actual, expected)
 
-    def test_get_budgets_creates_cache(self):
-        import json
-
+    @patch("budgetmapper.serializers.models.WdmmgTreeCache.get_or_none", return_value=None)
+    @patch("budgetmapper.serializers.models.WdmmgTreeCache.cache_tree")
+    def test_get_budgets_creates_cache(self, cache_tree, get_or_none):
         bud = factories.BudgetFactory()
-        cs = bud.classification_system
-        c0 = factories.ClassificationFactory(classification_system=cs, parent=None)
-        c00 = factories.ClassificationFactory(classification_system=cs, parent=c0)
-        c01 = factories.ClassificationFactory(classification_system=cs, parent=c0)
-        abi00 = factories.AtomicBudgetItemFactory(budget=bud, classification=c00)
-
-        expected = json.dumps(
-            [
-                {
-                    "id": c0.id,
-                    "name": c0.name,
-                    "code": c0.code,
-                    "amount": abi00.amount,
-                    "children": [
-                        {"id": c00.id, "name": c00.name, "code": c00.code, "amount": abi00.amount, "children": None},
-                        {"id": c01.id, "name": c01.name, "code": c01.code, "amount": 0, "children": None},
-                    ],
-                }
-            ]
-        ).encode("utf-8")
         serializers.WdmmgSerializer().get_budgets(obj=bud)
-        cache = models.WdmmgTreeCache.objects.get(budget=bud)
-        actual = models.BlobReader(cache.blob).read()
-        self.assertEqual(actual, expected)
+        cache_tree.assert_called_once_with([], bud)
+        get_or_none.assert_called_once_with(bud)
 
-    def test_get_budgets_uses_cache_when_budget_is_older(self):
-        with freezegun.freeze_time(datetime(2021, 1, 31, 12, 23, 34, 5678)) as dt:
-            bud = factories.BudgetFactory()
+    @patch("budgetmapper.serializers.models.WdmmgTreeCache.get_or_none", return_value=[{"a": 1}])
+    def test_get_budgets_uses_cache_when_available(self, get_or_none):
+        bud = factories.BudgetFactory()
+        expected = [{"a": 1}]
+        actual = serializers.WdmmgSerializer().get_budgets(obj=bud)
+        self.assertEqual(actual, expected)
+        get_or_none.assert_called_once_with(bud)
