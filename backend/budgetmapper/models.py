@@ -1,4 +1,5 @@
-from io import BufferedIOBase, RawIOBase
+import json
+from io import BufferedIOBase, BytesIO, RawIOBase
 
 import pykakasi
 import shortuuidfield
@@ -287,7 +288,7 @@ class Blob(models.Model):
 
 class BlobChunk(models.Model):
     id = PkField()
-    blob = models.ForeignKey(Blob, on_delete=models.CASCADE, db_index=False, null=False)
+    blob = models.ForeignKey(Blob, on_delete=models.CASCADE, db_index=True, null=False)
     index = models.PositiveIntegerField(db_index=False)
     body = models.BinaryField(db_index=False)
 
@@ -318,3 +319,32 @@ class BlobReader(BufferedIOBase):
             retval = self._buffer
             self._buffer = b""
         return retval
+
+
+class WdmmgTreeCache(models.Model):
+    id = PkField()
+    blob = models.ForeignKey(Blob, on_delete=models.CASCADE, db_index=False, null=False)
+    budget = models.OneToOneField(Budget, on_delete=models.CASCADE, null=False)
+    created_at = CurrentDateTimeField()
+    updated_at = AutoUpdateCurrentDateTimeField()
+
+    @classmethod
+    def cache_tree(cls, data, budget):
+        blob = Blob.write(BytesIO(json.dumps(data).encode("utf-8")), name=budget.name)
+        try:
+            cache = cls.objects.get(budget=budget)
+            cache.blob = blob
+        except cls.DoesNotExist:
+            cache = cls(budget=budget, blob=blob)
+        cache.save()
+        return cache
+
+    @classmethod
+    def get_or_none(cls, budget):
+        try:
+            cache = cls.objects.get(budget=budget)
+        except cls.DoesNotExist:
+            return None
+        if cache.updated_at > budget.updated_at:
+            return json.load(BlobReader(cache.blob))
+        return None
