@@ -131,6 +131,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
             "year": bud.year,
             "createdAt": bud.created_at.strftime(datetime_format),
             "updatedAt": bud.updated_at.strftime(datetime_format),
+            "totalAmount": abi000.amount + abi001.amount + abi002.amount + abi010.amount + abi100.amount,
             "budgets": [
                 {
                     "id": cl0.id,

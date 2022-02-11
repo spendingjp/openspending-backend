@@ -251,6 +251,7 @@ class WdmmgNodeSerializer(serializers.ModelSerializer):
 class WdmmgSerializer(serializers.ModelSerializer):
     government = GovernmentSerializer()
     budgets = serializers.SerializerMethodField()
+    total_amount = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Budget
@@ -262,9 +263,13 @@ class WdmmgSerializer(serializers.ModelSerializer):
             "year",
             "created_at",
             "updated_at",
+            "total_amount",
             "government",
             "budgets",
         )
+
+    def get_total_amount(self, obj: models.Budget):
+        return sum((d["amount"] for d in self.get_budgets(obj)))
 
     def get_budgets(self, obj: models.Budget):
         res = models.WdmmgTreeCache.get_or_none(obj)
