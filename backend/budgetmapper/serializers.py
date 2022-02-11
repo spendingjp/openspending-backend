@@ -1,5 +1,5 @@
 from django.db import IntegrityError
-from rest_framework import fields, serializers, status, validators
+from rest_framework import serializers, status
 from rest_framework.views import Response, exception_handler
 
 from . import models
@@ -232,4 +232,10 @@ class WdmmgSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "subtitle", "slug", "year", "created_at", "updated_at", "government", "budgets")
 
     def get_budgets(self, obj: models.Budget):
-        return [BudgetNodeSerializer(instance=c, context={"budget": obj}).data for c in obj.classification_system.roots]
+        res = models.WdmmgTreeCache.get_or_none(obj)
+        if res is None:
+            res = [
+                BudgetNodeSerializer(instance=c, context={"budget": obj}).data for c in obj.classification_system.roots
+            ]
+            models.WdmmgTreeCache.cache_tree(res, obj)
+        return res

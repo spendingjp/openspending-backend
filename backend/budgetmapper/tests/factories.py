@@ -75,3 +75,8 @@ class MappedBudgetItemFactory(DjangoModelFactory):
                     ClassificationFactory(classification_system=self.mapped_budget.classification_system)
                 )
             return
+
+
+class BlobFactory(DjangoModelFactory):
+    class Meta:
+        model = models.Blob

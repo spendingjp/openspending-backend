@@ -1,7 +1,11 @@
 import doctest
+import json
 from collections.abc import Iterator
-from unittest.mock import MagicMock, patch
+from datetime import datetime
+from io import BytesIO
+from unittest.mock import MagicMock, call, patch
 
+import freezegun
 from budgetmapper import models
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
@@ -337,8 +341,6 @@ class BlobTestCase(TestCase):
         side_effect=["ab12345678901234567890", "ab12345678901234567891", "ab12345678901234567892"],
     )
     def test_blob_write_and_reader(self, _):
-        from io import BytesIO
-
         raw_data = BytesIO(b"F" * 65537)
         name = "test"
         blob = models.Blob.write(raw_data, name=name)
@@ -360,3 +362,76 @@ class BlobTestCase(TestCase):
         expected = b"F" * 65534
         actual = reader.read()
         self.assertEqual(actual, expected)
+
+
+class WdmmgTreeCacheTestCase(TransactionTestCase):
+    def test_wdmmg_tree_cache(self):
+        raw_data = BytesIO(json.dumps({"a": 1}).encode("utf-8"))
+        blob = models.Blob.write(raw_data, name="cache")
+        budget = factories.BudgetFactory()
+        dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt), patch(
+            "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890"
+        ):
+            actual = models.WdmmgTreeCache(budget=budget, blob=blob)
+            actual.save()
+            self.assertEqual(actual.id, "ab12345678901234567890")
+            self.assertEqual(actual.blob.id, blob.id)
+            self.assertEqual(actual.budget.id, budget.id)
+            self.assertEqual(actual.created_at.strftime("%Y%m%d%H%M%S%f"), dt.strftime("%Y%m%d%H%M%S%f"))
+            self.assertEqual(actual.updated_at.strftime("%Y%m%d%H%M%S%f"), dt.strftime("%Y%m%d%H%M%S%f"))
+
+    @patch("budgetmapper.models.BytesIO")
+    @patch("budgetmapper.models.Blob.write")
+    def test_cache_tree(self, Blob_write, BytesIO):
+        blob0, blob1 = factories.BlobFactory(), factories.BlobFactory()
+        Blob_write.side_effect = [blob0, blob1]
+        bud = factories.BudgetFactory()
+        data0 = {"a": 1}
+        actual0 = models.WdmmgTreeCache.cache_tree(data0, bud)
+        self.assertEqual(actual0.budget.id, bud.id)
+        self.assertEqual(actual0.blob.id, blob0.id)
+        data1 = {"b": 1}
+        actual1 = models.WdmmgTreeCache.cache_tree(data1, bud)
+        self.assertEqual(actual1.budget.id, bud.id)
+        self.assertEqual(actual1.blob.id, blob1.id)
+        self.assertEqual(actual1.id, actual0.id)
+        Blob_write.assert_has_calls(
+            [call(BytesIO.return_value, name=bud.name), call(BytesIO.return_value, name=bud.name)]
+        )
+        BytesIO.assert_has_calls(
+            [
+                call(json.dumps(data0).encode("utf-8")),
+                call(json.dumps(data1).encode("utf-8")),
+            ]
+        )
+
+    @patch("budgetmapper.models.BlobReader")
+    def test_get_or_none_returns_data_when_budget_is_older(self, BlobReader):
+        BlobReader.return_value.read.return_value = b'{"a":1}'
+        with freezegun.freeze_time(datetime(2021, 1, 31, 12, 23, 34, 5678)) as dt:
+            blob = factories.BlobFactory()
+            bud = factories.BudgetFactory()
+            dt.tick(1000)
+            cache = models.WdmmgTreeCache(blob=blob, budget=bud)
+            cache.save()
+            expected = {"a": 1}
+            actual = models.WdmmgTreeCache.get_or_none(bud)
+            self.assertEqual(actual, expected)
+
+    def test_get_or_none_returns_none_when_no_cache(self):
+        bud = factories.BudgetFactory()
+        actual = models.WdmmgTreeCache.get_or_none(bud)
+        self.assertIsNone(actual)
+
+    def test_get_or_none_returns_none_when_budget_is_newer(self):
+        with freezegun.freeze_time(datetime(2021, 1, 31, 12, 23, 34, 5678)) as dt:
+            blob = factories.BlobFactory()
+            bud = factories.BudgetFactory()
+            cache = models.WdmmgTreeCache(blob=blob, budget=bud)
+            cache.save()
+            dt.tick(1000)
+            blob.updated_at = dt
+            blob.save()
+            actual = models.WdmmgTreeCache.get_or_none(bud)
+            self.assertIsNone(actual)
