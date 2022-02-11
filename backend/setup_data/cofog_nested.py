@@ -16,8 +16,12 @@ if __name__ == "__main__":
     with open(args.input, "r") as fin:
         data = json.load(fin)["data"]
 
-    cs = models.ClassificationSystem(name="COFOG")
-    cs.save()
+    try:
+        cs = models.ClassificationSystem.objects.get(slug="cofog")
+        models.Classification.objects.filter(classification_system=cs).delete()
+    except models.ClassificationSystem.DoesNotExist:
+        cs = models.ClassificationSystem(name="COFOG")
+        cs.save()
 
     def recreg(data, parent=None):
         inst = models.Classification(name=data["name"], code=data["code"], classification_system=cs, parent=parent)

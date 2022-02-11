@@ -19,12 +19,13 @@ if __name__ == "__main__":
     cofog = models.ClassificationSystem.objects.get(slug="cofog")
     tsukuba_budget = models.Budget.objects.get(slug="tsukuba-shi-2021-nendo-yosan")
     try:
+        budget = models.Budget.objects.get(slug="tsukuba-shi-cofog2021")
+        models.BudgetItemBase.objects.filter(budget=budget).delete()
+    except models.Budget.DoesNotExist:
         budget = models.Budget(
             name="つくば市COFOG2021", year=2021, subtitle="", classification_system=cofog, government=tsukuba
         )
         budget.save()
-    except:
-        budget = models.Budget.objects.get(slug="tsukuba-shi-cofog2021")
 
     buf = defaultdict(list)
     with open(args.input, "r") as fin:
