@@ -7,11 +7,13 @@
       @delete-budget="handleDeleteBudget"
     >
     </budget-list-item>
+    <div v-if="isBudgetEmpty">{{ commentForEmpty }}</div>
   </v-list>
 </template>
 
 <script lang="ts">
 import { defineComponent, SetupContext } from '@vue/composition-api'
+import { computed, toRefs } from '@nuxtjs/composition-api'
 import BudgetListItem from './BudgetListItem.vue'
 import { Budget } from '@/types/budget'
 
@@ -22,12 +24,23 @@ export default defineComponent({
       type: Array as () => Budget[],
       required: true,
     },
+    commentForEmpty: {
+      type: String,
+      required: true,
+    },
   },
-  setup({ budgets }, context: SetupContext) {
+  setup(props, context: SetupContext) {
+    const { budgets } = toRefs(props)
+
     const handleDeleteBudget = (e: string): void => {
-      context.emit('delete-budget', budgets.map((d) => d.id).indexOf(e))
+      context.emit('delete-budget', budgets.value.map((d) => d.id).indexOf(e))
     }
-    return { handleDeleteBudget }
+
+    const isBudgetEmpty = computed((): boolean => {
+      return budgets.value.length === 0
+    })
+
+    return { handleDeleteBudget, isBudgetEmpty }
   },
 })
 </script>
