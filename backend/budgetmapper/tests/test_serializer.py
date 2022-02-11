@@ -44,14 +44,19 @@ class ClassificationSystemSerializerTestCase(TestCase):
 
 class WdmmgSerializerTestCase(TestCase):
     def test_get_budgets(self):
+        from budgetmapper.models import IconImage
+
         gov = factories.GovernmentFactory(name="まほろ市", slug="mahoro-city")
         cs = factories.ClassificationSystemFactory(name="まほろ市2101年一般会計", slug="mahoro-city-2101-ippan-kaikei")
-        cl0 = factories.ClassificationFactory(classification_system=cs, code="1")
-        cl00 = factories.ClassificationFactory(classification_system=cs, parent=cl0, code="1.1")
+        icon0 = factories.IconImageFactory()
+        cl0 = factories.ClassificationFactory(classification_system=cs, code="1", icon=icon0)
+        icon00 = factories.IconImageFactory()
+        cl00 = factories.ClassificationFactory(classification_system=cs, parent=cl0, code="1.1", icon=icon00)
         cl000 = factories.ClassificationFactory(classification_system=cs, parent=cl00, code="1.1.1")
         cl001 = factories.ClassificationFactory(classification_system=cs, parent=cl00, code="1.1.2")
         cl002 = factories.ClassificationFactory(classification_system=cs, parent=cl00, code="1.1.3")
-        cl01 = factories.ClassificationFactory(classification_system=cs, parent=cl0, code="1.2")
+        icon01 = factories.IconImageFactory()
+        cl01 = factories.ClassificationFactory(classification_system=cs, parent=cl0, code="1.2", icon=icon01)
         cl010 = factories.ClassificationFactory(classification_system=cs, parent=cl01, code="1.2.1")
         cl1 = factories.ClassificationFactory(classification_system=cs, code="2")
         cl10 = factories.ClassificationFactory(classification_system=cs, parent=cl1, code="2.1")
@@ -78,11 +83,13 @@ class WdmmgSerializerTestCase(TestCase):
                 "name": cl0.name,
                 "code": cl0.code,
                 "amount": abi000.amount + abi001.amount + abi002.amount + abi010.amount,
+                "icon_slug": icon0.slug,
                 "children": [
                     {
                         "id": cl00.id,
                         "name": cl00.name,
                         "code": cl00.code,
+                        "icon_slug": icon00.slug,
                         "amount": abi000.amount + abi001.amount + abi002.amount,
                         "children": [
                             {
@@ -90,6 +97,7 @@ class WdmmgSerializerTestCase(TestCase):
                                 "name": cl000.name,
                                 "code": cl000.code,
                                 "amount": abi000.amount,
+                                "icon_slug": IconImage.get_default_icon().slug,
                                 "children": None,
                             },
                             {
@@ -97,6 +105,7 @@ class WdmmgSerializerTestCase(TestCase):
                                 "name": cl001.name,
                                 "code": cl001.code,
                                 "amount": abi001.amount,
+                                "icon_slug": IconImage.get_default_icon().slug,
                                 "children": None,
                             },
                             {
@@ -104,6 +113,7 @@ class WdmmgSerializerTestCase(TestCase):
                                 "name": cl002.name,
                                 "code": cl002.code,
                                 "amount": abi002.amount,
+                                "icon_slug": IconImage.get_default_icon().slug,
                                 "children": None,
                             },
                         ],
@@ -113,12 +123,14 @@ class WdmmgSerializerTestCase(TestCase):
                         "name": cl01.name,
                         "code": cl01.code,
                         "amount": abi010.amount,
+                        "icon_slug": icon01.slug,
                         "children": [
                             {
                                 "id": cl010.id,
                                 "name": cl010.name,
                                 "code": cl010.code,
                                 "amount": abi010.amount,
+                                "icon_slug": IconImage.get_default_icon().slug,
                                 "children": None,
                             }
                         ],
@@ -130,18 +142,21 @@ class WdmmgSerializerTestCase(TestCase):
                 "name": cl1.name,
                 "code": cl1.code,
                 "amount": abi100.amount,
+                "icon_slug": IconImage.get_default_icon().slug,
                 "children": [
                     {
                         "id": cl10.id,
                         "name": cl10.name,
                         "code": cl10.code,
                         "amount": abi100.amount,
+                        "icon_slug": IconImage.get_default_icon().slug,
                         "children": [
                             {
                                 "id": cl100.id,
                                 "name": cl100.name,
                                 "code": cl100.code,
                                 "amount": abi100.amount,
+                                "icon_slug": IconImage.get_default_icon().slug,
                                 "children": None,
                             }
                         ],
@@ -153,18 +168,21 @@ class WdmmgSerializerTestCase(TestCase):
                 "name": cl2.name,
                 "code": cl2.code,
                 "amount": 0,
+                "icon_slug": IconImage.get_default_icon().slug,
                 "children": [
                     {
                         "id": cl20.id,
                         "name": cl20.name,
                         "code": cl20.code,
                         "amount": 0,
+                        "icon_slug": IconImage.get_default_icon().slug,
                         "children": [
                             {
                                 "id": cl200.id,
                                 "name": cl200.name,
                                 "code": cl200.code,
                                 "amount": 0,
+                                "icon_slug": IconImage.get_default_icon().slug,
                                 "children": None,
                             }
                         ],
