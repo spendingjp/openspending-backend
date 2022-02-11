@@ -47,6 +47,16 @@ class TestCsvDownload(TestCase):
         self.assertEqual(actual, expected)
 
 
+class IconTestCase(TestCase):
+    def test_get_icon(self):
+        icon = factories.IconImageFactory()
+        c = Client()
+        res = c.get(f"/icons/{icon.slug}")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.headers["Content-Type"], f"image/{icon.image_type}")
+        self.assertEqual(res.getvalue(), icon.body)
+
+
 class BudgetMapperTestUserAPITestCase(APITestCase):
     def setUp(self):
         User = get_user_model()
@@ -95,12 +105,15 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
     def test_get(self) -> None:
         gov = factories.GovernmentFactory(name="まほろ市", slug="mahoro-city")
         cs = factories.ClassificationSystemFactory(name="まほろ市2101年一般会計", slug="mahoro-city-2101-ippan-kaikei")
-        cl0 = factories.ClassificationFactory(classification_system=cs, code="1")
-        cl00 = factories.ClassificationFactory(classification_system=cs, parent=cl0, code="1.1")
+        icon0 = factories.IconImageFactory()
+        cl0 = factories.ClassificationFactory(classification_system=cs, code="1", icon=icon0)
+        icon00 = factories.IconImageFactory()
+        cl00 = factories.ClassificationFactory(classification_system=cs, parent=cl0, code="1.1", icon=icon00)
         cl000 = factories.ClassificationFactory(classification_system=cs, parent=cl00, code="1.1.1")
         cl001 = factories.ClassificationFactory(classification_system=cs, parent=cl00, code="1.1.2")
         cl002 = factories.ClassificationFactory(classification_system=cs, parent=cl00, code="1.1.3")
-        cl01 = factories.ClassificationFactory(classification_system=cs, parent=cl0, code="1.2")
+        icon01 = factories.IconImageFactory()
+        cl01 = factories.ClassificationFactory(classification_system=cs, parent=cl0, code="1.2", icon=icon01)
         cl010 = factories.ClassificationFactory(classification_system=cs, parent=cl01, code="1.2.1")
         cl1 = factories.ClassificationFactory(classification_system=cs, code="2")
         cl10 = factories.ClassificationFactory(classification_system=cs, parent=cl1, code="2.1")
@@ -133,12 +146,14 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                     "id": cl0.id,
                     "name": cl0.name,
                     "code": cl0.code,
+                    "iconSlug": icon0.slug,
                     "amount": 504.0,
                     "children": [
                         {
                             "id": cl00.id,
                             "name": cl00.name,
                             "code": cl00.code,
+                            "iconSlug": icon00.slug,
                             "amount": 375.0,
                             "children": [
                                 {
@@ -146,6 +161,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                                     "name": cl000.name,
                                     "code": cl000.code,
                                     "amount": 123.0,
+                                    "iconSlug": models.IconImage.get_default_icon().slug,
                                     "children": None,
                                 },
                                 {
@@ -153,6 +169,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                                     "name": cl001.name,
                                     "code": cl001.code,
                                     "amount": 125.0,
+                                    "iconSlug": models.IconImage.get_default_icon().slug,
                                     "children": None,
                                 },
                                 {
@@ -160,6 +177,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                                     "name": cl002.name,
                                     "code": cl002.code,
                                     "amount": 127.0,
+                                    "iconSlug": models.IconImage.get_default_icon().slug,
                                     "children": None,
                                 },
                             ],
@@ -169,12 +187,14 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                             "name": cl01.name,
                             "code": cl01.code,
                             "amount": 129.0,
+                            "iconSlug": icon01.slug,
                             "children": [
                                 {
                                     "id": cl010.id,
                                     "name": cl010.name,
                                     "code": cl010.code,
                                     "amount": 129.0,
+                                    "iconSlug": models.IconImage.get_default_icon().slug,
                                     "children": None,
                                 }
                             ],
@@ -186,18 +206,21 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                     "name": cl1.name,
                     "code": cl1.code,
                     "amount": 131.0,
+                    "iconSlug": models.IconImage.get_default_icon().slug,
                     "children": [
                         {
                             "id": cl10.id,
                             "name": cl10.name,
                             "code": cl10.code,
                             "amount": 131.0,
+                            "iconSlug": models.IconImage.get_default_icon().slug,
                             "children": [
                                 {
                                     "id": cl100.id,
                                     "name": cl100.name,
                                     "code": cl100.code,
                                     "amount": 131.0,
+                                    "iconSlug": models.IconImage.get_default_icon().slug,
                                     "children": None,
                                 }
                             ],
@@ -209,18 +232,21 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                     "name": cl2.name,
                     "code": cl2.code,
                     "amount": 0,
+                    "iconSlug": models.IconImage.get_default_icon().slug,
                     "children": [
                         {
                             "id": cl20.id,
                             "name": cl20.name,
                             "code": cl20.code,
                             "amount": 0,
+                            "iconSlug": models.IconImage.get_default_icon().slug,
                             "children": [
                                 {
                                     "id": cl200.id,
                                     "name": cl200.name,
                                     "code": cl200.code,
                                     "amount": 0,
+                                    "iconSlug": models.IconImage.get_default_icon().slug,
                                     "children": None,
                                 }
                             ],
@@ -523,6 +549,7 @@ class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
                     "createdAt": cs.created_at.strftime(datetime_format),
                     "updatedAt": cs.updated_at.strftime(datetime_format),
                 },
+                "icon": b.icon.id if b.icon is not None else None,
                 "parent": b.parent,
                 "createdAt": b.created_at.strftime(datetime_format),
                 "updatedAt": b.updated_at.strftime(datetime_format),
@@ -557,6 +584,7 @@ class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "createdAt": cs.created_at.strftime(datetime_format),
                 "updatedAt": cs.updated_at.strftime(datetime_format),
             },
+            "icon": c.icon.id if c.icon is not None else None,
             "parent": c.parent.id,
             "createdAt": c.created_at.strftime(datetime_format),
             "updatedAt": c.updated_at.strftime(datetime_format),
@@ -595,6 +623,7 @@ class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertEqual(c.classification_system.id, cs.id)
         self.assertEqual(c.name, expected_name)
         self.assertEqual(c.code, expected_code)
+        self.assertEqual(c.icon, None)
         self.assertEqual(c.parent.id, classification_parent_b.id)
 
     def test_partial_update_requires_login(self):
@@ -645,6 +674,7 @@ class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_update(self):
+        icon = factories.IconImageFactory()
         cs = factories.ClassificationSystemFactory()
         classification_parent_a = factories.ClassificationFactory(classification_system=cs)
         classification_parent_b = factories.ClassificationFactory(classification_system=cs)
@@ -659,6 +689,7 @@ class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "name": expected_name,
                 "code": expected_code,
                 "parent": classification_parent_b.id,
+                "icon": icon.id,
             },
             format="json",
         )
@@ -667,6 +698,7 @@ class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertEqual(c.name, expected_name)
         self.assertEqual(c.code, expected_code)
         self.assertEqual(c.parent.id, classification_parent_b.id)
+        self.assertEqual(c.icon.id, icon.id)
 
     def test_delete_requires_login(self):
         cs = factories.ClassificationSystemFactory()
@@ -1013,6 +1045,7 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "code": budget_item.classification.code,
                 "classificationSystem": cs.id,
                 "parent": None,
+                "icon": None,
                 "createdAt": budget_item.classification.created_at.strftime(datetime_format),
                 "updatedAt": budget_item.classification.updated_at.strftime(datetime_format),
             },
@@ -1237,6 +1270,7 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
                     "name": cl010.name,
                     "code": cl010.code,
                     "classificationSystem": cs0.id,
+                    "icon": None,
                     "parent": cl01.id,
                     "createdAt": cl010.created_at.strftime(datetime_format),
                     "updatedAt": cl010.updated_at.strftime(datetime_format),
@@ -1246,6 +1280,7 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
                     "name": cl011.name,
                     "code": cl011.code,
                     "classificationSystem": cs0.id,
+                    "icon": None,
                     "parent": cl01.id,
                     "createdAt": cl011.created_at.strftime(datetime_format),
                     "updatedAt": cl011.updated_at.strftime(datetime_format),
@@ -1267,6 +1302,7 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "name": cl101.name,
                 "code": cl101.code,
                 "parent": cl10.id,
+                "icon": None,
                 "classificationSystem": cs1.id,
                 "createdAt": cl101.created_at.strftime(datetime_format),
                 "updatedAt": cl101.updated_at.strftime(datetime_format),
@@ -1376,3 +1412,58 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
             }
             actual = res.json()
             self.assertEqual(actual, expected)
+
+
+class IconImageCrudTestCase(BudgetMapperTestUserAPITestCase):
+    def test_list(self) -> None:
+        ordering = CreatedAtPagination.ordering
+        page_size = CreatedAtPagination.page_size
+        icons = [factories.IconImageFactory() for i in range(100)]
+        res = self.client.get("/api/v1/icon-images/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = [
+            {
+                "id": icon.id,
+                "name": icon.name,
+                "slug": icon.slug,
+                "createdAt": icon.created_at.strftime(datetime_format),
+                "updatedAt": icon.updated_at.strftime(datetime_format),
+            }
+            for icon in sorted(
+                icons, key=lambda icon: getattr(icon, ordering.strip("-")), reverse=ordering.startswith("-")
+            )[:page_size]
+        ]
+        res_json = res.json()
+        self.assertIn("results", res_json)
+        actual = res_json["results"]
+        self.assertEqual(actual, expected)
+
+    def test_retrieve(self):
+        icons = [factories.IconImageFactory() for i in range(100)]
+        icon = random.choice(icons)
+        res = self.client.get(f"/api/v1/icon-images/{icon.id}/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = {
+            "id": icon.id,
+            "name": icon.name,
+            "slug": icon.slug,
+            "dataUri": icon.to_data_uri(),
+            "createdAt": icon.created_at.strftime(datetime_format),
+            "updatedAt": icon.updated_at.strftime(datetime_format),
+        }
+
+        actual = res.json()
+        self.assertEqual(actual, expected)
+
+    def test_icon_image_is_read_only(self):
+        self.client.login(username=self._user_username, password=self._user_password)
+        icons = [factories.IconImageFactory() for i in range(100)]
+        icon = random.choice(icons)
+        res = self.client.post("/api/v1/icon-images/", {}, format="json")
+        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        res = self.client.put(f"/api/v1/icon-images/{icon.id}/", {}, format="json")
+        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        res = self.client.patch(f"/api/v1/icon-images/{icon.id}/", {}, format="json")
+        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        res = self.client.delete(f"/api/v1/icon-images/{icon.id}/", {}, format="json")
+        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)

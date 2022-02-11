@@ -2,7 +2,7 @@ import csv
 from io import BytesIO, StringIO
 
 import django_filters.rest_framework as drf_filters
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
 from django_filters.rest_framework import DjangoFilterBackend
@@ -20,6 +20,16 @@ class CreatedAtPagination(CursorPagination):
 class UpdatedAtPagination(CursorPagination):
     page_size = 10
     ordering = '-updated_at'
+
+
+class IconImageViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = models.IconImage.objects.all()
+    pagination_class = CreatedAtPagination
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return serializers.IconImageRetrieveSerializeer
+        return serializers.IconImageListSerializer
 
 
 class GovernmentViewSet(viewsets.ModelViewSet):
@@ -119,3 +129,8 @@ def download_csv_view(request, budget_id):
         )
 
     return FileResponse(BytesIO(buf.getvalue().encode("utf-8")), as_attachment=True, filename=f"{budget.slug}.csv")
+
+
+def icon_view(request, icon_slug):
+    icon = get_object_or_404(models.IconImage, slug=icon_slug)
+    return HttpResponse(icon.body, content_type=f"image/{icon.image_type}")

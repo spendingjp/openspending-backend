@@ -80,3 +80,12 @@ class MappedBudgetItemFactory(DjangoModelFactory):
 class BlobFactory(DjangoModelFactory):
     class Meta:
         model = models.Blob
+
+
+class IconImageFactory(DjangoModelFactory):
+    class Meta:
+        model = models.IconImage
+
+    name = fuzzy.FuzzyText()
+    body = b"<svg></svg>"
+    image_type = "svg+xml"
