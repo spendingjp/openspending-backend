@@ -229,7 +229,7 @@ class MappedBudgetItemCreateUpdateSerializer(serializers.ModelSerializer):
         )
 
 
-class BudgetNodeSerializer(serializers.ModelSerializer):
+class WdmmgNodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Classification
         fields = ("id", "name", "code")
@@ -238,7 +238,7 @@ class BudgetNodeSerializer(serializers.ModelSerializer):
         is_leaf = True
         children = []
         for c in instance.direct_children:
-            children.append(BudgetNodeSerializer(instance=c, context={"budget": self.context["budget"]}).data)
+            children.append(WdmmgNodeSerializer(instance=c, context={"budget": self.context["budget"]}).data)
             is_leaf = False
         if is_leaf:
             amount = self.context["budget"].get_amount_of(instance)
@@ -270,7 +270,7 @@ class WdmmgSerializer(serializers.ModelSerializer):
         res = models.WdmmgTreeCache.get_or_none(obj)
         if res is None:
             res = [
-                BudgetNodeSerializer(instance=c, context={"budget": obj}).data for c in obj.classification_system.roots
+                WdmmgNodeSerializer(instance=c, context={"budget": obj}).data for c in obj.classification_system.roots
             ]
             models.WdmmgTreeCache.cache_tree(res, obj)
         return res
