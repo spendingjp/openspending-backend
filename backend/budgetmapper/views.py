@@ -1,12 +1,10 @@
 import csv
 from io import BytesIO, StringIO
 
-import django_filters.rest_framework as drf_filters
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
-from django_filters import rest_framework as filters
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import exceptions, mixins, viewsets
+from rest_framework import mixins, viewsets
 from rest_framework.pagination import CursorPagination
 
 from . import models, serializers
@@ -14,12 +12,12 @@ from . import models, serializers
 
 class CreatedAtPagination(CursorPagination):
     page_size = 10
-    ordering = '-created_at'
+    ordering = "-created_at"
 
 
 class UpdatedAtPagination(CursorPagination):
     page_size = 10
-    ordering = '-updated_at'
+    ordering = "-updated_at"
 
 
 class GovernmentViewSet(viewsets.ModelViewSet):
@@ -41,7 +39,7 @@ class ClassificationSystemViewSet(viewsets.ModelViewSet):
 
 class ClassificationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
-        return models.Classification.objects.filter(classification_system=self.kwargs['classification_system_pk'])
+        return models.Classification.objects.filter(classification_system=self.kwargs["classification_system_pk"])
 
     pagination_class = CreatedAtPagination
 
@@ -118,4 +116,8 @@ def download_csv_view(request, budget_id):
             + [d["budget_item"].amount if d["budget_item"] is not None else 0]
         )
 
-    return FileResponse(BytesIO(buf.getvalue().encode("utf-8")), as_attachment=True, filename=f"{budget.slug}.csv")
+    return FileResponse(
+        BytesIO(buf.getvalue().encode("utf-8")),
+        as_attachment=True,
+        filename=f"{budget.slug}.csv",
+    )
