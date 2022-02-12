@@ -16,6 +16,23 @@ def custom_exception_handler(exc, context):
     return response
 
 
+class IconImageListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.IconImage
+        fields = ("id", "name", "slug", "created_at", "updated_at")
+
+
+class IconImageRetrieveSerializeer(serializers.ModelSerializer):
+    data_uri = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.IconImage
+        fields = ("id", "name", "slug", "data_uri", "created_at", "updated_at")
+
+    def get_data_uri(self, obj: models.IconImage):
+        return obj.to_data_uri()
+
+
 class GovernmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Government
@@ -62,6 +79,7 @@ class ClassificationSerializer(serializers.ModelSerializer):
             "id",
             "code",
             "name",
+            "icon",
             "classification_system",
             "parent",
             "created_at",
@@ -74,15 +92,7 @@ class ClassificationListItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Classification
-        fields = (
-            "id",
-            "code",
-            "name",
-            "classification_system",
-            "parent",
-            "created_at",
-            "updated_at",
-        )
+        fields = ("id", "code", "name", "icon", "classification_system", "parent", "created_at", "updated_at")
 
 
 class ClassificationSummarySerializer(serializers.ModelSerializer):
@@ -230,9 +240,14 @@ class MappedBudgetItemCreateUpdateSerializer(serializers.ModelSerializer):
 
 
 class WdmmgNodeSerializer(serializers.ModelSerializer):
+    icon_slug = serializers.SerializerMethodField()
+
     class Meta:
         model = models.Classification
-        fields = ("id", "name", "code")
+        fields = ("id", "name", "code", "icon_slug")
+
+    def get_icon_slug(self, obj: models.Classification):
+        return obj.icon.slug if obj.icon is not None else models.IconImage.get_default_icon().slug
 
     def to_representation(self, instance):
         is_leaf = True

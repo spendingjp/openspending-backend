@@ -13,10 +13,63 @@ from django.test import TestCase, TransactionTestCase
 
 from . import factories
 
+date_format = "%Y%m%d%H%M%S%f"
+
 
 def load_tests(loader, tests, ignore):
     tests.addTests(doctest.DocTestSuite(models))
     return tests
+
+
+class IconImageTestCase(TransactionTestCase):
+    @freezegun.freeze_time(datetime(2022, 2, 22, 22, 22, 22, 222222))
+    @patch("budgetmapper.models.jp_slugify", return_value="icon-slug-1")
+    @patch("budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890")
+    def test_icon_image(self, ShortUUIDField_get_default, jp_slugify) -> None:
+        sut = models.IconImage(name="icon_1", image_type="svg+xml", body=b"<svg></svg>")
+        sut.save()
+        self.assertEqual(sut.name, "icon_1")
+        self.assertEqual(sut.slug, "icon-slug-1")
+        self.assertEqual(sut.image_type, "svg+xml")
+        self.assertEqual(sut.id, "ab12345678901234567890")
+        self.assertEqual(sut.body, b"<svg></svg>")
+        self.assertEqual(
+            sut.created_at.strftime(date_format), datetime(2022, 2, 22, 22, 22, 22, 222222).strftime(date_format)
+        )
+        self.assertEqual(
+            sut.updated_at.strftime(date_format), datetime(2022, 2, 22, 22, 22, 22, 222222).strftime(date_format)
+        )
+
+    def test_to_data_uri(self):
+        sut = models.IconImage(name="icon_1", image_type="svg+xml", body=b"<svg></svg>")
+        sut.save()
+        expected = 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='
+        actual = sut.to_data_uri()
+        self.assertEqual(actual, expected)
+
+    def test_get_default_icon(self):
+        expected = {
+            "name": "default icon",
+            "slug": "default-icon",
+            "image_type": "svg+xml",
+            "body": b'<svg version="1.1" id="Ebene_1" xmlns="http://www.w3.org/2000/svg" '
+            b'xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="100px" height="100px" '
+            b'viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">'
+            b'<circle fill="#B2B2B2" cx="50" cy="50" r="50"/><g>'
+            b'<path d="M46.745,79.538c-3.866-0.402-8.458-1.449-12.324-3.705l2.255-6.444c2.819,2.095,'
+            b'6.686,3.786,10.391,4.35l1.208-22.876c-5.961-5.075-12.244-10.391-12.244-18.769c0-8.539,'
+            b'6.283-13.21,13.936-13.774l0.483-8.78h5.316l-0.483,9.021c2.578,0.322,5.559,1.128,8.861,'
+            b'2.497l-1.853,5.639c-2.015-1.047-4.753-1.933-7.331-2.336l-1.208,21.588c6.122,5.155,12.646,'
+            b'10.713,12.646,19.655c0,8.457-6.041,13.29-14.419,14.016l-0.563,10.149h-5.155L46.745,79.538z '
+            b'M48.759,41.599l0.886-17.238c-3.544,0.645-6.364,2.9-6.364,7.169C43.281,35.477,45.618,38.619,'
+            b'48.759,41.599z M53.27,55.132l-0.967,18.606c4.189-0.805,6.848-3.705,6.848-7.894S56.653,58.354,'
+            b'53.27,55.132z"/></g></svg>',
+        }
+        actual = models.IconImage.get_default_icon()
+        self.assertEqual(actual.name, expected["name"])
+        self.assertEqual(actual.slug, expected["slug"])
+        self.assertEqual(actual.body, expected["body"])
+        self.assertEqual(actual.image_type, expected["image_type"])
 
 
 class GovernmentTest(TestCase):
@@ -93,6 +146,7 @@ class ClassificationTest(TransactionTestCase):
         sut.save()
         self.assertEqual(sut.name, "総務費")
         self.assertEqual(sut.classification_system, cs)
+        self.assertEqual(sut.icon, None)
         self.assertIsNone(sut.code)
         self.assertIsNone(sut.parent)
         self.assertEqual(sut.level, 0)
@@ -155,6 +209,12 @@ class ClassificationTest(TransactionTestCase):
         sut = models.Classification(name="農林水産業費", classification_system=cs2)
         sut.save()
         self.assertEqual(sut.item_order, 0)
+
+    def test_classification_has_icon(self) -> None:
+        icon = factories.IconImageFactory()
+        cs = factories.ClassificationSystemFactory()
+        sut = models.Classification(name="ワクワク費", classification_system=cs, icon=icon)
+        self.assertEqual(sut.icon.id, icon.id)
 
 
 class BudgetTest(TestCase):
