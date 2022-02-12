@@ -600,6 +600,29 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
             actual = res.json()
             self.assertEqual(actual, expected)
 
+    @patch("budgetmapper.models.jp_slugify", return_value="theslug")
+    def test_update_blank_slug_by_slug(self, jp_slugify):
+        cs = factories.ClassificationSystemFactory(slug="someslug")
+        self.client.login(username=self._user_username, password=self._user_password)
+        dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt):
+            res = self.client.put(
+                f"/api/v1/classification-systems/{cs.slug}/",
+                {"slug": None},
+                format="json",
+            )
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            expected = {
+                "id": cs.id,
+                "name": cs.name,
+                "slug": "theslug",
+                "levelNames": cs.level_names,
+                "createdAt": cs.created_at.strftime(datetime_format),
+                "updatedAt": dt.strftime(datetime_format),
+            }
+            actual = res.json()
+            self.assertEqual(actual, expected)
+
 
 class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
     def test_list(self):
