@@ -16,6 +16,23 @@ def custom_exception_handler(exc, context):
     return response
 
 
+class IconImageListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.IconImage
+        fields = ("id", "name", "slug", "created_at", "updated_at")
+
+
+class IconImageRetrieveSerializeer(serializers.ModelSerializer):
+    data_uri = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.IconImage
+        fields = ("id", "name", "slug", "data_uri", "created_at", "updated_at")
+
+    def get_data_uri(self, obj: models.IconImage):
+        return obj.to_data_uri()
+
+
 class GovernmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Government
@@ -58,15 +75,7 @@ class ClassificationSystemDetailSerializer(serializers.ModelSerializer):
 class ClassificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Classification
-        fields = (
-            "id",
-            "code",
-            "name",
-            "classification_system",
-            "parent",
-            "created_at",
-            "updated_at",
-        )
+        fields = ("id", "code", "name", "icon", "classification_system", "parent", "created_at", "updated_at")
 
 
 class ClassificationListItemSerializer(serializers.ModelSerializer):
@@ -74,15 +83,7 @@ class ClassificationListItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Classification
-        fields = (
-            "id",
-            "code",
-            "name",
-            "classification_system",
-            "parent",
-            "created_at",
-            "updated_at",
-        )
+        fields = ("id", "code", "name", "icon", "classification_system", "parent", "created_at", "updated_at")
 
 
 class ClassificationSummarySerializer(serializers.ModelSerializer):
@@ -230,9 +231,14 @@ class MappedBudgetItemCreateUpdateSerializer(serializers.ModelSerializer):
 
 
 class WdmmgNodeSerializer(serializers.ModelSerializer):
+    icon_id = serializers.SerializerMethodField()
+
     class Meta:
         model = models.Classification
-        fields = ("id", "name", "code")
+        fields = ("id", "name", "code", "icon_id")
+
+    def get_icon_id(self, obj: models.Classification):
+        return obj.get_icon_id()
 
     def to_representation(self, instance):
         is_leaf = True
