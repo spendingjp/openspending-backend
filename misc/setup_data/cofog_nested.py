@@ -24,7 +24,17 @@ if __name__ == "__main__":
         cs.save()
 
     def recreg(data, parent=None):
-        inst = models.Classification(name=data["name"], code=data["code"], classification_system=cs, parent=parent)
+        icon_slug = data["icon-slug"]
+        if icon_slug is not None:
+            try:
+                icon = models.IconImage.objects.get(slug=icon_slug)
+            except models.IconImage.DoesNotExist:
+                icon = None
+        else:
+            icon = None
+        inst = models.Classification(
+            name=data["name"], code=data["code"], classification_system=cs, parent=parent, icon=icon
+        )
         inst.save()
         if "children" in data:
             for d in data["children"]:
