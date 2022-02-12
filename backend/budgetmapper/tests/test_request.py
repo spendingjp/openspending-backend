@@ -470,6 +470,28 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
         actual = res.json()
         self.assertEqual(actual, expected)
 
+    def test_retrieve_by_slug(self):
+        css = [factories.ClassificationSystemFactory() for i in range(100)]
+        cs = css[random.randint(0, 99)]
+        res = self.client.get(f"/api/v1/classification-systems/{cs.slug}/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = {
+            "id": cs.id,
+            "name": cs.name,
+            "slug": cs.slug,
+            "levelNames": cs.level_names,
+            "items": [],
+            "createdAt": cs.created_at.strftime(datetime_format),
+            "updatedAt": cs.updated_at.strftime(datetime_format),
+        }
+        actual = res.json()
+        self.assertEqual(actual, expected)
+
+    def test_retrieve_by_empty_slug(self):
+        [factories.ClassificationSystemFactory() for i in range(100)]
+        res = self.client.get("/api/v1/classification-systems//", format="json")
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_create_requires_authentication(self):
         query = {"name": "まほろ市予算"}
         res = self.client.post("/api/v1/classification-systems/", query, format="json")
@@ -540,6 +562,15 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
         with self.assertRaises(models.ClassificationSystem.DoesNotExist):
             models.ClassificationSystem.objects.get(id=cs.id)
 
+    def test_destroy_by_slug(self):
+        css = [factories.ClassificationSystemFactory() for i in range(100)]
+        cs = css[random.randint(0, 99)]
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.delete(f"/api/v1/classification-systems/{cs.slug}/")
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        with self.assertRaises(models.ClassificationSystem.DoesNotExist):
+            models.ClassificationSystem.objects.get(id=cs.id)
+
     def test_update_requires_login(self):
         css = [factories.ClassificationSystemFactory() for i in range(100)]
         cs = css[random.randint(0, 99)]
@@ -554,6 +585,29 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
         with freezegun.freeze_time(dt):
             res = self.client.put(
                 f"/api/v1/classification-systems/{cs.id}/",
+                {"slug": None},
+                format="json",
+            )
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            expected = {
+                "id": cs.id,
+                "name": cs.name,
+                "slug": "theslug",
+                "levelNames": cs.level_names,
+                "createdAt": cs.created_at.strftime(datetime_format),
+                "updatedAt": dt.strftime(datetime_format),
+            }
+            actual = res.json()
+            self.assertEqual(actual, expected)
+
+    @patch("budgetmapper.models.jp_slugify", return_value="theslug")
+    def test_update_blank_slug_by_slug(self, jp_slugify):
+        cs = factories.ClassificationSystemFactory(slug="someslug")
+        self.client.login(username=self._user_username, password=self._user_password)
+        dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt):
+            res = self.client.put(
+                f"/api/v1/classification-systems/{cs.slug}/",
                 {"slug": None},
                 format="json",
             )
