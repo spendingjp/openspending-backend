@@ -1,7 +1,6 @@
 import base64
 import json
 from io import BufferedIOBase, BytesIO, RawIOBase
-from xml.dom import NotFoundErr
 
 import pykakasi
 import shortuuidfield
