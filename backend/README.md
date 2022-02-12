@@ -35,25 +35,12 @@ python manage.py migrate
 
 #### Setup initial data for the database
 
-##### nested_tsukuba
+Run the commands below and you should keep the order of the commands.
 
 ```
-python setup_data/tsukuba_nested.py setup_data/tsukuba_nested.json
-
-```
-
-##### cofog_nested
-
-
-```
-python setup_data/cofog_nested.py setup_data/cofog_nested.json
-
-```
-
-##### tsukuba
-
-```
-python setup_data/tsukuba.py setup_data/tsukuba.json
+python ../misc/setup_data/tsukuba_nested.py ../misc/setup_data/tsukuba_nested.json
+python ../misc/setup_data/cofog_nested.py ../misc/setup_data/cofog_nested.json
+python ../misc/setup_data/tsukuba.py ../misc/setup_data/tsukuba.json
 
 ```
 
