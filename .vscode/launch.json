@@ -8,7 +8,7 @@
       "request": "launch",
       "cwd": "${workspaceFolder}/backend",
       "program": "${workspaceFolder}/backend/.venv/bin/flake8",
-      "args": ["--exit-zero", "--exclude", ".venv", "--max-line-length=120"]
+      "args": ["--exclude", ".venv,budgetmapper/migrations", "--max-line-length=120"]
     },
     {
       "name": "Test",

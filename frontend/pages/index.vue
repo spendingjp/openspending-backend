@@ -21,6 +21,7 @@
       <v-col>
         <budget-list
           :budgets="state.budgetList"
+          comment-for-empty="指定された条件に合致する予算は登録されていません。"
           @delete-budget="handleDeleteBudget"
         ></budget-list>
       </v-col>

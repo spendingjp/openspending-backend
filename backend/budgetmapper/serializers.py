@@ -1,5 +1,5 @@
 from django.db import IntegrityError
-from rest_framework import fields, serializers, status, validators
+from rest_framework import serializers, status
 from rest_framework.views import Response, exception_handler
 
 from . import models
@@ -11,7 +11,7 @@ def custom_exception_handler(exc, context):
     print(context)
 
     if isinstance(exc, IntegrityError) and not response:
-        response = Response({'message': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        response = Response({"message": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
     return response
 
@@ -19,7 +19,15 @@ def custom_exception_handler(exc, context):
 class GovernmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Government
-        fields = ("id", "name", "slug", "latitude", "longitude", "created_at", "updated_at")
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "latitude",
+            "longitude",
+            "created_at",
+            "updated_at",
+        )
 
 
 class ClassificationSystemSerializer(serializers.ModelSerializer):
@@ -50,7 +58,31 @@ class ClassificationSystemDetailSerializer(serializers.ModelSerializer):
 class ClassificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Classification
-        fields = ("id", "code", "name", "classification_system", "parent", "created_at", "updated_at")
+        fields = (
+            "id",
+            "code",
+            "name",
+            "classification_system",
+            "parent",
+            "created_at",
+            "updated_at",
+        )
+
+
+class ClassificationListItemSerializer(serializers.ModelSerializer):
+    classification_system = ClassificationSystemSerializer()
+
+    class Meta:
+        model = models.Classification
+        fields = (
+            "id",
+            "code",
+            "name",
+            "classification_system",
+            "parent",
+            "created_at",
+            "updated_at",
+        )
 
 
 class ClassificationSummarySerializer(serializers.ModelSerializer):
@@ -124,7 +156,8 @@ class BudgetDetailSerializer(serializers.ModelSerializer):
 
     def get_items(self, obj):
         return BudgetItemSerializer(
-            models.BudgetItemBase.objects.filter(budget=obj).prefetch_related("classification"), many=True
+            models.BudgetItemBase.objects.filter(budget=obj).prefetch_related("classification"),
+            many=True,
         ).data
 
 
@@ -196,7 +229,7 @@ class MappedBudgetItemCreateUpdateSerializer(serializers.ModelSerializer):
         )
 
 
-class BudgetNodeSerializer(serializers.ModelSerializer):
+class WdmmgNodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Classification
         fields = ("id", "name", "code")
@@ -205,7 +238,7 @@ class BudgetNodeSerializer(serializers.ModelSerializer):
         is_leaf = True
         children = []
         for c in instance.direct_children:
-            children.append(BudgetNodeSerializer(instance=c, context={"budget": self.context["budget"]}).data)
+            children.append(WdmmgNodeSerializer(instance=c, context={"budget": self.context["budget"]}).data)
             is_leaf = False
         if is_leaf:
             amount = self.context["budget"].get_amount_of(instance)
@@ -218,10 +251,31 @@ class BudgetNodeSerializer(serializers.ModelSerializer):
 class WdmmgSerializer(serializers.ModelSerializer):
     government = GovernmentSerializer()
     budgets = serializers.SerializerMethodField()
+    total_amount = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Budget
-        fields = ("id", "name", "subtitle", "slug", "year", "created_at", "updated_at", "government", "budgets")
+        fields = (
+            "id",
+            "name",
+            "subtitle",
+            "slug",
+            "year",
+            "created_at",
+            "updated_at",
+            "total_amount",
+            "government",
+            "budgets",
+        )
+
+    def get_total_amount(self, obj: models.Budget):
+        return sum((d["amount"] for d in self.get_budgets(obj)))
 
     def get_budgets(self, obj: models.Budget):
-        return [BudgetNodeSerializer(instance=c, context={"budget": obj}).data for c in obj.classification_system.roots]
+        res = models.WdmmgTreeCache.get_or_none(obj)
+        if res is None:
+            res = [
+                WdmmgNodeSerializer(instance=c, context={"budget": obj}).data for c in obj.classification_system.roots
+            ]
+            models.WdmmgTreeCache.cache_tree(res, obj)
+        return res

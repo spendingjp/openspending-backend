@@ -62,12 +62,12 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
         super(WdmmgTestCase, self).setUp()
 
     def test_no_list_route(self) -> None:
-        bud = factories.BudgetFactory(name="まほろ市2101年度予算", slug="mahoro-city-2101")
-        res = self.client.get(f"/api/v1/wdmmg/", format="json")
+        _ = factories.BudgetFactory(name="まほろ市2101年度予算", slug="mahoro-city-2101")
+        res = self.client.get("/api/v1/wdmmg/", format="json")
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_no_create_route(self) -> None:
-        res = self.client.post(f"/api/v1/wdmmg/", {}, format="json")
+        res = self.client.post("/api/v1/wdmmg/", {}, format="json")
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_update_returns_unauthorized_error_for_non_member(self) -> None:
@@ -109,7 +109,10 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
         cl20 = factories.ClassificationFactory(classification_system=cs, parent=cl2, code="10.1")
         cl200 = factories.ClassificationFactory(classification_system=cs, parent=cl20, code="10.1.1")
         bud = factories.BudgetFactory(
-            name="まほろ市2101年度予算", slug="mahoro-city-2101", government=gov, classification_system=cs
+            name="まほろ市2101年度予算",
+            slug="mahoro-city-2101",
+            government=gov,
+            classification_system=cs,
         )
 
         abi000 = factories.AtomicBudgetItemFactory(value=123.0, budget=bud, classification=cl000)
@@ -128,38 +131,39 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
             "year": bud.year,
             "createdAt": bud.created_at.strftime(datetime_format),
             "updatedAt": bud.updated_at.strftime(datetime_format),
+            "totalAmount": abi000.amount + abi001.amount + abi002.amount + abi010.amount + abi100.amount,
             "budgets": [
                 {
                     "id": cl0.id,
                     "name": cl0.name,
                     "code": cl0.code,
-                    "amount": 504.0,
+                    "amount": abi000.amount + abi001.amount + abi002.amount + abi010.amount,
                     "children": [
                         {
                             "id": cl00.id,
                             "name": cl00.name,
                             "code": cl00.code,
-                            "amount": 375.0,
+                            "amount": abi000.amount + abi001.amount + abi002.amount,
                             "children": [
                                 {
                                     "id": cl000.id,
                                     "name": cl000.name,
                                     "code": cl000.code,
-                                    "amount": 123.0,
+                                    "amount": abi000.amount,
                                     "children": None,
                                 },
                                 {
                                     "id": cl001.id,
                                     "name": cl001.name,
                                     "code": cl001.code,
-                                    "amount": 125.0,
+                                    "amount": abi001.amount,
                                     "children": None,
                                 },
                                 {
                                     "id": cl002.id,
                                     "name": cl002.name,
                                     "code": cl002.code,
-                                    "amount": 127.0,
+                                    "amount": abi002.amount,
                                     "children": None,
                                 },
                             ],
@@ -168,13 +172,13 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                             "id": cl01.id,
                             "name": cl01.name,
                             "code": cl01.code,
-                            "amount": 129.0,
+                            "amount": abi010.amount,
                             "children": [
                                 {
                                     "id": cl010.id,
                                     "name": cl010.name,
                                     "code": cl010.code,
-                                    "amount": 129.0,
+                                    "amount": abi010.amount,
                                     "children": None,
                                 }
                             ],
@@ -185,19 +189,19 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                     "id": cl1.id,
                     "name": cl1.name,
                     "code": cl1.code,
-                    "amount": 131.0,
+                    "amount": abi100.amount,
                     "children": [
                         {
                             "id": cl10.id,
                             "name": cl10.name,
                             "code": cl10.code,
-                            "amount": 131.0,
+                            "amount": abi100.amount,
                             "children": [
                                 {
                                     "id": cl100.id,
                                     "name": cl100.name,
                                     "code": cl100.code,
-                                    "amount": 131.0,
+                                    "amount": abi100.amount,
                                     "children": None,
                                 }
                             ],
@@ -260,7 +264,9 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "updatedAt": gov.updated_at.strftime(datetime_format),
             }
             for gov in sorted(
-                govs, key=lambda gov: getattr(gov, ordering.strip("-")), reverse=ordering.startswith("-")
+                govs,
+                key=lambda gov: getattr(gov, ordering.strip("-")),
+                reverse=ordering.startswith("-"),
             )[:page_size]
         ]
         res_json = res.json()
@@ -287,17 +293,20 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
 
     def test_create_requires_authentication(self):
         query = {"name": "まほろ市"}
-        res = self.client.post(f"/api/v1/governments/", query, format="json")
+        res = self.client.post("/api/v1/governments/", query, format="json")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    @patch("budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890")
+    @patch(
+        "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
+        return_value="ab12345678901234567890",
+    )
     @patch("budgetmapper.models.jp_slugify", return_value="theslug")
     def test_create_with_default(self, jp_slugify, shortuuidfield_ShortUUIDField_get_default):
         dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt):
             self.client.login(username=self._user_username, password=self._user_password)
             query = {"name": "まほろ市"}
-            res = self.client.post(f"/api/v1/governments/", query, format="json")
+            res = self.client.post("/api/v1/governments/", query, format="json")
             self.assertEqual(res.status_code, status.HTTP_201_CREATED)
             expected = {
                 "id": "ab12345678901234567890",
@@ -311,14 +320,22 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
             actual = res.json()
             self.assertEqual(actual, expected)
 
-    @patch("budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890")
+    @patch(
+        "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
+        return_value="ab12345678901234567890",
+    )
     @patch("budgetmapper.models.jp_slugify", return_value="theslug")
     def test_create_with_specified_values(self, jp_slugify, shortuuidfield_ShortUUIDField_get_default):
         dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt):
             self.client.login(username=self._user_username, password=self._user_password)
-            query = {"name": "まほろ市", "slug": "mahoro-city", "latitude": -54, "longitude": 170}
-            res = self.client.post(f"/api/v1/governments/", query, format="json")
+            query = {
+                "name": "まほろ市",
+                "slug": "mahoro-city",
+                "latitude": -54,
+                "longitude": 170,
+            }
+            res = self.client.post("/api/v1/governments/", query, format="json")
             self.assertEqual(res.status_code, status.HTTP_201_CREATED)
             expected = {
                 "id": "ab12345678901234567890",
@@ -390,9 +407,11 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "createdAt": cs.created_at.strftime(datetime_format),
                 "updatedAt": cs.updated_at.strftime(datetime_format),
             }
-            for cs in sorted(css, key=lambda cs: getattr(cs, ordering.strip("-")), reverse=ordering.startswith("-"))[
-                :page_size
-            ]
+            for cs in sorted(
+                css,
+                key=lambda cs: getattr(cs, ordering.strip("-")),
+                reverse=ordering.startswith("-"),
+            )[:page_size]
         ]
         res_json = res.json()
         self.assertIn("results", res_json)
@@ -418,17 +437,20 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
 
     def test_create_requires_authentication(self):
         query = {"name": "まほろ市予算"}
-        res = self.client.post(f"/api/v1/classification-systems/", query, format="json")
+        res = self.client.post("/api/v1/classification-systems/", query, format="json")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    @patch("budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890")
+    @patch(
+        "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
+        return_value="ab12345678901234567890",
+    )
     @patch("budgetmapper.models.jp_slugify", return_value="theslug")
     def test_create_with_default(self, jp_slugify, shortuuidfield_ShortUUIDField_get_default):
         dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt):
             self.client.login(username=self._user_username, password=self._user_password)
             query = {"name": "まほろ市予算"}
-            res = self.client.post(f"/api/v1/classification-systems/", query, format="json")
+            res = self.client.post("/api/v1/classification-systems/", query, format="json")
             self.assertEqual(res.status_code, status.HTTP_201_CREATED)
             expected = {
                 "id": "ab12345678901234567890",
@@ -441,14 +463,21 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
             actual = res.json()
             self.assertEqual(actual, expected)
 
-    @patch("budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890")
+    @patch(
+        "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
+        return_value="ab12345678901234567890",
+    )
     @patch("budgetmapper.models.jp_slugify", return_value="theslug")
     def test_create_with_specified_values(self, jp_slugify, shortuuidfield_ShortUUIDField_get_default):
         dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt):
             self.client.login(username=self._user_username, password=self._user_password)
-            query = {"name": "まほろ市予算", "slug": "mahoro-city-budget", "levelNames": ["level1", "level2", "level3"]}
-            res = self.client.post(f"/api/v1/classification-systems/", query, format="json")
+            query = {
+                "name": "まほろ市予算",
+                "slug": "mahoro-city-budget",
+                "levelNames": ["level1", "level2", "level3"],
+            }
+            res = self.client.post("/api/v1/classification-systems/", query, format="json")
             self.assertEqual(res.status_code, status.HTTP_201_CREATED)
             expected = {
                 "id": "ab12345678901234567890",
@@ -488,7 +517,11 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.client.login(username=self._user_username, password=self._user_password)
         dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt):
-            res = self.client.put(f"/api/v1/classification-systems/{cs.id}/", {"slug": None}, format="json")
+            res = self.client.put(
+                f"/api/v1/classification-systems/{cs.id}/",
+                {"slug": None},
+                format="json",
+            )
             self.assertEqual(res.status_code, status.HTTP_200_OK)
             expected = {
                 "id": cs.id,
@@ -500,6 +533,203 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
             }
             actual = res.json()
             self.assertEqual(actual, expected)
+
+
+class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
+    def test_list(self):
+        ordering = CreatedAtPagination.ordering
+        page_size = CreatedAtPagination.page_size
+        cs = factories.ClassificationSystemFactory()
+        classifications = [factories.ClassificationFactory(classification_system=cs) for _ in range(100)]
+        res = self.client.get(f"/api/v1/classification-systems/{cs.id}/classifications/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = [
+            {
+                "id": b.id,
+                "code": b.code,
+                "name": b.name,
+                "classificationSystem": {
+                    "id": cs.id,
+                    "name": cs.name,
+                    "slug": cs.slug,
+                    "levelNames": cs.level_names,
+                    "createdAt": cs.created_at.strftime(datetime_format),
+                    "updatedAt": cs.updated_at.strftime(datetime_format),
+                },
+                "parent": b.parent,
+                "createdAt": b.created_at.strftime(datetime_format),
+                "updatedAt": b.updated_at.strftime(datetime_format),
+            }
+            for b in sorted(
+                classifications,
+                key=lambda b: getattr(b, ordering.strip("-")),
+                reverse=ordering.startswith("-"),
+            )[:page_size]
+        ]
+        res_json = res.json()
+        self.assertIn("results", res_json)
+        actual = res_json["results"]
+        self.assertEqual(actual, expected)
+
+    def test_get(self):
+        self.maxDiff = None
+        cs = factories.ClassificationSystemFactory()
+        classification_parent_a = factories.ClassificationFactory(classification_system=cs)
+        c = factories.ClassificationFactory(classification_system=cs, parent=classification_parent_a)
+        res = self.client.get(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{c.id}/",
+            format="json",
+        )
+        expected = {
+            "id": c.id,
+            "code": c.code,
+            "name": c.name,
+            "classificationSystem": {
+                "id": cs.id,
+                "name": cs.name,
+                "slug": cs.slug,
+                "levelNames": cs.level_names,
+                "createdAt": cs.created_at.strftime(datetime_format),
+                "updatedAt": cs.updated_at.strftime(datetime_format),
+            },
+            "parent": c.parent.id,
+            "createdAt": c.created_at.strftime(datetime_format),
+            "updatedAt": c.updated_at.strftime(datetime_format),
+        }
+        res_cs = res.json()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_cs, expected)
+
+    def test_post_requires_login(self):
+        cs = factories.ClassificationSystemFactory()
+        classification = factories.ClassificationFactory(classification_system=cs)
+        res = self.client.post(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/",
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_post(self):
+        cs = factories.ClassificationSystemFactory()
+        classification_parent_b = factories.ClassificationFactory(classification_system=cs)
+        expected_name = "HOGEHOGEHOGE"
+        expected_code = "codecode"
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.post(
+            f"/api/v1/classification-systems/{cs.id}/classifications/",
+            {
+                "classification_system": cs.id,
+                "name": expected_name,
+                "code": expected_code,
+                "parent": classification_parent_b.id,
+            },
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        cs_id = res.json()["id"]
+        c = models.Classification.objects.get(id=cs_id)
+        self.assertEqual(c.classification_system.id, cs.id)
+        self.assertEqual(c.name, expected_name)
+        self.assertEqual(c.code, expected_code)
+        self.assertEqual(c.parent.id, classification_parent_b.id)
+
+    def test_partial_update_requires_login(self):
+        cs = factories.ClassificationSystemFactory()
+        classification = factories.ClassificationFactory(classification_system=cs)
+        res = self.client.patch(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/",
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_partial_update(self):
+        cs = factories.ClassificationSystemFactory()
+        classification = factories.ClassificationFactory(classification_system=cs)
+        expected_name = "HOGEHOGEHOGE"
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.patch(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/",
+            {"name": expected_name},
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        c = models.Classification.objects.get(id=classification.id)
+        self.assertEqual(c.name, expected_name)
+
+    def test_partial_update_parent(self):
+        cs = factories.ClassificationSystemFactory()
+        classification_parent_a = factories.ClassificationFactory(classification_system=cs)
+        classification_parent_b = factories.ClassificationFactory(classification_system=cs)
+        classification = factories.ClassificationFactory(classification_system=cs, parent=classification_parent_a)
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.patch(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/",
+            {
+                "parent": classification_parent_b.id,
+            },
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        c = models.Classification.objects.get(id=classification.id)
+        self.assertEqual(c.parent.id, classification_parent_b.id)
+
+    def test_update_requires_login(self):
+        cs = factories.ClassificationSystemFactory()
+        classification = factories.ClassificationFactory(classification_system=cs)
+        res = self.client.put(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/",
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_update(self):
+        cs = factories.ClassificationSystemFactory()
+        classification_parent_a = factories.ClassificationFactory(classification_system=cs)
+        classification_parent_b = factories.ClassificationFactory(classification_system=cs)
+        classification = factories.ClassificationFactory(classification_system=cs, parent=classification_parent_a)
+        expected_name = "HOGEHOGEHOGE"
+        expected_code = "codecode"
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.put(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/",
+            {
+                "classification_system": cs.id,
+                "name": expected_name,
+                "code": expected_code,
+                "parent": classification_parent_b.id,
+            },
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        c = models.Classification.objects.get(id=classification.id)
+        self.assertEqual(c.name, expected_name)
+        self.assertEqual(c.code, expected_code)
+        self.assertEqual(c.parent.id, classification_parent_b.id)
+
+    def test_delete_requires_login(self):
+        cs = factories.ClassificationSystemFactory()
+        classification = factories.ClassificationFactory(classification_system=cs)
+        res = self.client.delete(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/",
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+        try:
+            models.Classification.objects.get(id=classification.id)
+        except Exception as e:
+            self.fail(str(e))
+
+    def test_destroy(self):
+        cs = factories.ClassificationSystemFactory()
+        classification = factories.ClassificationFactory(classification_system=cs)
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.delete(
+            f"/api/v1/classification-systems/{cs.id}/classifications/{classification.id}/",
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        with self.assertRaises(models.Classification.DoesNotExist):
+            models.Classification.objects.get(id=classification.id)
 
 
 class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
@@ -521,9 +751,11 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "createdAt": b.created_at.strftime(datetime_format),
                 "updatedAt": b.updated_at.strftime(datetime_format),
             }
-            for b in sorted(bs, key=lambda b: getattr(b, ordering.strip("-")), reverse=ordering.startswith("-"))[
-                :page_size
-            ]
+            for b in sorted(
+                bs,
+                key=lambda b: getattr(b, ordering.strip("-")),
+                reverse=ordering.startswith("-"),
+            )[:page_size]
         ]
         res_json = res.json()
         self.assertIn("results", res_json)
@@ -564,7 +796,7 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
         ordering = CreatedAtPagination.ordering
         page_size = CreatedAtPagination.page_size
         bs = [factories.BudgetFactory(year=(2000 + i // 10)) for i in range(100)]
-        res = self.client.get(f"/api/v1/budgets/?year=2001", format="json")
+        res = self.client.get("/api/v1/budgets/?year=2001", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         expected = [
             {
@@ -658,11 +890,19 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
     def test_create_requires_authentication(self):
         gov = factories.GovernmentFactory()
         cs = factories.ClassificationSystemFactory()
-        query = {"name": "まほろ市2101年度予算", "year": 2101, "government": gov.id, "classificationSystem": cs.id}
-        res = self.client.post(f"/api/v1/budgets/", query, format="json")
+        query = {
+            "name": "まほろ市2101年度予算",
+            "year": 2101,
+            "government": gov.id,
+            "classificationSystem": cs.id,
+        }
+        res = self.client.post("/api/v1/budgets/", query, format="json")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    @patch("budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890")
+    @patch(
+        "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
+        return_value="ab12345678901234567890",
+    )
     @patch("budgetmapper.models.jp_slugify", return_value="theslug")
     def test_create_with_default(self, jp_slugify, shortuuidfield_ShortUUIDField_get_default):
         gov = factories.GovernmentFactory()
@@ -670,8 +910,13 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
         dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt):
             self.client.login(username=self._user_username, password=self._user_password)
-            query = {"name": "まほろ市2101年度予算", "year": 2101, "government": gov.id, "classificationSystem": cs.id}
-            res = self.client.post(f"/api/v1/budgets/", query, format="json")
+            query = {
+                "name": "まほろ市2101年度予算",
+                "year": 2101,
+                "government": gov.id,
+                "classificationSystem": cs.id,
+            }
+            res = self.client.post("/api/v1/budgets/", query, format="json")
             self.assertEqual(res.status_code, status.HTTP_201_CREATED)
             expected = {
                 "id": "ab12345678901234567890",
@@ -687,7 +932,10 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
             actual = res.json()
             self.assertEqual(actual, expected)
 
-    @patch("budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890")
+    @patch(
+        "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
+        return_value="ab12345678901234567890",
+    )
     @patch("budgetmapper.models.jp_slugify", return_value="theslug")
     def test_create_with_specified_values(self, jp_slugify, shortuuidfield_ShortUUIDField_get_default):
         gov = factories.GovernmentFactory()
@@ -703,7 +951,7 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "government": gov.id,
                 "classificationSystem": cs.id,
             }
-            res = self.client.post(f"/api/v1/budgets/", query, format="json")
+            res = self.client.post("/api/v1/budgets/", query, format="json")
             self.assertEqual(res.status_code, status.HTTP_201_CREATED)
             expected = {
                 "id": "ab12345678901234567890",
@@ -771,7 +1019,8 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         budget = factories.BudgetFactory(classification_system=cs)
         budget_items = [
             factories.AtomicBudgetItemFactory(
-                budget=budget, classification=factories.ClassificationFactory(classification_system=cs)
+                budget=budget,
+                classification=factories.ClassificationFactory(classification_system=cs),
             )
             for _ in range(100)
         ]
@@ -787,7 +1036,9 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "updatedAt": b.updated_at.strftime(datetime_format),
             }
             for b in sorted(
-                budget_items, key=lambda b: getattr(b, ordering.strip("-")), reverse=ordering.startswith("-")
+                budget_items,
+                key=lambda b: getattr(b, ordering.strip("-")),
+                reverse=ordering.startswith("-"),
             )[:page_size]
         ]
         res_json = res.json()
@@ -799,7 +1050,8 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         cs = factories.ClassificationSystemFactory()
         budget = factories.BudgetFactory(classification_system=cs)
         budget_item = factories.AtomicBudgetItemFactory(
-            budget=budget, classification=factories.ClassificationFactory(classification_system=cs)
+            budget=budget,
+            classification=factories.ClassificationFactory(classification_system=cs),
         )
         res = self.client.get(f"/api/v1/budgets/{budget.id}/items/{budget_item.id}/", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -836,7 +1088,8 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         cs = factories.ClassificationSystemFactory()
         budget = factories.BudgetFactory(classification_system=cs)
         budget_item = factories.AtomicBudgetItemFactory(
-            budget=budget, classification=factories.ClassificationFactory(classification_system=cs)
+            budget=budget,
+            classification=factories.ClassificationFactory(classification_system=cs),
         )
         res = self.client.patch(f"/api/v1/budgets/{budget.id}/items/{budget_item.id}/", {}, format="json")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -845,7 +1098,9 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         cs = factories.ClassificationSystemFactory()
         budget = factories.BudgetFactory(classification_system=cs)
         budget_item = factories.AtomicBudgetItemFactory(
-            budget=budget, classification=factories.ClassificationFactory(classification_system=cs), value=20.0
+            budget=budget,
+            classification=factories.ClassificationFactory(classification_system=cs),
+            value=20.0,
         )
         self.client.login(username=self._user_username, password=self._user_password)
         dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
@@ -873,7 +1128,8 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         cs = factories.ClassificationSystemFactory()
         budget = factories.BudgetFactory(classification_system=cs)
         budget_item = factories.AtomicBudgetItemFactory(
-            budget=budget, classification=factories.ClassificationFactory(classification_system=cs)
+            budget=budget,
+            classification=factories.ClassificationFactory(classification_system=cs),
         )
         res = self.client.delete(f"/api/v1/budgets/{budget.id}/items/{budget_item.id}/", format="json")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -882,7 +1138,8 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         cs = factories.ClassificationSystemFactory()
         budget = factories.BudgetFactory(classification_system=cs)
         budget_item = factories.AtomicBudgetItemFactory(
-            budget=budget, classification=factories.ClassificationFactory(classification_system=cs)
+            budget=budget,
+            classification=factories.ClassificationFactory(classification_system=cs),
         )
         self.client.login(username=self._user_username, password=self._user_password)
         res = self.client.delete(f"/api/v1/budgets/{budget.id}/items/{budget_item.id}/", format="json")
@@ -915,7 +1172,8 @@ class AtomicBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "updatedAt": dt.strftime(datetime_format),
             }
             with patch(
-                "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890"
+                "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
+                return_value="ab12345678901234567890",
             ):
                 res = self.client.post(
                     f"/api/v1/budgets/{budget.id}/items/",
@@ -942,11 +1200,11 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         cl011 = factories.ClassificationFactory(classification_system=cs0, parent=cl01)
         cl012 = factories.ClassificationFactory(classification_system=cs0, parent=cl01)
 
-        abi00 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl000)
-        abi01 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl001)
-        abi10 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl010)
-        abi11 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl011)
-        abi12 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl012)
+        factories.AtomicBudgetItemFactory(budget=bud0, classification=cl000)
+        factories.AtomicBudgetItemFactory(budget=bud0, classification=cl001)
+        factories.AtomicBudgetItemFactory(budget=bud0, classification=cl010)
+        factories.AtomicBudgetItemFactory(budget=bud0, classification=cl011)
+        factories.AtomicBudgetItemFactory(budget=bud0, classification=cl012)
 
         cs1 = factories.ClassificationSystemFactory()
         bud1 = factories.BudgetFactory(classification_system=cs1)
@@ -981,7 +1239,9 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "updatedAt": b.updated_at.strftime(datetime_format),
             }
             for b in sorted(
-                [mbi00, mbi01, mbi10], key=lambda b: getattr(b, ordering.strip("-")), reverse=ordering.startswith("-")
+                [mbi00, mbi01, mbi10],
+                key=lambda b: getattr(b, ordering.strip("-")),
+                reverse=ordering.startswith("-"),
             )[:page_size]
         ]
         res_json = res.json()
@@ -1000,11 +1260,11 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         cl011 = factories.ClassificationFactory(classification_system=cs0, parent=cl01)
         cl012 = factories.ClassificationFactory(classification_system=cs0, parent=cl01)
 
-        abi00 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl000)
-        abi01 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl001)
-        abi10 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl010)
-        abi11 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl011)
-        abi12 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl012)
+        factories.AtomicBudgetItemFactory(budget=bud0, classification=cl000)
+        factories.AtomicBudgetItemFactory(budget=bud0, classification=cl001)
+        factories.AtomicBudgetItemFactory(budget=bud0, classification=cl010)
+        factories.AtomicBudgetItemFactory(budget=bud0, classification=cl011)
+        factories.AtomicBudgetItemFactory(budget=bud0, classification=cl012)
 
         cs1 = factories.ClassificationSystemFactory()
         bud1 = factories.BudgetFactory(classification_system=cs1)
@@ -1092,8 +1352,8 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         bud0 = factories.BudgetFactory(classification_system=cs0)
         cl00 = factories.ClassificationFactory(classification_system=cs0)
         cl01 = factories.ClassificationFactory(classification_system=cs0)
-        abi00 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl00)
-        abi01 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl01)
+        factories.AtomicBudgetItemFactory(budget=bud0, classification=cl00)
+        factories.AtomicBudgetItemFactory(budget=bud0, classification=cl01)
         cs1 = factories.ClassificationSystemFactory()
         bud1 = factories.BudgetFactory(classification_system=cs1)
         cl10 = factories.ClassificationFactory(classification_system=cs1)
@@ -1111,8 +1371,8 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         bud0 = factories.BudgetFactory(classification_system=cs0)
         cl00 = factories.ClassificationFactory(classification_system=cs0)
         cl01 = factories.ClassificationFactory(classification_system=cs0)
-        abi00 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl00)
-        abi01 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl01)
+        factories.AtomicBudgetItemFactory(budget=bud0, classification=cl00)
+        factories.AtomicBudgetItemFactory(budget=bud0, classification=cl01)
         cs1 = factories.ClassificationSystemFactory()
         bud1 = factories.BudgetFactory(classification_system=cs1)
         cl10 = factories.ClassificationFactory(classification_system=cs1)
@@ -1125,7 +1385,8 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "mappedClassifications": [cl00.id, cl01.id],
             }
             with patch(
-                "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default", return_value="ab12345678901234567890"
+                "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
+                return_value="ab12345678901234567890",
             ):
                 res = self.client.post(f"/api/v1/budgets/{bud1.id}/items/", query, format="json")
                 self.assertEqual(res.status_code, status.HTTP_201_CREATED)
@@ -1146,7 +1407,7 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         res = self.client.delete(f"/api/v1/budgets/{mbi.budget.id}/items/{mbi.id}/", format="json")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_destroy_requires_login(self):
+    def test_destroy(self):
         mbi0 = factories.MappedBudgetItemFactory()
         mbi1 = factories.MappedBudgetItemFactory()
         mbi2 = factories.MappedBudgetItemFactory()
