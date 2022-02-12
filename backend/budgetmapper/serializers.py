@@ -75,16 +75,7 @@ class ClassificationSystemDetailSerializer(serializers.ModelSerializer):
 class ClassificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Classification
-        fields = (
-            "id",
-            "code",
-            "name",
-            "icon",
-            "classification_system",
-            "parent",
-            "created_at",
-            "updated_at",
-        )
+        fields = ("id", "code", "name", "icon", "classification_system", "parent", "created_at", "updated_at")
 
 
 class ClassificationListItemSerializer(serializers.ModelSerializer):
