@@ -40,7 +40,7 @@ Run the commands below and you should keep the order of the commands.
 ```
 python ../misc/setup_data/tsukuba_nested.py ../misc/setup_data/tsukuba_nested.json
 python ../misc/setup_data/cofog_nested.py ../misc/setup_data/cofog_nested.json
-python ../misc/setup_data/tsukuba.py ../misc/setup_data/tsukuba.json
+python ../misc/setup_data/tsukuba.py ../misc/setup_data/tsukuba.csv
 
 ```
 
