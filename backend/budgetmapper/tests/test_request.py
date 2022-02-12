@@ -470,6 +470,28 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
         actual = res.json()
         self.assertEqual(actual, expected)
 
+    def test_retrieve_by_slug(self):
+        css = [factories.ClassificationSystemFactory() for i in range(100)]
+        cs = css[random.randint(0, 99)]
+        res = self.client.get(f"/api/v1/classification-systems/{cs.slug}/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = {
+            "id": cs.id,
+            "name": cs.name,
+            "slug": cs.slug,
+            "levelNames": cs.level_names,
+            "items": [],
+            "createdAt": cs.created_at.strftime(datetime_format),
+            "updatedAt": cs.updated_at.strftime(datetime_format),
+        }
+        actual = res.json()
+        self.assertEqual(actual, expected)
+
+    def test_retrieve_by_empty_slug(self):
+        [factories.ClassificationSystemFactory() for i in range(100)]
+        res = self.client.get("/api/v1/classification-systems//", format="json")
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_create_requires_authentication(self):
         query = {"name": "まほろ市予算"}
         res = self.client.post("/api/v1/classification-systems/", query, format="json")
@@ -536,6 +558,15 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
         cs = css[random.randint(0, 99)]
         self.client.login(username=self._user_username, password=self._user_password)
         res = self.client.delete(f"/api/v1/classification-systems/{cs.id}/")
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        with self.assertRaises(models.ClassificationSystem.DoesNotExist):
+            models.ClassificationSystem.objects.get(id=cs.id)
+
+    def test_destroy_by_slug(self):
+        css = [factories.ClassificationSystemFactory() for i in range(100)]
+        cs = css[random.randint(0, 99)]
+        self.client.login(username=self._user_username, password=self._user_password)
+        res = self.client.delete(f"/api/v1/classification-systems/{cs.slug}/")
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         with self.assertRaises(models.ClassificationSystem.DoesNotExist):
             models.ClassificationSystem.objects.get(id=cs.id)

@@ -1,6 +1,9 @@
 import csv
+import operator
+from functools import reduce
 from io import BytesIO, StringIO
 
+from django.db.models import Q
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -20,6 +23,18 @@ class UpdatedAtPagination(CursorPagination):
     ordering = "-updated_at"
 
 
+class MultipleFieldLookupMixin(object):
+    # refs: https://stackoverflow.com/a/38462137
+    def get_object(self):
+        queryset = self.get_queryset()  # Get the base queryset
+        queryset = self.filter_queryset(queryset)  # Apply any filter backends
+        filter = {}
+        for field in self.lookup_fields:
+            filter[field] = self.kwargs[self.param_field_name_in_path]
+        q = reduce(operator.or_, (Q(x) for x in filter.items()))
+        return get_object_or_404(queryset, q)
+
+
 class IconImageViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.IconImage.objects.all()
     pagination_class = CreatedAtPagination
@@ -36,10 +51,12 @@ class GovernmentViewSet(viewsets.ModelViewSet):
     pagination_class = CreatedAtPagination
 
 
-class ClassificationSystemViewSet(viewsets.ModelViewSet):
+class ClassificationSystemViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
     queryset = models.ClassificationSystem.objects.all()
     serializer_class = serializers.ClassificationSystemSerializer
     pagination_class = CreatedAtPagination
+    lookup_fields = ("pk", "slug")
+    param_field_name_in_path = "pk"
 
     def get_serializer_class(self):
         if self.action == "retrieve":
