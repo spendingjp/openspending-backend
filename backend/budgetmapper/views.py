@@ -134,9 +134,6 @@ def icon_view(request, icon_slug_or_id):
     try:
         icon = models.IconImage.objects.get(slug=icon_slug_or_id)
     except models.IconImage.DoesNotExist:
-        pass
-
-    if icon is None:
         icon = get_object_or_404(models.IconImage, id=icon_slug_or_id)
 
     return HttpResponse(icon.body, content_type=f"image/{icon.image_type}")
