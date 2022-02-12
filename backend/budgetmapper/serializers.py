@@ -231,14 +231,14 @@ class MappedBudgetItemCreateUpdateSerializer(serializers.ModelSerializer):
 
 
 class WdmmgNodeSerializer(serializers.ModelSerializer):
-    icon_slug = serializers.SerializerMethodField()
+    icon_id = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Classification
-        fields = ("id", "name", "code", "icon_slug")
+        fields = ("id", "name", "code", "icon_id")
 
-    def get_icon_slug(self, obj: models.Classification):
-        return obj.icon.slug if obj.icon is not None else models.IconImage.get_default_icon().slug
+    def get_icon_id(self, obj: models.Classification):
+        return obj.get_icon_id()
 
     def to_representation(self, instance):
         is_leaf = True

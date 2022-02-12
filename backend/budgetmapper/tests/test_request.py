@@ -48,10 +48,18 @@ class TestCsvDownload(TestCase):
 
 
 class IconTestCase(TestCase):
-    def test_get_icon(self):
+    def test_get_icon_by_slug(self):
         icon = factories.IconImageFactory()
         c = Client()
         res = c.get(f"/icons/{icon.slug}")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.headers["Content-Type"], f"image/{icon.image_type}")
+        self.assertEqual(res.getvalue(), icon.body)
+
+    def test_get_icon_by_id(self):
+        icon = factories.IconImageFactory()
+        c = Client()
+        res = c.get(f"/icons/{icon.id}")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.headers["Content-Type"], f"image/{icon.image_type}")
         self.assertEqual(res.getvalue(), icon.body)
@@ -103,6 +111,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
         self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_get(self) -> None:
+        self.maxDiff = None
         gov = factories.GovernmentFactory(name="まほろ市", slug="mahoro-city")
         cs = factories.ClassificationSystemFactory(name="まほろ市2101年一般会計", slug="mahoro-city-2101-ippan-kaikei")
         icon0 = factories.IconImageFactory()
@@ -151,21 +160,21 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                     "name": cl0.name,
                     "code": cl0.code,
                     "amount": abi000.amount + abi001.amount + abi002.amount + abi010.amount,
-                    "iconSlug": icon0.slug,
+                    "iconId": icon0.id,
                     "children": [
                         {
                             "id": cl00.id,
                             "name": cl00.name,
                             "code": cl00.code,
                             "amount": abi000.amount + abi001.amount + abi002.amount,
-                            "iconSlug": icon00.slug,
+                            "iconId": icon00.id,
                             "children": [
                                 {
                                     "id": cl000.id,
                                     "name": cl000.name,
                                     "code": cl000.code,
                                     "amount": abi000.amount,
-                                    "iconSlug": models.IconImage.get_default_icon().slug,
+                                    "iconId": models.IconImage.get_default_icon().id,
                                     "children": None,
                                 },
                                 {
@@ -173,7 +182,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                                     "name": cl001.name,
                                     "code": cl001.code,
                                     "amount": abi001.amount,
-                                    "iconSlug": models.IconImage.get_default_icon().slug,
+                                    "iconId": models.IconImage.get_default_icon().id,
                                     "children": None,
                                 },
                                 {
@@ -181,7 +190,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                                     "name": cl002.name,
                                     "code": cl002.code,
                                     "amount": abi002.amount,
-                                    "iconSlug": models.IconImage.get_default_icon().slug,
+                                    "iconId": models.IconImage.get_default_icon().id,
                                     "children": None,
                                 },
                             ],
@@ -191,14 +200,14 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                             "name": cl01.name,
                             "code": cl01.code,
                             "amount": abi010.amount,
-                            "iconSlug": icon01.slug,
+                            "iconId": icon01.id,
                             "children": [
                                 {
                                     "id": cl010.id,
                                     "name": cl010.name,
                                     "code": cl010.code,
                                     "amount": abi010.amount,
-                                    "iconSlug": models.IconImage.get_default_icon().slug,
+                                    "iconId": models.IconImage.get_default_icon().id,
                                     "children": None,
                                 }
                             ],
@@ -210,21 +219,21 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                     "name": cl1.name,
                     "code": cl1.code,
                     "amount": abi100.amount,
-                    "iconSlug": models.IconImage.get_default_icon().slug,
+                    "iconId": models.IconImage.get_default_icon().id,
                     "children": [
                         {
                             "id": cl10.id,
                             "name": cl10.name,
                             "code": cl10.code,
                             "amount": abi100.amount,
-                            "iconSlug": models.IconImage.get_default_icon().slug,
+                            "iconId": models.IconImage.get_default_icon().id,
                             "children": [
                                 {
                                     "id": cl100.id,
                                     "name": cl100.name,
                                     "code": cl100.code,
                                     "amount": abi100.amount,
-                                    "iconSlug": models.IconImage.get_default_icon().slug,
+                                    "iconId": models.IconImage.get_default_icon().id,
                                     "children": None,
                                 }
                             ],
@@ -236,21 +245,21 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                     "name": cl2.name,
                     "code": cl2.code,
                     "amount": 0,
-                    "iconSlug": models.IconImage.get_default_icon().slug,
+                    "iconId": models.IconImage.get_default_icon().id,
                     "children": [
                         {
                             "id": cl20.id,
                             "name": cl20.name,
                             "code": cl20.code,
                             "amount": 0,
-                            "iconSlug": models.IconImage.get_default_icon().slug,
+                            "iconId": models.IconImage.get_default_icon().id,
                             "children": [
                                 {
                                     "id": cl200.id,
                                     "name": cl200.name,
                                     "code": cl200.code,
                                     "amount": 0,
-                                    "iconSlug": models.IconImage.get_default_icon().slug,
+                                    "iconId": models.IconImage.get_default_icon().id,
                                     "children": None,
                                 }
                             ],

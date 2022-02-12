@@ -1,6 +1,7 @@
 import base64
 import json
 from io import BufferedIOBase, BytesIO, RawIOBase
+from xml.dom import NotFoundErr
 
 import pykakasi
 import shortuuidfield
@@ -250,6 +251,9 @@ class Classification(models.Model):
     @property
     def direct_children(self) -> models.QuerySet:
         return Classification.objects.filter(parent=self).order_by("item_order")
+
+    def get_icon_id(self):
+        return self.icon.id if self.icon is not None else IconImage.get_default_icon().id
 
     class Meta:
         unique_together = ("classification_system", "item_order")

@@ -129,6 +129,14 @@ def download_csv_view(request, budget_id):
     return FileResponse(BytesIO(buf.getvalue().encode("utf-8")), as_attachment=True, filename=f"{budget.slug}.csv")
 
 
-def icon_view(request, icon_slug):
-    icon = get_object_or_404(models.IconImage, slug=icon_slug)
+def icon_view(request, icon_slug_or_id):
+    icon = None
+    try:
+        icon = models.IconImage.objects.get(slug=icon_slug_or_id)
+    except models.IconImage.DoesNotExist:
+        pass
+
+    if icon is None:
+        icon = get_object_or_404(models.IconImage, id=icon_slug_or_id)
+
     return HttpResponse(icon.body, content_type=f"image/{icon.image_type}")
