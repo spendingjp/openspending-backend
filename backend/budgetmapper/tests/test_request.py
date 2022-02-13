@@ -1541,15 +1541,15 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
 
         mbi00 = models.MappedBudgetItem(budget=bud1, classification=cl100)
         mbi00.save()
-        mbi00.mapped_classifications.set([cl000])
+        mbi00.source_classifications.set([cl000])
 
         mbi01 = models.MappedBudgetItem(budget=bud1, classification=cl101)
         mbi01.save()
-        mbi01.mapped_classifications.set([cl010, cl011])
+        mbi01.source_classifications.set([cl010, cl011])
 
         mbi10 = models.MappedBudgetItem(budget=bud1, classification=cl110)
         mbi10.save()
-        mbi10.mapped_classifications.set([cl001, cl012])
+        mbi10.source_classifications.set([cl001, cl012])
 
         res = self.client.get(f"/api/v1/budgets/{bud1.id}/items/", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -1557,7 +1557,7 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
             {
                 "id": b.id,
                 "budget": bud1.id,
-                "mappedClassifications": [c.id for c in b.mapped_classifications.all()],
+                "sourceClassifications": [c.id for c in b.source_classifications.all()],
                 "classification": b.classification.id,
                 "createdAt": b.created_at.strftime(datetime_format),
                 "updatedAt": b.updated_at.strftime(datetime_format),
@@ -1600,21 +1600,21 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
 
         mbi00 = models.MappedBudgetItem(budget=bud1, classification=cl100)
         mbi00.save()
-        mbi00.mapped_classifications.set([cl000])
+        mbi00.source_classifications.set([cl000])
 
         mbi01 = models.MappedBudgetItem(budget=bud1, classification=cl101)
         mbi01.save()
-        mbi01.mapped_classifications.set([cl010, cl011])
+        mbi01.source_classifications.set([cl010, cl011])
 
         mbi10 = models.MappedBudgetItem(budget=bud1, classification=cl110)
         mbi10.save()
-        mbi10.mapped_classifications.set([cl001, cl012])
+        mbi10.source_classifications.set([cl001, cl012])
 
         res = self.client.get(f"/api/v1/budgets/{bud1.id}/items/{mbi01.id}/", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         expected = {
             "id": mbi01.id,
-            "mappedClassifications": [
+            "sourceClassifications": [
                 {
                     "id": cl010.id,
                     "name": cl010.name,
@@ -1677,7 +1677,7 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
         query = {
             "budget": bud1.id,
             "classification": cl10.id,
-            "mappedClassifications": [cl00.id, cl01.id],
+            "sourceClassifications": [cl00.id, cl01.id],
         }
         res = self.client.post(f"/api/v1/budgets/{bud1.id}/items/", query, format="json")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -1697,7 +1697,7 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
             self.client.login(username=self._user_username, password=self._user_password)
             query = {
                 "classification": cl10.id,
-                "mappedClassifications": [cl00.id, cl01.id],
+                "sourceClassifications": [cl00.id, cl01.id],
             }
             with patch(
                 "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
@@ -1709,7 +1709,7 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
                     "id": "ab12345678901234567890",
                     "budget": bud1.id,
                     "classification": cl10.id,
-                    "mappedClassifications": [cl00.id, cl01.id],
+                    "sourceClassifications": [cl00.id, cl01.id],
                     "createdAt": dt.strftime(datetime_format),
                     "updatedAt": dt.strftime(datetime_format),
                 }
@@ -1736,15 +1736,15 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
     def test_update_requires_login(self):
         mbi = factories.MappedBudgetItemFactory()
         cl = factories.ClassificationFactory(classification_system=mbi.budget.source_budget.classification_system)
-        query = {"mappedClassifications": [c.id for c in mbi.mapped_classifications.all()] + [cl.id]}
+        query = {"sourceClassifications": [c.id for c in mbi.source_classifications.all()] + [cl.id]}
         res = self.client.patch(f"/api/v1/budgets/{mbi.budget.id}/items/{mbi.id}/", query, format="json")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_update_adding_mapped_classifications(self):
+    def test_update_adding_source_classifications(self):
         mbi = factories.MappedBudgetItemFactory()
-        cl_orig = [c.id for c in mbi.mapped_classifications.all()]
+        cl_orig = [c.id for c in mbi.source_classifications.all()]
         cl = factories.ClassificationFactory(classification_system=mbi.budget.source_budget.classification_system)
-        query = {"mappedClassifications": cl_orig + [cl.id]}
+        query = {"sourceClassifications": cl_orig + [cl.id]}
         dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt):
             self.client.login(username=self._user_username, password=self._user_password)
@@ -1754,7 +1754,7 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "id": mbi.id,
                 "budget": mbi.budget.id,
                 "classification": mbi.classification.id,
-                "mappedClassifications": cl_orig + [cl.id],
+                "sourceClassifications": cl_orig + [cl.id],
                 "createdAt": mbi.created_at.strftime(datetime_format),
                 "updatedAt": dt.strftime(datetime_format),
             }

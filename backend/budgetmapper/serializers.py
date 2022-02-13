@@ -339,7 +339,7 @@ class MappedBudgetItemListSerializer(serializers.ModelSerializer):
             "id",
             "budget",
             "classification",
-            "mapped_classifications",
+            "source_classifications",
             "created_at",
             "updated_at",
         )
@@ -347,7 +347,7 @@ class MappedBudgetItemListSerializer(serializers.ModelSerializer):
 
 class MappedBudgetItemRetrieveSerializer(serializers.ModelSerializer):
     classification = ClassificationSerializer()
-    mapped_classifications = ClassificationSerializer(many=True)
+    source_classifications = ClassificationSerializer(many=True)
     budget = MappedBudgetSerializer()
 
     class Meta:
@@ -356,7 +356,7 @@ class MappedBudgetItemRetrieveSerializer(serializers.ModelSerializer):
             "id",
             "budget",
             "classification",
-            "mapped_classifications",
+            "source_classifications",
             "created_at",
             "updated_at",
         )
@@ -369,7 +369,7 @@ class MappedBudgetItemCreateUpdateSerializer(serializers.ModelSerializer):
             "id",
             "budget",
             "classification",
-            "mapped_classifications",
+            "source_classifications",
             "created_at",
             "updated_at",
         )

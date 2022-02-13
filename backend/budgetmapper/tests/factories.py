@@ -77,10 +77,10 @@ class MappedBudgetItemFactory(DjangoModelFactory):
     classification = factory.SubFactory(ClassificationFactory)
 
     @factory.post_generation
-    def mapped_classifications(self, create, extracted, **kwargs):
+    def source_classifications(self, create, extracted, **kwargs):
         if create:
             for _ in range(random.randint(1, 10)):
-                self.mapped_classifications.add(
+                self.source_classifications.add(
                     ClassificationFactory(classification_system=self.budget.source_budget.classification_system)
                 )
             return

@@ -361,11 +361,11 @@ class AtomicBudgetItem(BudgetItemBase):
 
 
 class MappedBudgetItem(BudgetItemBase):
-    mapped_classifications = models.ManyToManyField(Classification, related_name="mapping_classifications")
+    source_classifications = models.ManyToManyField(Classification, related_name="mapping_classifications")
 
     @property
     def amount(self) -> float:
-        return sum(self.budget.source_budget.get_amount_of(c) for c in self.mapped_classifications.all())
+        return sum(self.budget.source_budget.get_amount_of(c) for c in self.source_classifications.all())
 
 
 class Blob(models.Model):

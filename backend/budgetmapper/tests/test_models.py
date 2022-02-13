@@ -313,7 +313,7 @@ class MappedBudgetItemTestCase(TestCase):
         cl = factories.ClassificationFactory(classification_system=bud.classification_system)
         sut = models.MappedBudgetItem(budget=bud, classification=cl)
         sut.save()
-        sut.mapped_classifications.set([orig_cl])
+        sut.source_classifications.set([orig_cl])
         sut.save()
         self.assertEqual(sut.amount, atm.value)
         self.assertEqual(sut.budget, bud)
@@ -331,7 +331,7 @@ class MappedBudgetItemTestCase(TestCase):
         cl = factories.ClassificationFactory(classification_system=bud.classification_system)
         sut = models.MappedBudgetItem(budget=bud, classification=cl)
         sut.save()
-        sut.mapped_classifications.set([atm.classification for atm in atms])
+        sut.source_classifications.set([atm.classification for atm in atms])
         sut.save()
         self.assertEqual(sut.amount, sum(atm.value for atm in atms))
         self.assertEqual(sut.budget, bud)
@@ -390,15 +390,15 @@ class ComplexBudgetItemTestCase(TestCase):
 
         mbi00 = models.MappedBudgetItem(budget=bud1, classification=cl100)
         mbi00.save()
-        mbi00.mapped_classifications.set([cl000])
+        mbi00.source_classifications.set([cl000])
 
         mbi01 = models.MappedBudgetItem(budget=bud1, classification=cl101)
         mbi01.save()
-        mbi01.mapped_classifications.set([cl010, cl011])
+        mbi01.source_classifications.set([cl010, cl011])
 
         mbi10 = models.MappedBudgetItem(budget=bud1, classification=cl110)
         mbi10.save()
-        mbi10.mapped_classifications.set([cl001, cl012])
+        mbi10.source_classifications.set([cl001, cl012])
 
         self.assertAlmostEqual(bud1.get_amount_of(cl10), abi00.value + abi10.value + abi11.value)
         self.assertAlmostEqual(bud1.get_amount_of(cl100), abi00.value)
