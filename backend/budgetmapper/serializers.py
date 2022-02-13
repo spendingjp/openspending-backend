@@ -152,7 +152,7 @@ class BudgetListSerializer(serializers.ModelSerializer):
     def to_representation(self, instance: models.BudgetBase):
         if isinstance(instance, models.MappedBudget):
             return dict(
-                super(BudgetListSerializer, self).to_representation(instance), source_budget=instance.source_budget
+                super(BudgetListSerializer, self).to_representation(instance), source_budget=instance.source_budget.id
             )
         return super(BudgetListSerializer, self).to_representation(instance)
 
@@ -293,7 +293,7 @@ class MappedBudgetRetrieveSerializer(serializers.ModelSerializer):
         return obj.year
 
     def get_government(self, obj: models.BudgetBase):
-        return obj.government.id
+        return GovernmentSerializer(obj.government).data
 
     class Meta:
         model = models.MappedBudget
