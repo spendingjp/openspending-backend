@@ -1,12 +1,10 @@
 <template>
   <v-container>
     <v-row class="mb-4">
-      <h1>Cofog 分類紐付け</h1>
+      <h1>COFOG 分類紐付け</h1>
     </v-row>
     <v-row class="mb-8">
-      <div>
-        ここに説明が入ります。ここに説明が入ります。ここに説明が入ります。ここに説明が入ります。ここに説明が入ります。
-      </div>
+      <div>COFOG への紐付けを選択して [反映] をクリックします</div>
     </v-row>
     <v-row v-if="state.wdmmgTree">
       <wdmmg-tree

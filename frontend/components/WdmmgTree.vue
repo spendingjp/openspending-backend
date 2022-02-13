@@ -21,7 +21,14 @@
               class="cofog-selector"
               dense
               return-object
-            ></v-autocomplete>
+            >
+              <template #item="{ item: cofogItem }">
+                {{ `${cofogItem.code} ${cofogItem.name}` }}
+              </template>
+              <template #selection="{ item: cofogItem }">
+                {{ `${cofogItem.code} ${cofogItem.name}` }}
+              </template>
+            </v-autocomplete>
           </div>
           <div class="cofog-btn-container" @click.stop>
             <v-btn depressed color="primary" @click="onClickCommitBtn(item)"
