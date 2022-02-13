@@ -13,7 +13,7 @@
       <template #append="{ item }">
         <div class="tree-suffix-container">
           <div class="cofog-selector-container" @click.stop>
-            <v-select
+            <v-autocomplete
               v-model="state.clsToCofogMap[item.id]"
               :items="state.cofogClassifications"
               item-text="name"
@@ -21,7 +21,7 @@
               class="cofog-selector"
               dense
               return-object
-            ></v-select>
+            ></v-autocomplete>
           </div>
           <div class="cofog-btn-container" @click.stop>
             <v-btn depressed color="primary" @click="onClickCommitBtn(item)"
