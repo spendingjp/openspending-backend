@@ -39,15 +39,25 @@ class ClassificationFactory(DjangoModelFactory):
     parent = None
 
 
-class BudgetFactory(DjangoModelFactory):
+class BasicBudgetFactory(DjangoModelFactory):
     class Meta:
-        model = models.Budget
+        model = models.BasicBudget
 
     name = fuzzy.FuzzyText(suffix="予算")
-    year = fuzzy.FuzzyInteger(1900, high=2200)
+    year_value = fuzzy.FuzzyInteger(1900, high=2200)
     subtitle = fuzzy.FuzzyText()
     classification_system = factory.SubFactory(ClassificationSystemFactory)
-    government = factory.SubFactory(GovernmentFactory)
+    government_value = factory.SubFactory(GovernmentFactory)
+
+
+class MappedBudgetFactory(DjangoModelFactory):
+    class Meta:
+        model = models.MappedBudget
+
+    name = fuzzy.FuzzyText(suffix="予算")
+    subtitle = fuzzy.FuzzyText()
+    classification_system = factory.SubFactory(ClassificationSystemFactory)
+    source_budget = factory.SubFactory(BasicBudgetFactory)
 
 
 class AtomicBudgetItemFactory(DjangoModelFactory):
@@ -55,7 +65,7 @@ class AtomicBudgetItemFactory(DjangoModelFactory):
         model = models.AtomicBudgetItem
 
     value = fuzzy.FuzzyFloat(1000.0, high=1000000.0)
-    budget = factory.SubFactory(BudgetFactory)
+    budget = factory.SubFactory(BasicBudgetFactory)
     classification = factory.SubFactory(ClassificationFactory)
 
 
@@ -63,16 +73,15 @@ class MappedBudgetItemFactory(DjangoModelFactory):
     class Meta:
         model = models.MappedBudgetItem
 
-    budget = factory.SubFactory(BudgetFactory)
+    budget = factory.SubFactory(MappedBudgetFactory)
     classification = factory.SubFactory(ClassificationFactory)
-    mapped_budget = factory.SubFactory(BudgetFactory)
 
     @factory.post_generation
     def mapped_classifications(self, create, extracted, **kwargs):
         if create:
             for _ in range(random.randint(1, 10)):
                 self.mapped_classifications.add(
-                    ClassificationFactory(classification_system=self.mapped_budget.classification_system)
+                    ClassificationFactory(classification_system=self.budget.source_budget.classification_system)
                 )
             return
 

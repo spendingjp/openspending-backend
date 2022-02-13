@@ -217,12 +217,12 @@ class ClassificationTest(TransactionTestCase):
         self.assertEqual(sut.icon.id, icon.id)
 
 
-class BudgetTest(TestCase):
+class BasicBudgetTest(TestCase):
     @patch("budgetmapper.models.jp_slugify", return_value="a-slug")
     def test_budget_default(self, _: MagicMock) -> None:
         gov = factories.GovernmentFactory()
         cs = factories.ClassificationSystemFactory()
-        sut = models.Budget(name="まほろ市 2101 年度予算", year=2101, classification_system=cs, government=gov)
+        sut = models.BasicBudget(name="まほろ市 2101 年度予算", year_value=2101, classification_system=cs, government_value=gov)
         sut.save()
         self.assertEqual(sut.name, "まほろ市 2101 年度予算")
         self.assertEqual(sut.slug, "a-slug")
@@ -234,13 +234,13 @@ class BudgetTest(TestCase):
     def test_budget_has_year(self) -> None:
         gov = factories.GovernmentFactory()
         cs = factories.ClassificationSystemFactory()
-        sut = models.Budget(
+        sut = models.BasicBudget(
             name="まほろ市 2101 年度予算",
-            year=2101,
+            year_value=2101,
             subtitle="改正案",
             slug="a-slug-mahoro",
             classification_system=cs,
-            government=gov,
+            government_value=gov,
         )
         sut.save()
         self.assertEqual(sut.name, "まほろ市 2101 年度予算")
@@ -252,7 +252,7 @@ class BudgetTest(TestCase):
 
     def test_iterate_items(self) -> None:
         cs = factories.ClassificationSystemFactory()
-        bud = factories.BudgetFactory(classification_system=cs)
+        bud = factories.BasicBudgetFactory(classification_system=cs)
         cl0 = factories.ClassificationFactory(classification_system=cs)
         cl00 = factories.ClassificationFactory(classification_system=cs, parent=cl0)
         cl01 = factories.ClassificationFactory(classification_system=cs, parent=cl0)
@@ -284,7 +284,7 @@ class BudgetTest(TestCase):
 
 class AtomicBudgetItemTestCase(TestCase):
     def test_atomic_budget_item_default(self) -> None:
-        bud = factories.BudgetFactory()
+        bud = factories.BasicBudgetFactory()
         cl = factories.ClassificationFactory(classification_system=bud.classification_system)
         sut = models.AtomicBudgetItem(value=123, classification=cl, budget=bud)
         sut.save()
@@ -296,7 +296,7 @@ class AtomicBudgetItemTestCase(TestCase):
 
     def test_cs_must_coincide(self) -> None:
         cs1 = factories.ClassificationSystemFactory()
-        bud = factories.BudgetFactory(classification_system=cs1)
+        bud = factories.BasicBudgetFactory(classification_system=cs1)
         cs2 = factories.ClassificationSystemFactory()
         cl = factories.ClassificationFactory(classification_system=cs2)
         sut = models.AtomicBudgetItem(value=10000, budget=bud, classification=cl)
@@ -306,12 +306,12 @@ class AtomicBudgetItemTestCase(TestCase):
 
 class MappedBudgetItemTestCase(TestCase):
     def test_mapped_budget_item_mapped_to_single_budget_item(self) -> None:
-        orig_bud = factories.BudgetFactory()
+        orig_bud = factories.BasicBudgetFactory()
         orig_cl = factories.ClassificationFactory(classification_system=orig_bud.classification_system)
         atm = factories.AtomicBudgetItemFactory(classification=orig_cl, budget=orig_bud)
-        bud = factories.BudgetFactory()
+        bud = factories.MappedBudgetFactory(source_budget=orig_bud)
         cl = factories.ClassificationFactory(classification_system=bud.classification_system)
-        sut = models.MappedBudgetItem(budget=bud, classification=cl, mapped_budget=orig_bud)
+        sut = models.MappedBudgetItem(budget=bud, classification=cl)
         sut.save()
         sut.mapped_classifications.set([orig_cl])
         sut.save()
@@ -321,15 +321,15 @@ class MappedBudgetItemTestCase(TestCase):
         self.assertEqual(bud.get_amount_of(cl), atm.value)
 
     def test_mapped_budget_item_mapped_to_many_budget_item(self) -> None:
-        orig_bud = factories.BudgetFactory()
+        orig_bud = factories.BasicBudgetFactory()
         atms = []
         for i in range(100):
             orig_cl = factories.ClassificationFactory(classification_system=orig_bud.classification_system)
             atms.append(factories.AtomicBudgetItemFactory(classification=orig_cl, budget=orig_bud))
 
-        bud = factories.BudgetFactory()
+        bud = factories.MappedBudgetFactory(source_budget=orig_bud)
         cl = factories.ClassificationFactory(classification_system=bud.classification_system)
-        sut = models.MappedBudgetItem(budget=bud, classification=cl, mapped_budget=orig_bud)
+        sut = models.MappedBudgetItem(budget=bud, classification=cl)
         sut.save()
         sut.mapped_classifications.set([atm.classification for atm in atms])
         sut.save()
@@ -342,7 +342,7 @@ class MappedBudgetItemTestCase(TestCase):
 class ComplexBudgetItemTestCase(TestCase):
     def test_get_amount_of_tree_nodes(self) -> None:
         cs = factories.ClassificationSystemFactory()
-        bud = factories.BudgetFactory(classification_system=cs)
+        bud = factories.BasicBudgetFactory(classification_system=cs)
         cl0 = factories.ClassificationFactory(classification_system=cs)
         cl00 = factories.ClassificationFactory(classification_system=cs, parent=cl0)
         cl01 = factories.ClassificationFactory(classification_system=cs, parent=cl0)
@@ -365,7 +365,7 @@ class ComplexBudgetItemTestCase(TestCase):
 
     def test_get_amount_of_mapped_tree_nodes(self) -> None:
         cs0 = factories.ClassificationSystemFactory()
-        bud0 = factories.BudgetFactory(classification_system=cs0)
+        bud0 = factories.BasicBudgetFactory(classification_system=cs0)
         cl00 = factories.ClassificationFactory(classification_system=cs0)
         cl000 = factories.ClassificationFactory(classification_system=cs0, parent=cl00)
         cl001 = factories.ClassificationFactory(classification_system=cs0, parent=cl00)
@@ -381,22 +381,22 @@ class ComplexBudgetItemTestCase(TestCase):
         abi12 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl012)
 
         cs1 = factories.ClassificationSystemFactory()
-        bud1 = factories.BudgetFactory(classification_system=cs1)
+        bud1 = factories.MappedBudgetFactory(classification_system=cs1, source_budget=bud0)
         cl10 = factories.ClassificationFactory(classification_system=cs1)
         cl100 = factories.ClassificationFactory(classification_system=cs1, parent=cl10)
         cl101 = factories.ClassificationFactory(classification_system=cs1, parent=cl10)
         cl11 = factories.ClassificationFactory(classification_system=cs1)
         cl110 = factories.ClassificationFactory(classification_system=cs1, parent=cl11)
 
-        mbi00 = models.MappedBudgetItem(budget=bud1, classification=cl100, mapped_budget=bud0)
+        mbi00 = models.MappedBudgetItem(budget=bud1, classification=cl100)
         mbi00.save()
         mbi00.mapped_classifications.set([cl000])
 
-        mbi01 = models.MappedBudgetItem(budget=bud1, classification=cl101, mapped_budget=bud0)
+        mbi01 = models.MappedBudgetItem(budget=bud1, classification=cl101)
         mbi01.save()
         mbi01.mapped_classifications.set([cl010, cl011])
 
-        mbi10 = models.MappedBudgetItem(budget=bud1, classification=cl110, mapped_budget=bud0)
+        mbi10 = models.MappedBudgetItem(budget=bud1, classification=cl110)
         mbi10.save()
         mbi10.mapped_classifications.set([cl001, cl012])
 
@@ -444,7 +444,7 @@ class WdmmgTreeCacheTestCase(TransactionTestCase):
     def test_wdmmg_tree_cache(self):
         raw_data = BytesIO(json.dumps({"a": 1}).encode("utf-8"))
         blob = models.Blob.write(raw_data, name="cache")
-        budget = factories.BudgetFactory()
+        budget = factories.BasicBudgetFactory()
         dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt), patch(
             "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
@@ -469,7 +469,7 @@ class WdmmgTreeCacheTestCase(TransactionTestCase):
     def test_cache_tree(self, Blob_write, BytesIO):
         blob0, blob1 = factories.BlobFactory(), factories.BlobFactory()
         Blob_write.side_effect = [blob0, blob1]
-        bud = factories.BudgetFactory()
+        bud = factories.BasicBudgetFactory()
         data0 = {"a": 1}
         actual0 = models.WdmmgTreeCache.cache_tree(data0, bud)
         self.assertEqual(actual0.budget.id, bud.id)
@@ -497,7 +497,7 @@ class WdmmgTreeCacheTestCase(TransactionTestCase):
         BlobReader.return_value.read.return_value = b'{"a":1}'
         with freezegun.freeze_time(datetime(2021, 1, 31, 12, 23, 34, 5678)) as dt:
             blob = factories.BlobFactory()
-            bud = factories.BudgetFactory()
+            bud = factories.BasicBudgetFactory()
             dt.tick(1000)
             cache = models.WdmmgTreeCache(blob=blob, budget=bud)
             cache.save()
@@ -506,14 +506,14 @@ class WdmmgTreeCacheTestCase(TransactionTestCase):
             self.assertEqual(actual, expected)
 
     def test_get_or_none_returns_none_when_no_cache(self):
-        bud = factories.BudgetFactory()
+        bud = factories.BasicBudgetFactory()
         actual = models.WdmmgTreeCache.get_or_none(bud)
         self.assertIsNone(actual)
 
     def test_get_or_none_returns_none_when_budget_is_newer(self):
         with freezegun.freeze_time(datetime(2021, 1, 31, 12, 23, 34, 5678)) as dt:
             blob = factories.BlobFactory()
-            bud = factories.BudgetFactory()
+            bud = factories.BasicBudgetFactory()
             cache = models.WdmmgTreeCache(blob=blob, budget=bud)
             cache.save()
             dt.tick(1000)

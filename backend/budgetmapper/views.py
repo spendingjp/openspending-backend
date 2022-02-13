@@ -4,10 +4,9 @@ from functools import reduce
 from io import BytesIO, StringIO
 
 from django.db.models import Q
-from django.http import FileResponse, HttpResponse
+from django.http import FileResponse, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import mixins, viewsets
+from rest_framework import filters, mixins, viewsets
 from rest_framework.pagination import CursorPagination
 
 from . import models, serializers
@@ -76,45 +75,69 @@ class ClassificationViewSet(viewsets.ModelViewSet):
         return serializers.ClassificationSerializer
 
 
+class BudgetFilter(filters.BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        basic_qs = models.BasicBudget.objects
+        if "government" in request.query_params:
+            basic_qs = basic_qs.filter(government_value_id=request.query_params["government"])
+        if "year" in request.query_params:
+            try:
+                basic_qs = basic_qs.filter(year_value=int(request.query_params["year"]))
+            except ValueError:
+                return queryset.filter(pk=None)
+        ids = list(d["id"] for d in basic_qs.values("id"))
+        ids += list(d["id"] for d in models.MappedBudget.objects.filter(source_budget__in=ids).values("id"))
+        return queryset.filter(Q(pk__in=ids))
+
+
 class BudgetViewSet(viewsets.ModelViewSet):
-    queryset = models.Budget.objects.all()
+    queryset = models.BudgetBase.objects.all()
     pagination_class = CreatedAtPagination
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ("government", "year")
+    filter_backends = [BudgetFilter]
 
     def get_serializer_class(self):
+        if "pk" not in self.kwargs:
+            if self.action == "create":
+                if "source_budget" in self.request.data:
+                    return serializers.MappedBudgetSerializer
+                return serializers.BasicBudgetCreateUpdateSerializer
+            return serializers.BudgetListSerializer
+        bud = get_object_or_404(models.BudgetBase.objects, pk=self.kwargs["pk"])
+        if isinstance(bud, models.BasicBudget):
+            if self.action == "retrieve":
+                return serializers.BasicBudgetRetrieveSerializer
+            return serializers.BasicBudgetSerializer
         if self.action == "retrieve":
-            return serializers.BudgetDetailSerializer
-        return serializers.BudgetSerializer
+            return serializers.MappedBudgetRetrieveSerializer
+        return serializers.MappedBudgetSerializer
 
 
 class BudgetItemViewSet(viewsets.ModelViewSet):
     pagination_class = CreatedAtPagination
 
     def get_serializer_class(self):
-        if self.action == "create":
-            self.request.data["budget"] = self.kwargs["budget_pk"]
-            if "mapped_budget" in self.request.data and "mapped_classifications" in self.request.data:
-                return serializers.MappedBudgetItemCreateUpdateSerializer
-            return serializers.AtomicBudgetItemCreateUpdateSerializer
-        if isinstance(self.get_queryset().first(), models.MappedBudgetItem):
+        bud = get_object_or_404(models.BudgetBase.objects, pk=self.kwargs["budget_pk"])
+        if isinstance(bud, models.BasicBudget):
+            if self.action == "retrieve":
+                return serializers.AtomicBudgetItemRetrieveSerializer
+            if self.action in {"create", "update", "partial_update"}:
+                self.request.data["budget"] = self.kwargs["budget_pk"]
+                return serializers.AtomicBudgetItemCreateUpdateSerializer
+            return serializers.AtomicBudgetItemListSerializer
+        else:
             if self.action == "retrieve":
                 return serializers.MappedBudgetItemRetrieveSerializer
-            if self.action in {"update", "partial_update"}:
+            if self.action in {"create", "update", "partial_update"}:
+                self.request.data["budget"] = self.kwargs["budget_pk"]
                 return serializers.MappedBudgetItemCreateUpdateSerializer
             return serializers.MappedBudgetItemListSerializer
-        if self.action == "retrieve":
-            return serializers.AtomicBudgetItemRetrieveSerializer
-        if self.action in {"update", "partial_update"}:
-            return serializers.AtomicBudgetItemCreateUpdateSerializer
-        return serializers.AtomicBudgetItemListSerializer
 
     def get_queryset(self):
         return models.BudgetItemBase.objects.filter(budget=self.kwargs["budget_pk"])
 
 
 class WdmmgView(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-    queryset = models.Budget.objects.all()
+    queryset = models.BudgetBase.objects.all()
     pagination_class = CreatedAtPagination
     serializer_class = serializers.WdmmgSerializer
     lookup_field = "slug"
@@ -126,7 +149,7 @@ def download_xlsx_template_view(request):
 
 
 def download_csv_view(request, budget_id):
-    budget = get_object_or_404(models.Budget, pk=budget_id)
+    budget = get_object_or_404(models.BudgetBase, pk=budget_id)
     level_names = (
         budget.classification_system.level_names if budget.classification_system.level_names is not None else []
     )
