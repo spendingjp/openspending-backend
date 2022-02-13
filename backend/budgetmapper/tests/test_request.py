@@ -1612,7 +1612,7 @@ class MappedBudgetItemCrudTestCase(BudgetMapperTestUserAPITestCase):
 
         res = self.client.get(f"/api/v1/budgets/{bud1.id}/items/{mbi01.id}/", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        bud1 = models.Budget.objects.get(pk=bud1.pk)
+        bud1 = models.MappedBudget.objects.get(pk=bud1.pk)
         expected = {
             "id": mbi01.id,
             "sourceClassifications": [

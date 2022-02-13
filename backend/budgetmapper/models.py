@@ -467,7 +467,7 @@ def touch_budget_on_delete_atomic_budget_item(sender, instance=None, **kwargs):
 @receiver(post_save, sender=ClassificationSystem)
 def touch_budget_on_classification_system_save(sender, instance=None, **kwargs):
     if instance is not None:
-        for budget in Budget.objects.filter(classification_system=instance):
+        for budget in BudgetBase.objects.filter(classification_system=instance):
             budget.save()
 
 

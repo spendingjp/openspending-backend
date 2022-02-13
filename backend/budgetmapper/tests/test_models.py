@@ -414,9 +414,11 @@ class ComplexBudgetItemTestCase(TestCase):
         with freezegun.freeze_time(dt_orig) as dt:
             cs = factories.ClassificationSystemFactory()
             gov = factories.GovernmentFactory(name="まほろ市")
-            bud = models.Budget(name="まほろ市予算", year=2101, government=gov, classification_system=cs)
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
             bud.save()
-            other_bud = models.Budget(name="無関係な予算", year=2101, government=gov, classification_system=cs)
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=cs
+            )
             other_bud.save()
             cl0 = factories.ClassificationFactory(classification_system=cs)
             self.assert_datetime_equals(bud.created_at, datetime.now())
@@ -434,9 +436,11 @@ class ComplexBudgetItemTestCase(TestCase):
         with freezegun.freeze_time(dt_orig) as dt:
             cs = factories.ClassificationSystemFactory()
             gov = factories.GovernmentFactory(name="まほろ市")
-            bud = models.Budget(name="まほろ市予算", year=2101, government=gov, classification_system=cs)
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
             bud.save()
-            other_bud = models.Budget(name="無関係な予算", year=2101, government=gov, classification_system=cs)
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=cs
+            )
             other_bud.save()
             cl0 = factories.ClassificationFactory(classification_system=cs)
             dt.tick(1000)
@@ -457,9 +461,11 @@ class ComplexBudgetItemTestCase(TestCase):
         with freezegun.freeze_time(dt_orig) as dt:
             cs = factories.ClassificationSystemFactory()
             gov = factories.GovernmentFactory(name="まほろ市")
-            bud = models.Budget(name="まほろ市予算", year=2101, government=gov, classification_system=cs)
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
             bud.save()
-            other_bud = models.Budget(name="無関係な予算", year=2101, government=gov, classification_system=cs)
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=cs
+            )
             other_bud.save()
             cl0 = factories.ClassificationFactory(classification_system=cs)
             dt.tick(1000)
@@ -479,9 +485,11 @@ class ComplexBudgetItemTestCase(TestCase):
         with freezegun.freeze_time(dt_orig) as dt:
             cs = factories.ClassificationSystemFactory()
             gov = factories.GovernmentFactory(name="まほろ市")
-            bud = models.Budget(name="まほろ市予算", year=2101, government=gov, classification_system=cs)
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
             bud.save()
-            other_bud = models.Budget(name="無関係な予算", year=2101, government=gov, classification_system=cs)
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=cs
+            )
             other_bud.save()
             cl0 = factories.ClassificationFactory(classification_system=cs)
             dt.tick(1000)
@@ -504,9 +512,11 @@ class ComplexBudgetItemTestCase(TestCase):
             other_cs = models.ClassificationSystem(name="まほろ市無関係予算体系")
             other_cs.save()
             gov = factories.GovernmentFactory(name="まほろ市")
-            bud = models.Budget(name="まほろ市予算", year=2101, government=gov, classification_system=cs)
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
             bud.save()
-            other_bud = models.Budget(name="無関係な予算", year=2101, government=gov, classification_system=other_cs)
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=other_cs
+            )
             other_bud.save()
             dt.tick(1000)
             cs.name = "まほろ市予算体系"
@@ -525,9 +535,11 @@ class ComplexBudgetItemTestCase(TestCase):
             other_cs = models.ClassificationSystem(name="まほろ市無関係予算体系")
             other_cs.save()
             gov = factories.GovernmentFactory(name="まほろ市")
-            bud = models.Budget(name="まほろ市予算", year=2101, government=gov, classification_system=cs)
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
             bud.save()
-            other_bud = models.Budget(name="無関係な予算", year=2101, government=gov, classification_system=other_cs)
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=other_cs
+            )
             other_bud.save()
             cl0 = models.Classification(classification_system=cs, name="議会費")
             cl0.save()
@@ -553,9 +565,11 @@ class ComplexBudgetItemTestCase(TestCase):
             other_cs = models.ClassificationSystem(name="まほろ市無関係予算体系")
             other_cs.save()
             gov = factories.GovernmentFactory(name="まほろ市")
-            bud = models.Budget(name="まほろ市予算", year=2101, government=gov, classification_system=cs)
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
             bud.save()
-            other_bud = models.Budget(name="無関係な予算", year=2101, government=gov, classification_system=other_cs)
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=other_cs
+            )
             other_bud.save()
             cl0 = models.Classification(classification_system=cs, name="ギカイ費")
             cl0.save()
@@ -581,9 +595,11 @@ class ComplexBudgetItemTestCase(TestCase):
             other_cs = models.ClassificationSystem(name="まほろ市無関係予算体系")
             other_cs.save()
             gov = factories.GovernmentFactory(name="まほろ市")
-            bud = models.Budget(name="まほろ市予算", year=2101, government=gov, classification_system=cs)
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
             bud.save()
-            other_bud = models.Budget(name="無関係な予算", year=2101, government=gov, classification_system=other_cs)
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=other_cs
+            )
             other_bud.save()
             cl0 = models.Classification(classification_system=cs, name="議会費")
             cl0.save()
