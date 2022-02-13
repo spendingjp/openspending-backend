@@ -28,11 +28,15 @@ if __name__ == "__main__":
         tsukuba2021cs = models.ClassificationSystem(name="つくば市2021年度予算")
         tsukuba2021cs.save()
     try:
-        budget = models.Budget.objects.get(slug="tsukuba-shi-2021-nendo-yosan")
+        budget = models.BudgetBase.objects.get(slug="tsukuba-shi-2021-nendo-yosan")
         models.BudgetItemBase.objects.filter(budget=budget).delete()
-    except models.Budget.DoesNotExist:
-        budget = models.Budget(
-            name="つくば市2021年度予算", year=2021, subtitle="", classification_system=tsukuba2021cs, government=tsukuba
+    except models.BudgetBase.DoesNotExist:
+        budget = models.BasicBudget(
+            name="つくば市2021年度予算",
+            year_value=2021,
+            subtitle="",
+            classification_system=tsukuba2021cs,
+            government_value=tsukuba,
         )
         budget.save()
 

@@ -17,14 +17,12 @@ if __name__ == "__main__":
 
     tsukuba = models.Government.objects.get(slug="tsukuba-shi")
     cofog = models.ClassificationSystem.objects.get(slug="cofog")
-    tsukuba_budget = models.Budget.objects.get(slug="tsukuba-shi-2021-nendo-yosan")
+    tsukuba_budget = models.BudgetBase.objects.get(slug="tsukuba-shi-2021-nendo-yosan")
     try:
-        budget = models.Budget.objects.get(slug="tsukuba-shi-cofog2021")
+        budget = models.BudgetBase.objects.get(slug="tsukuba-shi-cofog2021")
         models.BudgetItemBase.objects.filter(budget=budget).delete()
-    except models.Budget.DoesNotExist:
-        budget = models.Budget(
-            name="つくば市COFOG2021", year=2021, subtitle="", classification_system=cofog, government=tsukuba
-        )
+    except models.BudgetBase.DoesNotExist:
+        budget = models.MappedBudget(name="つくば市COFOG2021", classification_system=cofog, source_budget=tsukuba_budget)
         budget.save()
 
     buf = defaultdict(list)
@@ -42,7 +40,6 @@ if __name__ == "__main__":
         x = models.MappedBudgetItem(
             budget=budget,
             classification=models.Classification.objects.get(id=k),
-            mapped_budget=tsukuba_budget,
         )
         x.save()
         x.mapped_classifications.set([models.Classification.objects.get(id=vv) for vv in v])
