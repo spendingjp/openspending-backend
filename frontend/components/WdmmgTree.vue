@@ -41,7 +41,7 @@ import { BudgetTreeNode } from '~/types/budget-tree-node'
 import { Classification } from '~/types/classification'
 // import { $axios } from '~/utils/api-accessor'
 
-type FlatBudgets = {
+type IdToBudgetMap = {
   [id: string]: BudgetTreeNode
 }
 
@@ -71,24 +71,24 @@ export default defineComponent({
       clsToCofogMap: {},
     })
 
-    const flattenBudgets: FlatBudgets = {}
+    const idToBudgetMap: IdToBudgetMap = {}
     const flatBudgets = (
       budget: BudgetTreeNode,
-      flattenBudgets: FlatBudgets
+      idToBudgetMap: IdToBudgetMap
     ) => {
-      flattenBudgets[budget.id] = budget
+      idToBudgetMap[budget.id] = budget
       if (budget.children) {
         budget.children.forEach((child) => {
-          flatBudgets(child, flattenBudgets)
+          flatBudgets(child, idToBudgetMap)
         })
       }
     }
     wdmmgTree.budgets.forEach((budget) => {
-      flatBudgets(budget, flattenBudgets)
+      flatBudgets(budget, idToBudgetMap)
     })
 
     state.clsToCofogMap = Object.fromEntries(
-      Object.entries(flattenBudgets).map(([key, _]) => [
+      Object.entries(idToBudgetMap).map(([key, _]) => [
         key,
         {} as Classification,
       ])
