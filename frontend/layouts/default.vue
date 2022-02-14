@@ -28,7 +28,7 @@ export default Vue.extend({
   middleware: ['authenticated'],
   data() {
     return {
-      title: 'Vuetify.js',
+      title: 'Where Does My Money Go?',
     }
   },
   methods: {
