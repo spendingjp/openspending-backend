@@ -10,7 +10,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.text import slugify
@@ -450,3 +450,53 @@ class WdmmgTreeCache(models.Model):
         if cache.updated_at > budget.updated_at:
             return json.load(BlobReader(cache.blob))
         return None
+
+
+@receiver(post_save, sender=AtomicBudgetItem)
+def touch_budget_on_save_atomic_budget_item(sender, instance=None, **kwargs):
+    if instance is not None:
+        instance.budget.save()
+
+
+@receiver(post_delete, sender=AtomicBudgetItem)
+def touch_budget_on_delete_atomic_budget_item(sender, instance=None, **kwargs):
+    if instance is not None:
+        instance.budget.save()
+
+
+@receiver(post_save, sender=MappedBudgetItem)
+def touch_budget_on_save_mapped_budget_item(sender, instance=None, **kwargs):
+    if instance is not None:
+        instance.budget.save()
+
+
+@receiver(post_delete, sender=MappedBudgetItem)
+def touch_budget_on_delete_mapped_budget_item(sender, instance=None, **kwargs):
+    if instance is not None:
+        instance.budget.save()
+
+
+@receiver(post_save, sender=ClassificationSystem)
+def touch_budget_on_classification_system_save(sender, instance=None, **kwargs):
+    if instance is not None:
+        for budget in BudgetBase.objects.filter(classification_system=instance):
+            budget.save()
+
+
+@receiver(post_save, sender=Classification)
+def touch_classification_system_on_classification_save(sender, instance=None, **kwargs):
+    if instance is not None:
+        instance.classification_system.save()
+
+
+@receiver(post_delete, sender=Classification)
+def touch_classification_system_on_delete_classification(sender, instance=None, **kwargs):
+    if instance is not None:
+        instance.classification_system.save()
+
+
+@receiver(post_save, sender=BasicBudget)
+def touch_mapped_budget_on_budget_save(sender, instance=None, **kwargs):
+    if isinstance is not None:
+        for budget in MappedBudget.objects.filter(source_budget=instance):
+            budget.save()

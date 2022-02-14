@@ -340,6 +340,9 @@ class MappedBudgetItemTestCase(TestCase):
 
 
 class ComplexBudgetItemTestCase(TestCase):
+    def assert_datetime_equals(self, a, b):
+        return self.assertEqual(a.strftime(date_format), b.strftime(date_format))
+
     def test_get_amount_of_tree_nodes(self) -> None:
         cs = factories.ClassificationSystemFactory()
         bud = factories.BasicBudgetFactory(classification_system=cs)
@@ -405,6 +408,315 @@ class ComplexBudgetItemTestCase(TestCase):
         self.assertAlmostEqual(bud1.get_amount_of(cl101), abi10.value + abi11.value)
         self.assertAlmostEqual(bud1.get_amount_of(cl11), abi01.value + abi12.value)
         self.assertAlmostEqual(bud1.get_amount_of(cl110), abi01.value + abi12.value)
+
+    def test_basic_budget_updated_at_renewed_when_atomic_budget_item_added(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            cs = factories.ClassificationSystemFactory()
+            gov = factories.GovernmentFactory(name="まほろ市")
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
+            bud.save()
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=cs
+            )
+            other_bud.save()
+            cl0 = factories.ClassificationFactory(classification_system=cs)
+            self.assert_datetime_equals(bud.created_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            models.AtomicBudgetItem(budget=bud, classification=cl0, value=123).save()
+            bud.refresh_from_db()
+            other_bud.refresh_from_db()
+            self.assert_datetime_equals(bud.created_at, dt_orig)
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            self.assert_datetime_equals(other_bud.updated_at, dt_orig)
+
+    def test_basic_budget_updated_at_renewed_when_atomic_budget_item_updated(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            cs = factories.ClassificationSystemFactory()
+            gov = factories.GovernmentFactory(name="まほろ市")
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
+            bud.save()
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=cs
+            )
+            other_bud.save()
+            cl0 = factories.ClassificationFactory(classification_system=cs)
+            dt.tick(1000)
+            abi0 = models.AtomicBudgetItem(budget=bud, classification=cl0, value=123)
+            abi0.save()
+            self.assert_datetime_equals(bud.created_at, dt_orig)
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            abi0.value = 123000
+            abi0.save()
+            bud.refresh_from_db()
+            other_bud.refresh_from_db()
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            self.assert_datetime_equals(other_bud.updated_at, dt_orig)
+
+    def test_basic_budget_updated_at_renewed_when_atomic_budget_item_deleted(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            cs = factories.ClassificationSystemFactory()
+            gov = factories.GovernmentFactory(name="まほろ市")
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
+            bud.save()
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=cs
+            )
+            other_bud.save()
+            cl0 = factories.ClassificationFactory(classification_system=cs)
+            dt.tick(1000)
+            abi0 = models.AtomicBudgetItem(budget=bud, classification=cl0, value=123)
+            abi0.save()
+            self.assert_datetime_equals(bud.created_at, dt_orig)
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            abi0.delete()
+            bud.refresh_from_db()
+            other_bud.refresh_from_db()
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            self.assert_datetime_equals(other_bud.updated_at, dt_orig)
+
+    def test_basic_budget_updated_at_renewed_when_atomic_budget_item_deleted_from_manager(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            cs = factories.ClassificationSystemFactory()
+            gov = factories.GovernmentFactory(name="まほろ市")
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
+            bud.save()
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=cs
+            )
+            other_bud.save()
+            cl0 = factories.ClassificationFactory(classification_system=cs)
+            dt.tick(1000)
+            abi0 = models.AtomicBudgetItem(budget=bud, classification=cl0, value=123)
+            abi0.save()
+            self.assert_datetime_equals(bud.created_at, dt_orig)
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            models.AtomicBudgetItem.objects.all().delete()
+            bud.refresh_from_db()
+            other_bud.refresh_from_db()
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            self.assert_datetime_equals(other_bud.updated_at, dt_orig)
+
+    def test_basic_budget_updated_at_renewed_when_classiification_system_updated(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            cs = models.ClassificationSystem(name="まほろ市予算体型")
+            cs.save()
+            other_cs = models.ClassificationSystem(name="まほろ市無関係予算体系")
+            other_cs.save()
+            gov = factories.GovernmentFactory(name="まほろ市")
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
+            bud.save()
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=other_cs
+            )
+            other_bud.save()
+            dt.tick(1000)
+            cs.name = "まほろ市予算体系"
+            cs.save()
+            bud.refresh_from_db()
+            other_bud.refresh_from_db()
+            self.assert_datetime_equals(bud.created_at, dt_orig)
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            self.assert_datetime_equals(other_bud.updated_at, dt_orig)
+
+    def test_basic_budget_and_classification_updated_at_renewed_when_classification_added(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            cs = models.ClassificationSystem(name="まほろ市予算体型")
+            cs.save()
+            other_cs = models.ClassificationSystem(name="まほろ市無関係予算体系")
+            other_cs.save()
+            gov = factories.GovernmentFactory(name="まほろ市")
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
+            bud.save()
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=other_cs
+            )
+            other_bud.save()
+            cl0 = models.Classification(classification_system=cs, name="議会費")
+            cl0.save()
+            self.assert_datetime_equals(bud.created_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            cl00 = models.Classification(classification_system=cs, name="議会費詳細", parent=cl0)
+            cl00.save()
+            bud.refresh_from_db()
+            other_bud.refresh_from_db()
+            cs.refresh_from_db()
+            other_cs.refresh_from_db()
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            self.assert_datetime_equals(other_bud.updated_at, dt_orig)
+            self.assert_datetime_equals(cs.updated_at, datetime.now())
+            self.assert_datetime_equals(other_cs.updated_at, dt_orig)
+
+    def test_basic_budget_and_classification_updated_at_renewed_when_classification_updated(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            cs = models.ClassificationSystem(name="まほろ市予算体系")
+            cs.save()
+            other_cs = models.ClassificationSystem(name="まほろ市無関係予算体系")
+            other_cs.save()
+            gov = factories.GovernmentFactory(name="まほろ市")
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
+            bud.save()
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=other_cs
+            )
+            other_bud.save()
+            cl0 = models.Classification(classification_system=cs, name="ギカイ費")
+            cl0.save()
+            self.assert_datetime_equals(bud.created_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            cl0.name = "議会費"
+            cl0.save()
+            bud.refresh_from_db()
+            other_bud.refresh_from_db()
+            cs.refresh_from_db()
+            other_cs.refresh_from_db()
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            self.assert_datetime_equals(other_bud.updated_at, dt_orig)
+            self.assert_datetime_equals(cs.updated_at, datetime.now())
+            self.assert_datetime_equals(other_cs.updated_at, dt_orig)
+
+    def test_basic_budget_and_classification_updated_at_renewed_when_classification_deleted(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            cs = models.ClassificationSystem(name="まほろ市予算体系")
+            cs.save()
+            other_cs = models.ClassificationSystem(name="まほろ市無関係予算体系")
+            other_cs.save()
+            gov = factories.GovernmentFactory(name="まほろ市")
+            bud = models.BasicBudget(name="まほろ市予算", year_value=2101, government_value=gov, classification_system=cs)
+            bud.save()
+            other_bud = models.BasicBudget(
+                name="無関係な予算", year_value=2101, government_value=gov, classification_system=other_cs
+            )
+            other_bud.save()
+            cl0 = models.Classification(classification_system=cs, name="議会費")
+            cl0.save()
+            self.assert_datetime_equals(bud.created_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            cl0.delete()
+            bud.refresh_from_db()
+            other_bud.refresh_from_db()
+            cs.refresh_from_db()
+            other_cs.refresh_from_db()
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            self.assert_datetime_equals(other_bud.updated_at, dt_orig)
+            self.assert_datetime_equals(cs.updated_at, datetime.now())
+            self.assert_datetime_equals(other_cs.updated_at, dt_orig)
+
+    def test_mapped_budget_updated_at_renewed_when_source_budget_updated(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            gov = factories.GovernmentFactory(name="まほろ市")
+            orig_cs = factories.ClassificationSystemFactory()
+            orig_bud = models.BasicBudget(
+                name="まほろ市余産", year_value=2101, government_value=gov, classification_system=orig_cs
+            )
+            orig_bud.save()
+            cs = factories.ClassificationSystemFactory(name="COFOG")
+            bud = models.MappedBudget(classification_system=cs, source_budget=orig_bud, name="まほろ市COFOG")
+            bud.save()
+            self.assert_datetime_equals(bud.created_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            orig_bud.name = "まほろ市予算"
+            orig_bud.save()
+            orig_bud.refresh_from_db()
+            bud.refresh_from_db()
+            self.assert_datetime_equals(orig_bud.updated_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+
+    def test_mappd_budget_updated_at_renewed_when_classification_system_updated(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            gov = factories.GovernmentFactory(name="まほろ市")
+            orig_bud = factories.BasicBudgetFactory(government_value=gov)
+            cs = models.ClassificationSystem(name="C.O.F.O.G.")
+            cs.save()
+            bud = models.MappedBudget(classification_system=cs, source_budget=orig_bud, name="まほろ市COFOG")
+            bud.save()
+            self.assert_datetime_equals(bud.created_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            cs.name = "COFOG"
+            cs.save()
+            bud.refresh_from_db()
+            orig_bud.refresh_from_db()
+            self.assert_datetime_equals(orig_bud.updated_at, dt_orig)
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+
+    def test_mapped_budget_updated_at_renewed_when_mapped_budget_item_added(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            gov = factories.GovernmentFactory(name="まほろ市")
+            orig_bud = factories.BasicBudgetFactory(government_value=gov)
+            cs = factories.ClassificationSystemFactory()
+            cl = factories.ClassificationFactory(classification_system=orig_bud.classification_system)
+            bud = models.MappedBudget(classification_system=cs, source_budget=orig_bud, name="まほろ市COFOG")
+            bud.save()
+            self.assert_datetime_equals(bud.created_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            mbi = models.MappedBudgetItem(budget=bud, classification=cl)
+            mbi.save()
+            bud.refresh_from_db()
+            orig_bud.refresh_from_db()
+            self.assert_datetime_equals(orig_bud.updated_at, dt_orig)
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+
+    def test_mapped_budget_updated_at_renewed_when_mapped_budget_item_updated(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            gov = factories.GovernmentFactory(name="まほろ市")
+            orig_bud = factories.BasicBudgetFactory(government_value=gov)
+            orig_cl = factories.ClassificationFactory(classification_system=orig_bud.classification_system)
+            cs = factories.ClassificationSystemFactory()
+            cl = factories.ClassificationFactory(classification_system=orig_bud.classification_system)
+            bud = models.MappedBudget(classification_system=cs, source_budget=orig_bud, name="まほろ市COFOG")
+            bud.save()
+            mbi = models.MappedBudgetItem(budget=bud, classification=cl)
+            mbi.save()
+            self.assert_datetime_equals(bud.created_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            mbi.source_classifications.set([orig_cl])
+            mbi.save()
+            bud.refresh_from_db()
+            orig_bud.refresh_from_db()
+            self.assert_datetime_equals(orig_bud.updated_at, dt_orig)
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+
+    def test_mapped_budget_updated_at_renewed_when_mapped_budget_item_deleted(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            gov = factories.GovernmentFactory(name="まほろ市")
+            orig_bud = factories.BasicBudgetFactory(government_value=gov)
+            cs = factories.ClassificationSystemFactory()
+            cl = factories.ClassificationFactory(classification_system=orig_bud.classification_system)
+            bud = models.MappedBudget(classification_system=cs, source_budget=orig_bud, name="まほろ市COFOG")
+            bud.save()
+            mbi = models.MappedBudgetItem(budget=bud, classification=cl)
+            mbi.save()
+            self.assert_datetime_equals(bud.created_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            mbi.delete()
+            bud.refresh_from_db()
+            orig_bud.refresh_from_db()
+            self.assert_datetime_equals(orig_bud.updated_at, dt_orig)
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
 
 
 class BlobTestCase(TestCase):
