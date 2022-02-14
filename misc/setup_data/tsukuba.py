@@ -42,5 +42,5 @@ if __name__ == "__main__":
             classification=models.Classification.objects.get(id=k),
         )
         x.save()
-        x.mapped_classifications.set([models.Classification.objects.get(id=vv) for vv in v])
+        x.source_classifications.set([models.Classification.objects.get(id=vv) for vv in v])
         x.save()
