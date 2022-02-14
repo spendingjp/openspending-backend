@@ -386,9 +386,6 @@ class WdmmgNodeSerializer(serializers.ModelSerializer):
     def get_icon_id(self, obj: models.Classification):
         return obj.get_icon_id()
 
-    def get_source_classifications(self, obj: models.Classification):
-        return [c.id for c in obj.get_source_classifications()]
-
     def get_mapped_budget_items(self, obj: models.Classification):
         return [
             {"id": item.id, "source_classifications": [cls.id for cls in item.source_classifications.all()]}
