@@ -456,6 +456,9 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
     def test_retrieve(self):
         css = [factories.ClassificationSystemFactory() for i in range(100)]
         cs = css[random.randint(0, 99)]
+        cl0 = factories.ClassificationFactory(classification_system=cs, item_order=2)
+        cl1 = factories.ClassificationFactory(classification_system=cs, item_order=0)
+        cl2 = factories.ClassificationFactory(classification_system=cs, item_order=1)
         res = self.client.get(f"/api/v1/classification-systems/{cs.id}/", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         expected = {
@@ -463,7 +466,38 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
             "name": cs.name,
             "slug": cs.slug,
             "levelNames": cs.level_names,
-            "items": [],
+            "items": [
+                {
+                    "id": cl1.id,
+                    "code": cl1.code,
+                    "name": cl1.name,
+                    "icon": cl1.icon,
+                    "classificationSystem": cs.id,
+                    "parent": None,
+                    "createdAt": cl1.created_at.strftime(datetime_format),
+                    "updatedAt": cl1.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": cl2.id,
+                    "code": cl2.code,
+                    "name": cl2.name,
+                    "icon": cl2.icon,
+                    "classificationSystem": cs.id,
+                    "parent": None,
+                    "createdAt": cl2.created_at.strftime(datetime_format),
+                    "updatedAt": cl2.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": cl0.id,
+                    "code": cl0.code,
+                    "name": cl0.name,
+                    "icon": cl0.icon,
+                    "classificationSystem": cs.id,
+                    "parent": None,
+                    "createdAt": cl0.created_at.strftime(datetime_format),
+                    "updatedAt": cl0.updated_at.strftime(datetime_format),
+                },
+            ],
             "createdAt": cs.created_at.strftime(datetime_format),
             "updatedAt": cs.updated_at.strftime(datetime_format),
         }
