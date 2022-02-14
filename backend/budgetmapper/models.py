@@ -1,5 +1,6 @@
 import base64
 import json
+from abc import abstractmethod
 from io import BufferedIOBase, BytesIO, RawIOBase
 
 import pykakasi
@@ -258,14 +259,12 @@ class Classification(models.Model):
         unique_together = ("classification_system", "item_order")
 
 
-class Budget(models.Model):
+class BudgetBase(PolymorphicModel):
     id = PkField()
     name = NameField()
     slug = JpSlugField(unique=True)
-    year = models.IntegerField(null=False, db_index=True)
     subtitle = models.TextField(null=True)
     classification_system = models.ForeignKey(ClassificationSystem, on_delete=models.CASCADE, db_index=True, null=False)
-    government = models.ForeignKey(Government, on_delete=models.CASCADE, db_index=True, null=False)
     created_at = CurrentDateTimeField()
     updated_at = AutoUpdateCurrentDateTimeField()
 
@@ -286,15 +285,52 @@ class Budget(models.Model):
             except BudgetItemBase.DoesNotExist:
                 yield {"classifications": cl, "budget_item": None}
 
+    @property
+    @abstractmethod
+    def year(self):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def government(self):
+        raise NotImplementedError
+
+
+class BasicBudget(BudgetBase):
+    year_value = models.IntegerField(null=False, db_index=True)
+    government_value = models.ForeignKey(Government, on_delete=models.CASCADE, db_index=True, null=False)
+
+    @property
+    def year(self):
+        return self.year_value
+
+    @property
+    def government(self):
+        return self.government_value
+
     class Meta:
         indexes = [
-            models.Index(fields=["government", "year"]),
+            models.Index(fields=["government_value", "year_value"]),
         ]
+
+
+class MappedBudget(BudgetBase):
+    source_budget = models.ForeignKey(
+        BudgetBase, related_name="mapped_budget", db_index=True, on_delete=models.CASCADE, null=False
+    )
+
+    @property
+    def year(self):
+        return self.source_budget.year
+
+    @property
+    def government(self):
+        return self.source_budget.government
 
 
 class BudgetItemBase(PolymorphicModel):
     id = PkField()
-    budget = models.ForeignKey(Budget, on_delete=models.CASCADE, db_index=True, null=False)
+    budget = models.ForeignKey(BudgetBase, on_delete=models.CASCADE, db_index=True, null=False)
     classification = models.ForeignKey(Classification, on_delete=models.CASCADE, db_index=True, null=False)
     created_at = CurrentDateTimeField()
     updated_at = AutoUpdateCurrentDateTimeField()
@@ -325,12 +361,11 @@ class AtomicBudgetItem(BudgetItemBase):
 
 
 class MappedBudgetItem(BudgetItemBase):
-    mapped_budget = models.ForeignKey(Budget, db_index=True, on_delete=models.CASCADE, null=False)
-    mapped_classifications = models.ManyToManyField(Classification, related_name="mapping_classifications")
+    source_classifications = models.ManyToManyField(Classification, related_name="mapping_classifications")
 
     @property
     def amount(self) -> float:
-        return sum(self.mapped_budget.get_amount_of(c) for c in self.mapped_classifications.all())
+        return sum(self.budget.source_budget.get_amount_of(c) for c in self.source_classifications.all())
 
 
 class Blob(models.Model):
@@ -391,7 +426,7 @@ class BlobReader(BufferedIOBase):
 class WdmmgTreeCache(models.Model):
     id = PkField()
     blob = models.ForeignKey(Blob, on_delete=models.CASCADE, db_index=False, null=False)
-    budget = models.OneToOneField(Budget, on_delete=models.CASCADE, null=False)
+    budget = models.OneToOneField(BudgetBase, on_delete=models.CASCADE, null=False)
     created_at = CurrentDateTimeField()
     updated_at = AutoUpdateCurrentDateTimeField()
 
