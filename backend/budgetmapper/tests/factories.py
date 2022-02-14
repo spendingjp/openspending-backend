@@ -78,7 +78,9 @@ class MappedBudgetItemFactory(DjangoModelFactory):
 
     @factory.post_generation
     def source_classifications(self, create, extracted, **kwargs):
-        if create:
+        if extracted:
+            self.source_classifications.set(extracted)
+        elif create:
             for _ in range(random.randint(1, 10)):
                 self.source_classifications.add(
                     ClassificationFactory(classification_system=self.budget.source_budget.classification_system)

@@ -255,6 +255,10 @@ class Classification(models.Model):
     def get_icon_id(self):
         return self.icon.id if self.icon is not None else IconImage.get_default_icon().id
 
+    def get_source_classifications(self):
+        budget_items = self.budgetitembase_set.all()
+        return [sc for bi in budget_items if isinstance(bi, MappedBudgetItem) for sc in bi.source_classifications.all()]
+
     class Meta:
         unique_together = ("classification_system", "item_order")
 

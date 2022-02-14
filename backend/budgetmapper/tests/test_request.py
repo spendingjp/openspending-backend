@@ -143,6 +143,19 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
         abi010 = factories.AtomicBudgetItemFactory(value=129.0, budget=bud, classification=cl010)
         abi100 = factories.AtomicBudgetItemFactory(value=131.0, budget=bud, classification=cl100)
 
+        cofog_cs = factories.ClassificationSystemFactory(name="COFOG", slug="cofog")
+        cofog_cl0 = factories.ClassificationFactory(classification_system=cofog_cs, code="1", icon=icon0)
+        cofog_cl00 = factories.ClassificationFactory(
+            classification_system=cofog_cs, parent=cofog_cl0, code="1.1", icon=icon00
+        )
+        cofog_cl000 = factories.ClassificationFactory(classification_system=cofog_cs, parent=cofog_cl00, code="1.1.1")
+        cofog_cl001 = factories.ClassificationFactory(classification_system=cofog_cs, parent=cofog_cl00, code="1.1.2")
+        cofog_cl002 = factories.ClassificationFactory(classification_system=cofog_cs, parent=cofog_cl00, code="1.1.3")
+
+        mbi000 = factories.MappedBudgetItemFactory(classification=cl000, source_classifications=[cofog_cl000])
+        mbi001 = factories.MappedBudgetItemFactory(classification=cl001, source_classifications=[cofog_cl001])
+        mbi200 = factories.MappedBudgetItemFactory(classification=cl200, source_classifications=[cofog_cl002])
+
         res = self.client.get(f"/api/v1/wdmmg/{bud.slug}/", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         expected = {
@@ -161,6 +174,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                     "code": cl0.code,
                     "amount": abi000.amount + abi001.amount + abi002.amount + abi010.amount,
                     "iconId": icon0.id,
+                    "sourceClassifications": [],
                     "children": [
                         {
                             "id": cl00.id,
@@ -168,6 +182,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                             "code": cl00.code,
                             "amount": abi000.amount + abi001.amount + abi002.amount,
                             "iconId": icon00.id,
+                            "sourceClassifications": [],
                             "children": [
                                 {
                                     "id": cl000.id,
@@ -175,6 +190,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                                     "code": cl000.code,
                                     "amount": abi000.amount,
                                     "iconId": models.IconImage.get_default_icon().id,
+                                    "sourceClassifications": [cofog_cl000.id],
                                     "children": None,
                                 },
                                 {
@@ -183,6 +199,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                                     "code": cl001.code,
                                     "amount": abi001.amount,
                                     "iconId": models.IconImage.get_default_icon().id,
+                                    "sourceClassifications": [cofog_cl001.id],
                                     "children": None,
                                 },
                                 {
@@ -191,6 +208,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                                     "code": cl002.code,
                                     "amount": abi002.amount,
                                     "iconId": models.IconImage.get_default_icon().id,
+                                    "sourceClassifications": [],
                                     "children": None,
                                 },
                             ],
@@ -201,6 +219,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                             "code": cl01.code,
                             "amount": abi010.amount,
                             "iconId": icon01.id,
+                            "sourceClassifications": [],
                             "children": [
                                 {
                                     "id": cl010.id,
@@ -208,6 +227,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                                     "code": cl010.code,
                                     "amount": abi010.amount,
                                     "iconId": models.IconImage.get_default_icon().id,
+                                    "sourceClassifications": [],
                                     "children": None,
                                 }
                             ],
@@ -220,6 +240,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                     "code": cl1.code,
                     "amount": abi100.amount,
                     "iconId": models.IconImage.get_default_icon().id,
+                    "sourceClassifications": [],
                     "children": [
                         {
                             "id": cl10.id,
@@ -227,6 +248,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                             "code": cl10.code,
                             "amount": abi100.amount,
                             "iconId": models.IconImage.get_default_icon().id,
+                            "sourceClassifications": [],
                             "children": [
                                 {
                                     "id": cl100.id,
@@ -234,6 +256,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                                     "code": cl100.code,
                                     "amount": abi100.amount,
                                     "iconId": models.IconImage.get_default_icon().id,
+                                    "sourceClassifications": [],
                                     "children": None,
                                 }
                             ],
@@ -246,6 +269,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                     "code": cl2.code,
                     "amount": 0,
                     "iconId": models.IconImage.get_default_icon().id,
+                    "sourceClassifications": [],
                     "children": [
                         {
                             "id": cl20.id,
@@ -253,6 +277,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                             "code": cl20.code,
                             "amount": 0,
                             "iconId": models.IconImage.get_default_icon().id,
+                            "sourceClassifications": [],
                             "children": [
                                 {
                                     "id": cl200.id,
@@ -260,6 +285,7 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                                     "code": cl200.code,
                                     "amount": 0,
                                     "iconId": models.IconImage.get_default_icon().id,
+                                    "sourceClassifications": [cofog_cl002.id],
                                     "children": None,
                                 }
                             ],

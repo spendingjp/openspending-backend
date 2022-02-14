@@ -79,6 +79,19 @@ class WdmmgSerializerTestCase(TestCase):
         abi010 = factories.AtomicBudgetItemFactory(value=129.0, budget=bud, classification=cl010)
         abi100 = factories.AtomicBudgetItemFactory(value=131.0, budget=bud, classification=cl100)
 
+        cofog_cs = factories.ClassificationSystemFactory(name="COFOG", slug="cofog")
+        cofog_cl0 = factories.ClassificationFactory(classification_system=cofog_cs, code="1", icon=icon0)
+        cofog_cl00 = factories.ClassificationFactory(
+            classification_system=cofog_cs, parent=cofog_cl0, code="1.1", icon=icon00
+        )
+        cofog_cl000 = factories.ClassificationFactory(classification_system=cofog_cs, parent=cofog_cl00, code="1.1.1")
+        cofog_cl001 = factories.ClassificationFactory(classification_system=cofog_cs, parent=cofog_cl00, code="1.1.2")
+        cofog_cl002 = factories.ClassificationFactory(classification_system=cofog_cs, parent=cofog_cl00, code="1.1.3")
+
+        mbi000 = factories.MappedBudgetItemFactory(classification=cl000, source_classifications=[cofog_cl000])
+        mbi001 = factories.MappedBudgetItemFactory(classification=cl001, source_classifications=[cofog_cl001])
+        mbi200 = factories.MappedBudgetItemFactory(classification=cl200, source_classifications=[cofog_cl002])
+
         expected = [
             {
                 "id": cl0.id,
@@ -86,6 +99,7 @@ class WdmmgSerializerTestCase(TestCase):
                 "code": cl0.code,
                 "amount": abi000.amount + abi001.amount + abi002.amount + abi010.amount,
                 "icon_id": icon0.id,
+                "source_classifications": [],
                 "children": [
                     {
                         "id": cl00.id,
@@ -93,6 +107,7 @@ class WdmmgSerializerTestCase(TestCase):
                         "code": cl00.code,
                         "icon_id": icon00.id,
                         "amount": abi000.amount + abi001.amount + abi002.amount,
+                        "source_classifications": [],
                         "children": [
                             {
                                 "id": cl000.id,
@@ -100,6 +115,7 @@ class WdmmgSerializerTestCase(TestCase):
                                 "code": cl000.code,
                                 "amount": abi000.amount,
                                 "icon_id": IconImage.get_default_icon().id,
+                                "source_classifications": [cofog_cl000.id],
                                 "children": None,
                             },
                             {
@@ -108,6 +124,7 @@ class WdmmgSerializerTestCase(TestCase):
                                 "code": cl001.code,
                                 "amount": abi001.amount,
                                 "icon_id": IconImage.get_default_icon().id,
+                                "source_classifications": [cofog_cl001.id],
                                 "children": None,
                             },
                             {
@@ -116,6 +133,7 @@ class WdmmgSerializerTestCase(TestCase):
                                 "code": cl002.code,
                                 "amount": abi002.amount,
                                 "icon_id": IconImage.get_default_icon().id,
+                                "source_classifications": [],
                                 "children": None,
                             },
                         ],
@@ -126,6 +144,7 @@ class WdmmgSerializerTestCase(TestCase):
                         "code": cl01.code,
                         "amount": abi010.amount,
                         "icon_id": icon01.id,
+                        "source_classifications": [],
                         "children": [
                             {
                                 "id": cl010.id,
@@ -133,6 +152,7 @@ class WdmmgSerializerTestCase(TestCase):
                                 "code": cl010.code,
                                 "amount": abi010.amount,
                                 "icon_id": IconImage.get_default_icon().id,
+                                "source_classifications": [],
                                 "children": None,
                             }
                         ],
@@ -145,6 +165,7 @@ class WdmmgSerializerTestCase(TestCase):
                 "code": cl1.code,
                 "amount": abi100.amount,
                 "icon_id": IconImage.get_default_icon().id,
+                "source_classifications": [],
                 "children": [
                     {
                         "id": cl10.id,
@@ -152,6 +173,7 @@ class WdmmgSerializerTestCase(TestCase):
                         "code": cl10.code,
                         "amount": abi100.amount,
                         "icon_id": IconImage.get_default_icon().id,
+                        "source_classifications": [],
                         "children": [
                             {
                                 "id": cl100.id,
@@ -159,6 +181,7 @@ class WdmmgSerializerTestCase(TestCase):
                                 "code": cl100.code,
                                 "amount": abi100.amount,
                                 "icon_id": IconImage.get_default_icon().id,
+                                "source_classifications": [],
                                 "children": None,
                             }
                         ],
@@ -171,6 +194,7 @@ class WdmmgSerializerTestCase(TestCase):
                 "code": cl2.code,
                 "amount": 0,
                 "icon_id": IconImage.get_default_icon().id,
+                "source_classifications": [],
                 "children": [
                     {
                         "id": cl20.id,
@@ -178,6 +202,7 @@ class WdmmgSerializerTestCase(TestCase):
                         "code": cl20.code,
                         "amount": 0,
                         "icon_id": IconImage.get_default_icon().id,
+                        "source_classifications": [],
                         "children": [
                             {
                                 "id": cl200.id,
@@ -185,6 +210,7 @@ class WdmmgSerializerTestCase(TestCase):
                                 "code": cl200.code,
                                 "amount": 0,
                                 "icon_id": IconImage.get_default_icon().id,
+                                "source_classifications": [cofog_cl002.id],
                                 "children": None,
                             }
                         ],
