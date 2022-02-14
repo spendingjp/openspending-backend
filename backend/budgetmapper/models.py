@@ -464,6 +464,18 @@ def touch_budget_on_delete_atomic_budget_item(sender, instance=None, **kwargs):
         instance.budget.save()
 
 
+@receiver(post_save, sender=MappedBudgetItem)
+def touch_budget_on_save_mapped_budget_item(sender, instance=None, **kwargs):
+    if instance is not None:
+        instance.budget.save()
+
+
+@receiver(post_delete, sender=MappedBudgetItem)
+def touch_budget_on_delete_mapped_budget_item(sender, instance=None, **kwargs):
+    if instance is not None:
+        instance.budget.save()
+
+
 @receiver(post_save, sender=ClassificationSystem)
 def touch_budget_on_classification_system_save(sender, instance=None, **kwargs):
     if instance is not None:
@@ -481,3 +493,10 @@ def touch_classification_system_on_classification_save(sender, instance=None, **
 def touch_classification_system_on_delete_classification(sender, instance=None, **kwargs):
     if instance is not None:
         instance.classification_system.save()
+
+
+@receiver(post_save, sender=BasicBudget)
+def touch_mapped_budget_on_budget_save(sender, instance=None, **kwargs):
+    if isinstance is not None:
+        for budget in MappedBudget.objects.filter(source_budget=instance):
+            budget.save()

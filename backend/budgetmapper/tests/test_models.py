@@ -409,7 +409,7 @@ class ComplexBudgetItemTestCase(TestCase):
         self.assertAlmostEqual(bud1.get_amount_of(cl11), abi01.value + abi12.value)
         self.assertAlmostEqual(bud1.get_amount_of(cl110), abi01.value + abi12.value)
 
-    def test_budget_updated_at_renewed_when_atomic_budget_item_added(self) -> None:
+    def test_basic_budget_updated_at_renewed_when_atomic_budget_item_added(self) -> None:
         dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt_orig) as dt:
             cs = factories.ClassificationSystemFactory()
@@ -431,7 +431,7 @@ class ComplexBudgetItemTestCase(TestCase):
             self.assert_datetime_equals(bud.updated_at, datetime.now())
             self.assert_datetime_equals(other_bud.updated_at, dt_orig)
 
-    def test_budget_updated_at_renewed_when_atomic_budget_item_updated(self) -> None:
+    def test_basic_budget_updated_at_renewed_when_atomic_budget_item_updated(self) -> None:
         dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt_orig) as dt:
             cs = factories.ClassificationSystemFactory()
@@ -456,7 +456,7 @@ class ComplexBudgetItemTestCase(TestCase):
             self.assert_datetime_equals(bud.updated_at, datetime.now())
             self.assert_datetime_equals(other_bud.updated_at, dt_orig)
 
-    def test_budget_updated_at_renewed_when_atomic_budget_item_deleted(self) -> None:
+    def test_basic_budget_updated_at_renewed_when_atomic_budget_item_deleted(self) -> None:
         dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt_orig) as dt:
             cs = factories.ClassificationSystemFactory()
@@ -480,7 +480,7 @@ class ComplexBudgetItemTestCase(TestCase):
             self.assert_datetime_equals(bud.updated_at, datetime.now())
             self.assert_datetime_equals(other_bud.updated_at, dt_orig)
 
-    def test_budget_updated_at_renewed_when_atomic_budget_item_deleted_from_manager(self) -> None:
+    def test_basic_budget_updated_at_renewed_when_atomic_budget_item_deleted_from_manager(self) -> None:
         dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt_orig) as dt:
             cs = factories.ClassificationSystemFactory()
@@ -504,7 +504,7 @@ class ComplexBudgetItemTestCase(TestCase):
             self.assert_datetime_equals(bud.updated_at, datetime.now())
             self.assert_datetime_equals(other_bud.updated_at, dt_orig)
 
-    def test_budget_updated_at_renewed_when_classiification_system_updated(self) -> None:
+    def test_basic_budget_updated_at_renewed_when_classiification_system_updated(self) -> None:
         dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt_orig) as dt:
             cs = models.ClassificationSystem(name="まほろ市予算体型")
@@ -527,7 +527,7 @@ class ComplexBudgetItemTestCase(TestCase):
             self.assert_datetime_equals(bud.updated_at, datetime.now())
             self.assert_datetime_equals(other_bud.updated_at, dt_orig)
 
-    def test_budget_and_classification_updated_at_renewed_when_classification_added(self) -> None:
+    def test_basic_budget_and_classification_updated_at_renewed_when_classification_added(self) -> None:
         dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt_orig) as dt:
             cs = models.ClassificationSystem(name="まほろ市予算体型")
@@ -557,7 +557,7 @@ class ComplexBudgetItemTestCase(TestCase):
             self.assert_datetime_equals(cs.updated_at, datetime.now())
             self.assert_datetime_equals(other_cs.updated_at, dt_orig)
 
-    def test_budget_and_classification_updated_at_renewed_when_classification_updated(self) -> None:
+    def test_basic_budget_and_classification_updated_at_renewed_when_classification_updated(self) -> None:
         dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt_orig) as dt:
             cs = models.ClassificationSystem(name="まほろ市予算体系")
@@ -587,7 +587,7 @@ class ComplexBudgetItemTestCase(TestCase):
             self.assert_datetime_equals(cs.updated_at, datetime.now())
             self.assert_datetime_equals(other_cs.updated_at, dt_orig)
 
-    def test_budget_and_classification_updated_at_renewed_when_classification_deleted(self) -> None:
+    def test_basic_budget_and_classification_updated_at_renewed_when_classification_deleted(self) -> None:
         dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt_orig) as dt:
             cs = models.ClassificationSystem(name="まほろ市予算体系")
@@ -615,6 +615,108 @@ class ComplexBudgetItemTestCase(TestCase):
             self.assert_datetime_equals(other_bud.updated_at, dt_orig)
             self.assert_datetime_equals(cs.updated_at, datetime.now())
             self.assert_datetime_equals(other_cs.updated_at, dt_orig)
+
+    def test_mapped_budget_updated_at_renewed_when_source_budget_updated(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            gov = factories.GovernmentFactory(name="まほろ市")
+            orig_cs = factories.ClassificationSystemFactory()
+            orig_bud = models.BasicBudget(
+                name="まほろ市余産", year_value=2101, government_value=gov, classification_system=orig_cs
+            )
+            orig_bud.save()
+            cs = factories.ClassificationSystemFactory(name="COFOG")
+            bud = models.MappedBudget(classification_system=cs, source_budget=orig_bud, name="まほろ市COFOG")
+            bud.save()
+            self.assert_datetime_equals(bud.created_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            orig_bud.name = "まほろ市予算"
+            orig_bud.save()
+            orig_bud.refresh_from_db()
+            bud.refresh_from_db()
+            self.assert_datetime_equals(orig_bud.updated_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+
+    def test_mappd_budget_updated_at_renewed_when_classification_system_updated(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            gov = factories.GovernmentFactory(name="まほろ市")
+            orig_bud = factories.BasicBudgetFactory(government_value=gov)
+            cs = models.ClassificationSystem(name="C.O.F.O.G.")
+            cs.save()
+            bud = models.MappedBudget(classification_system=cs, source_budget=orig_bud, name="まほろ市COFOG")
+            bud.save()
+            self.assert_datetime_equals(bud.created_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            cs.name = "COFOG"
+            cs.save()
+            bud.refresh_from_db()
+            orig_bud.refresh_from_db()
+            self.assert_datetime_equals(orig_bud.updated_at, dt_orig)
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+
+    def test_mapped_budget_updated_at_renewed_when_mapped_budget_item_added(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            gov = factories.GovernmentFactory(name="まほろ市")
+            orig_bud = factories.BasicBudgetFactory(government_value=gov)
+            cs = factories.ClassificationSystemFactory()
+            cl = factories.ClassificationFactory(classification_system=orig_bud.classification_system)
+            bud = models.MappedBudget(classification_system=cs, source_budget=orig_bud, name="まほろ市COFOG")
+            bud.save()
+            self.assert_datetime_equals(bud.created_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            mbi = models.MappedBudgetItem(budget=bud, classification=cl)
+            mbi.save()
+            bud.refresh_from_db()
+            orig_bud.refresh_from_db()
+            self.assert_datetime_equals(orig_bud.updated_at, dt_orig)
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+
+    def test_mapped_budget_updated_at_renewed_when_mapped_budget_item_updated(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            gov = factories.GovernmentFactory(name="まほろ市")
+            orig_bud = factories.BasicBudgetFactory(government_value=gov)
+            orig_cl = factories.ClassificationFactory(classification_system=orig_bud.classification_system)
+            cs = factories.ClassificationSystemFactory()
+            cl = factories.ClassificationFactory(classification_system=orig_bud.classification_system)
+            bud = models.MappedBudget(classification_system=cs, source_budget=orig_bud, name="まほろ市COFOG")
+            bud.save()
+            mbi = models.MappedBudgetItem(budget=bud, classification=cl)
+            mbi.save()
+            self.assert_datetime_equals(bud.created_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            mbi.source_classifications.set([orig_cl])
+            mbi.save()
+            bud.refresh_from_db()
+            orig_bud.refresh_from_db()
+            self.assert_datetime_equals(orig_bud.updated_at, dt_orig)
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+
+    def test_mapped_budget_updated_at_renewed_when_mapped_budget_item_deleted(self) -> None:
+        dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt_orig) as dt:
+            gov = factories.GovernmentFactory(name="まほろ市")
+            orig_bud = factories.BasicBudgetFactory(government_value=gov)
+            cs = factories.ClassificationSystemFactory()
+            cl = factories.ClassificationFactory(classification_system=orig_bud.classification_system)
+            bud = models.MappedBudget(classification_system=cs, source_budget=orig_bud, name="まほろ市COFOG")
+            bud.save()
+            mbi = models.MappedBudgetItem(budget=bud, classification=cl)
+            mbi.save()
+            self.assert_datetime_equals(bud.created_at, datetime.now())
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
+            dt.tick(1000)
+            mbi.delete()
+            bud.refresh_from_db()
+            orig_bud.refresh_from_db()
+            self.assert_datetime_equals(orig_bud.updated_at, dt_orig)
+            self.assert_datetime_equals(bud.updated_at, datetime.now())
 
 
 class BlobTestCase(TestCase):
