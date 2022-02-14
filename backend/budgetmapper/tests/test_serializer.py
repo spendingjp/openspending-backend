@@ -99,7 +99,7 @@ class WdmmgSerializerTestCase(TestCase):
                 "code": cl0.code,
                 "amount": abi000.amount + abi001.amount + abi002.amount + abi010.amount,
                 "icon_id": icon0.id,
-                "source_classifications": [],
+                "mapped_budget_items": [],
                 "children": [
                     {
                         "id": cl00.id,
@@ -107,7 +107,7 @@ class WdmmgSerializerTestCase(TestCase):
                         "code": cl00.code,
                         "icon_id": icon00.id,
                         "amount": abi000.amount + abi001.amount + abi002.amount,
-                        "source_classifications": [],
+                        "mapped_budget_items": [],
                         "children": [
                             {
                                 "id": cl000.id,
@@ -115,7 +115,7 @@ class WdmmgSerializerTestCase(TestCase):
                                 "code": cl000.code,
                                 "amount": abi000.amount,
                                 "icon_id": IconImage.get_default_icon().id,
-                                "source_classifications": [cofog_cl000.id],
+                                "mapped_budget_items": [{"id": mbi000.id, "source_classifications": [cofog_cl000.id]}],
                                 "children": None,
                             },
                             {
@@ -124,7 +124,7 @@ class WdmmgSerializerTestCase(TestCase):
                                 "code": cl001.code,
                                 "amount": abi001.amount,
                                 "icon_id": IconImage.get_default_icon().id,
-                                "source_classifications": [cofog_cl001.id],
+                                "mapped_budget_items": [{"id": mbi001.id, "source_classifications": [cofog_cl001.id]}],
                                 "children": None,
                             },
                             {
@@ -133,7 +133,7 @@ class WdmmgSerializerTestCase(TestCase):
                                 "code": cl002.code,
                                 "amount": abi002.amount,
                                 "icon_id": IconImage.get_default_icon().id,
-                                "source_classifications": [],
+                                "mapped_budget_items": [],
                                 "children": None,
                             },
                         ],
@@ -144,7 +144,7 @@ class WdmmgSerializerTestCase(TestCase):
                         "code": cl01.code,
                         "amount": abi010.amount,
                         "icon_id": icon01.id,
-                        "source_classifications": [],
+                        "mapped_budget_items": [],
                         "children": [
                             {
                                 "id": cl010.id,
@@ -152,7 +152,7 @@ class WdmmgSerializerTestCase(TestCase):
                                 "code": cl010.code,
                                 "amount": abi010.amount,
                                 "icon_id": IconImage.get_default_icon().id,
-                                "source_classifications": [],
+                                "mapped_budget_items": [],
                                 "children": None,
                             }
                         ],
@@ -165,7 +165,7 @@ class WdmmgSerializerTestCase(TestCase):
                 "code": cl1.code,
                 "amount": abi100.amount,
                 "icon_id": IconImage.get_default_icon().id,
-                "source_classifications": [],
+                "mapped_budget_items": [],
                 "children": [
                     {
                         "id": cl10.id,
@@ -173,7 +173,7 @@ class WdmmgSerializerTestCase(TestCase):
                         "code": cl10.code,
                         "amount": abi100.amount,
                         "icon_id": IconImage.get_default_icon().id,
-                        "source_classifications": [],
+                        "mapped_budget_items": [],
                         "children": [
                             {
                                 "id": cl100.id,
@@ -181,7 +181,7 @@ class WdmmgSerializerTestCase(TestCase):
                                 "code": cl100.code,
                                 "amount": abi100.amount,
                                 "icon_id": IconImage.get_default_icon().id,
-                                "source_classifications": [],
+                                "mapped_budget_items": [],
                                 "children": None,
                             }
                         ],
@@ -194,7 +194,7 @@ class WdmmgSerializerTestCase(TestCase):
                 "code": cl2.code,
                 "amount": 0,
                 "icon_id": IconImage.get_default_icon().id,
-                "source_classifications": [],
+                "mapped_budget_items": [],
                 "children": [
                     {
                         "id": cl20.id,
@@ -202,7 +202,7 @@ class WdmmgSerializerTestCase(TestCase):
                         "code": cl20.code,
                         "amount": 0,
                         "icon_id": IconImage.get_default_icon().id,
-                        "source_classifications": [],
+                        "mapped_budget_items": [],
                         "children": [
                             {
                                 "id": cl200.id,
@@ -210,7 +210,7 @@ class WdmmgSerializerTestCase(TestCase):
                                 "code": cl200.code,
                                 "amount": 0,
                                 "icon_id": IconImage.get_default_icon().id,
-                                "source_classifications": [cofog_cl002.id],
+                                "mapped_budget_items": [{"id": mbi200.id, "source_classifications": [cofog_cl002.id]}],
                                 "children": None,
                             }
                         ],

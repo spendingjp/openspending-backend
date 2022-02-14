@@ -377,17 +377,23 @@ class MappedBudgetItemCreateUpdateSerializer(serializers.ModelSerializer):
 
 class WdmmgNodeSerializer(serializers.ModelSerializer):
     icon_id = serializers.SerializerMethodField()
-    source_classifications = serializers.SerializerMethodField()
+    mapped_budget_items = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Classification
-        fields = ("id", "name", "code", "icon_id", "source_classifications")
+        fields = ("id", "name", "code", "icon_id", "mapped_budget_items")
 
     def get_icon_id(self, obj: models.Classification):
         return obj.get_icon_id()
 
     def get_source_classifications(self, obj: models.Classification):
         return [c.id for c in obj.get_source_classifications()]
+
+    def get_mapped_budget_items(self, obj: models.Classification):
+        return [
+            {"id": item.id, "source_classifications": [cls.id for cls in item.source_classifications.all()]}
+            for item in obj.mapped_budget_items
+        ]
 
     def to_representation(self, instance):
         is_leaf = True

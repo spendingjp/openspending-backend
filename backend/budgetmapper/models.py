@@ -252,6 +252,10 @@ class Classification(models.Model):
     def direct_children(self) -> models.QuerySet:
         return Classification.objects.filter(parent=self).order_by("item_order")
 
+    @property
+    def mapped_budget_items(self):
+        return [bi for bi in self.budgetitembase_set.all() if isinstance(bi, MappedBudgetItem)]
+
     def get_icon_id(self):
         return self.icon.id if self.icon is not None else IconImage.get_default_icon().id
 
