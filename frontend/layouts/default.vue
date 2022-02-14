@@ -1,6 +1,7 @@
 <template>
   <v-app>
     <v-app-bar fixed app>
+      <back-button @back="handleBack"></back-button>
       <v-toolbar-title v-text="title" />
       <v-spacer />
       <v-btn
@@ -22,9 +23,11 @@
 
 <script>
 import Vue from 'vue'
+import BackButton from '../components/BackButton.vue'
 import { authStore } from '@/store'
 
 export default Vue.extend({
+  components: { BackButton },
   middleware: ['authenticated'],
   data() {
     return {
@@ -35,6 +38,9 @@ export default Vue.extend({
     handleLogout() {
       authStore.signOut()
       this.$router.push('/login')
+    },
+    handleBack() {
+      this.$router.back()
     },
   },
 })
