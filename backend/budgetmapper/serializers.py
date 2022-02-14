@@ -69,7 +69,9 @@ class ClassificationSystemDetailSerializer(serializers.ModelSerializer):
         )
 
     def get_items(self, obj):
-        return ClassificationSerializer(models.Classification.objects.filter(classification_system=obj), many=True).data
+        return ClassificationSerializer(
+            models.Classification.objects.filter(classification_system=obj).order_by("item_order"), many=True
+        ).data
 
 
 class ClassificationSerializer(serializers.ModelSerializer):
