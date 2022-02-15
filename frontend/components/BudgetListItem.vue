@@ -49,7 +49,7 @@ export default defineComponent({
         })
     }
     const handleShow = (): void => {
-      router.push(`/budgets/${budget.slug}/mapping`)
+      router.push(`/budgets/${budget.slug}/view`)
     }
     return { deleting, handleDelete, handleShow }
   },

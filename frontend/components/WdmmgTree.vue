@@ -4,7 +4,6 @@
       :items="wdmmgTree.budgets"
       selection-type="leaf"
       transition
-      dense
       open-on-click
     >
       <template #label="{ item }">
