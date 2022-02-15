@@ -8,7 +8,11 @@
       "request": "launch",
       "cwd": "${workspaceFolder}/backend",
       "program": "${workspaceFolder}/backend/.venv/bin/flake8",
-      "args": ["--exclude", ".venv,budgetmapper/migrations", "--max-line-length=120"]
+      "args": [
+        "--exclude",
+        ".venv,budgetmapper/migrations",
+        "--max-line-length=120"
+      ]
     },
     {
       "name": "Test",
@@ -33,6 +37,19 @@
       "args": ["runserver"],
       "env": {
         "APPLICATION_DEBUG": "True"
+      },
+      "django": true
+    },
+    {
+      "name": "Django (DEBUG = False)",
+      "type": "python",
+      "justMyCode": false,
+      "request": "launch",
+      "cwd": "${workspaceFolder}/backend",
+      "program": "${workspaceFolder}/backend/manage.py",
+      "args": ["runserver"],
+      "env": {
+        "APPLICATION_ALLOWED_HOSTS": "localhost"
       },
       "django": true
     }

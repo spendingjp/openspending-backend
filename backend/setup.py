@@ -33,6 +33,6 @@ setup(
             "freezegun",
             "django-extensions",
         ],
-        "prod": ["psycopg2"],
+        "prod": ["psycopg2", "whitenoise"],
     },
 )
