@@ -72,6 +72,8 @@ if DEBUG:
     MIDDLEWARE.append("corsheaders.middleware.CorsMiddleware")
     MIDDLEWARE.append("django.middleware.common.CommonMiddleware")
     CORS_ALLOW_ALL_ORIGINS = True
+else:
+    MIDDLEWARE.append("whitenoise.middleware.WhiteNoiseMiddleware")
 
 ROOT_URLCONF = 'wdmmgserver.urls'
 
