@@ -5,6 +5,7 @@ on: push
 env:
   APPLICATION_SECRET_KEY: key
   APPLICATION_DATABASE_PASSWORD: postgres
+  APPLICATION_DEBUG: True
 
 jobs:
   build:
