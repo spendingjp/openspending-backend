@@ -21,8 +21,9 @@ services:
       - APPLICATION_DATABASE_PASSWORD=${APPLICATION_DATABASE_PASSWORD}
       - APPLICATION_DATABASE_HOST=db
       - APPLICATION_ALLOWED_HOSTS=${APPLICATION_ALLOWED_HOSTS}
+      - APPLICATION_SECRET_KEY=${APPLICATION_SECRET_KEY}
     volumes:
-     - static_volume:/app/static
+      - static_volume:/app/static
     networks:
       - backend
     depends_on:
