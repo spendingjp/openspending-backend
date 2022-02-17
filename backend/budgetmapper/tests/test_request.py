@@ -280,6 +280,125 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
         actual = res.json()
         self.assertEqual(actual, expected)
 
+    def test_get_mapped_budget(self) -> None:
+        self.maxDiff = None
+        gov = factories.GovernmentFactory()
+        cs0 = factories.ClassificationSystemFactory()
+        bud0 = factories.BasicBudgetFactory(classification_system=cs0, government_value=gov)
+        cl00 = factories.ClassificationFactory(classification_system=cs0)
+        cl000 = factories.ClassificationFactory(classification_system=cs0, parent=cl00)
+        cl001 = factories.ClassificationFactory(classification_system=cs0, parent=cl00)
+        cl01 = factories.ClassificationFactory(classification_system=cs0)
+        cl010 = factories.ClassificationFactory(classification_system=cs0, parent=cl01)
+        cl011 = factories.ClassificationFactory(classification_system=cs0, parent=cl01)
+        cl012 = factories.ClassificationFactory(classification_system=cs0, parent=cl01)
+
+        abi000 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl000)
+        abi001 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl001)
+        abi010 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl010)
+        abi011 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl011)
+        abi012 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl012)
+
+        cs1 = factories.ClassificationSystemFactory()
+        bud1 = factories.MappedBudgetFactory(classification_system=cs1, source_budget=bud0)
+        cl10 = factories.ClassificationFactory(classification_system=cs1)
+        cl100 = factories.ClassificationFactory(classification_system=cs1, parent=cl10)
+        cl101 = factories.ClassificationFactory(classification_system=cs1, parent=cl10)
+        cl11 = factories.ClassificationFactory(classification_system=cs1)
+        cl110 = factories.ClassificationFactory(classification_system=cs1, parent=cl11)
+
+        mbi00 = models.MappedBudgetItem(budget=bud1, classification=cl100)
+        mbi00.save()
+        mbi00.source_classifications.set([cl000])
+
+        mbi01 = models.MappedBudgetItem(budget=bud1, classification=cl101)
+        mbi01.save()
+        mbi01.source_classifications.set([cl010, cl011])
+
+        mbi10 = models.MappedBudgetItem(budget=bud1, classification=cl110)
+        mbi10.save()
+        mbi10.source_classifications.set([cl001, cl012])
+
+        res = self.client.get(f"/api/v1/wdmmg/{bud1.slug}/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        expected = {
+            "id": bud1.id,
+            "name": bud1.name,
+            "subtitle": bud1.subtitle,
+            "slug": bud1.slug,
+            "year": bud1.year,
+            "sourceBudget": {
+                "id": bud0.id,
+                "name": bud0.name,
+                "slug": bud0.slug,
+                "year": bud0.year,
+                "subtitle": bud0.subtitle,
+                "classificationSystem": bud0.classification_system.id,
+                "government": gov.id,
+                "createdAt": bud0.created_at.strftime(datetime_format),
+                "updatedAt": bud0.updated_at.strftime(datetime_format),
+            },
+            "createdAt": bud1.created_at.strftime(datetime_format),
+            "updatedAt": bud1.updated_at.strftime(datetime_format),
+            "government": {
+                "id": gov.id,
+                "name": gov.name,
+                "slug": gov.slug,
+                "latitude": gov.latitude,
+                "longitude": gov.longitude,
+                "createdAt": gov.created_at.strftime(datetime_format),
+                "updatedAt": gov.updated_at.strftime(datetime_format),
+            },
+            "totalAmount": (abi000.amount + (abi010.amount + abi011.amount)) + (abi012.amount + abi001.amount),
+            "budgets": [
+                {
+                    "id": cl10.id,
+                    "name": cl10.name,
+                    "code": cl10.code,
+                    "amount": abi000.amount + (abi010.amount + abi011.amount),
+                    "iconId": cl10.get_icon_id(),
+                    "children": [
+                        {
+                            "id": cl100.id,
+                            "name": cl100.name,
+                            "code": cl100.code,
+                            "amount": abi000.amount,
+                            "iconId": cl100.get_icon_id(),
+                            "children": None,
+                        },
+                        {
+                            "id": cl101.id,
+                            "name": cl101.name,
+                            "code": cl101.code,
+                            "amount": abi010.amount + abi011.amount,
+                            "iconId": cl101.get_icon_id(),
+                            "children": None,
+                        },
+                    ],
+                },
+                {
+                    "id": cl11.id,
+                    "name": cl11.name,
+                    "code": cl11.code,
+                    "amount": abi001.amount + abi012.amount,
+                    "iconId": cl11.get_icon_id(),
+                    "children": [
+                        {
+                            "id": cl110.id,
+                            "name": cl110.name,
+                            "code": cl110.code,
+                            "amount": abi001.amount + abi012.amount,
+                            "iconId": cl110.get_icon_id(),
+                            "children": None,
+                        }
+                    ],
+                },
+            ],
+        }
+        actual = res.json()
+        self.assertEqual(actual, expected)
+
 
 class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
     def test_list(self):
