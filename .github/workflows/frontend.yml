@@ -16,6 +16,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
+          cache-dependency-path: "**/yarn.lock"
 
       - name: checkout
         uses: actions/checkout@v2
@@ -49,6 +50,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
+          cache-dependency-path: "**/yarn.lock"
 
       - name: checkout
         uses: actions/checkout@master
@@ -81,6 +83,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
+          cache-dependency-path: "**/yarn.lock"
 
       - name: checkout
         uses: actions/checkout@master
@@ -116,6 +119,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
+          cache-dependency-path: "**/yarn.lock"
 
       - name: checkout
         uses: actions/checkout@master
