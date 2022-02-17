@@ -94,7 +94,6 @@ jobs:
         uses: actions/checkout@master
 
       - name: restore workspace cache
-        working-directory: ./frontend
         uses: actions/cache@v2
         with:
           path: |
