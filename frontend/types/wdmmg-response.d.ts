@@ -1,4 +1,5 @@
 import { Government } from './government'
+import { Budget } from './budget'
 import { BudgetTreeNode } from './budget-tree-node'
 
 export interface WdmmgResponse {
@@ -9,6 +10,7 @@ export interface WdmmgResponse {
   year: number
   createdAt: string
   updatedAt: string
+  sourceBudget?: Budget
   government: Government
   budgets: BudgetTreeNode[]
 }
