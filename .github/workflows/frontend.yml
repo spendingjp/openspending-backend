@@ -23,14 +23,13 @@ jobs:
           fetch-depth: 0 # All history
 
       - name: cache node_modules
-        working-directory: ./frontend
         id: node_modules_cache_id
         uses: actions/cache@v2
         with:
           path: |
-            node_modules
-            packages/*/node_modules
-            distributions/*/node_modules
+            ./frontend/node_modules
+            ./frontend/packages/*/node_modules
+            ./frontend/distributions/*/node_modules
           key: ${{ matrix.os }}-node-v${{ matrix.node }}-deps-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
 
       - name: install
@@ -38,14 +37,13 @@ jobs:
         run: yarn --check-files --frozen-lockfile --non-interactive
 
       - name: cache workspace
-        working-directory: ./frontend
         uses: actions/cache@v2
         with:
           path: |
-            node_modules
-            packages/*/node_modules
-            distributions/*/node_modules
-            packages/*/dist
+            ./frontend/node_modules
+            ./frontend/packages/*/node_modules
+            ./frontend/distributions/*/node_modules
+            ./frontend/packages/*/dist
           key: ${{ matrix.os }}-node-v${{ matrix.node }}-nuxt-${{ github.sha }}
 
   lint:
@@ -65,14 +63,13 @@ jobs:
         uses: actions/checkout@master
 
       - name: restore workspace cache
-        working-directory: ./frontend
         uses: actions/cache@v2
         with:
           path: |
-            node_modules
-            packages/*/node_modules
-            distributions/*/node_modules
-            packages/*/dist
+            ./frontend/node_modules
+            ./frontend/packages/*/node_modules
+            ./frontend/distributions/*/node_modules
+            ./frontend/packages/*/dist
           key: ${{ matrix.os }}-node-v${{ matrix.node }}-nuxt-${{ github.sha }}
 
       - name: lint
@@ -101,10 +98,10 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-            node_modules
-            packages/*/node_modules
-            distributions/*/node_modules
-            packages/*/dist
+            ./frontend/node_modules
+            ./frontend/packages/*/node_modules
+            ./frontend/distributions/*/node_modules
+            ./frontend/packages/*/dist
           key: ${{ matrix.os }}-node-v${{ matrix.node }}-nuxt-${{ github.sha }}
 
       - name: audit
@@ -132,14 +129,13 @@ jobs:
         uses: actions/checkout@master
 
       - name: restore workspace cache
-        working-directory: ./frontend
         uses: actions/cache@v2
         with:
           path: |
-            node_modules
-            packages/*/node_modules
-            distributions/*/node_modules
-            packages/*/dist
+            ./frontend/ node_modules
+             ./frontend/packages/*/node_modules
+             ./frontend/distributions/*/node_modules
+             ./frontend/packages/*/dist
           key: ${{ matrix.os }}-node-v${{ matrix.node }}-nuxt-${{ github.sha }}
 
       - name: generate
