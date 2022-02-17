@@ -5,10 +5,9 @@ on: push
 jobs:
   setup:
     runs-on: ${{ matrix.os }}
-    if: github.event_name == 'push' || !((github.base_ref == '2.x') && github.head_ref == 'dev')
-
     strategy:
       matrix:
+        # os: [ubuntu-latest, macos-latest, windows-latest]
         os: [ubuntu-latest]
         node: [14, 16]
 
@@ -30,7 +29,7 @@ jobs:
             ./frontend/node_modules
             ./frontend/packages/*/node_modules
             ./frontend/distributions/*/node_modules
-          key: ${{ matrix.os }}-node-v${{ matrix.node }}-deps-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
+          key: ${{ matrix.os }}-node-v${{ matrix.node }}-deps-${{ hashFiles(format('{0}{1}', github.workspace, 'frontend/yarn.lock')) }}
 
       - name: install
         working-directory: ./frontend
@@ -113,7 +112,6 @@ jobs:
 
     strategy:
       matrix:
-        # os: [ubuntu-latest, macos-latest, windows-latest]
         os: [ubuntu-latest]
         node: [16]
 
