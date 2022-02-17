@@ -23,7 +23,6 @@ jobs:
 
   lint:
     runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -46,7 +45,6 @@ jobs:
 
   audit:
     runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -68,7 +66,6 @@ jobs:
 
   generate:
     runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         os: [ubuntu-latest]
