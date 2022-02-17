@@ -20,6 +20,9 @@ classification_system_router.register(
 )
 budget_router = routers.NestedDefaultRouter(router, r"budgets", lookup="budget")
 budget_router.register(r"items", views.BudgetItemViewSet, basename="budget-item")
+budget_router.register(
+    r"mapped-budget-candidates", views.MappedgBudgetCandidateView, basename="budget-mapping-budget-candidate"
+)
 
 urlpatterns = [
     path("api/v1/", include(router.urls)),

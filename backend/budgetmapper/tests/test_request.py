@@ -111,7 +111,6 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
         self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_get(self) -> None:
-        self.maxDiff = None
         gov = factories.GovernmentFactory(name="まほろ市", slug="mahoro-city")
         cs = factories.ClassificationSystemFactory(name="まほろ市2101年一般会計", slug="mahoro-city-2101-ippan-kaikei")
         icon0 = factories.IconImageFactory()
@@ -281,7 +280,6 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
         self.assertEqual(actual, expected)
 
     def test_get_mapped_budget(self) -> None:
-        self.maxDiff = None
         gov = factories.GovernmentFactory()
         cs0 = factories.ClassificationSystemFactory()
         bud0 = factories.BasicBudgetFactory(classification_system=cs0, government_value=gov)
@@ -777,6 +775,84 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
             self.assertEqual(actual, expected)
 
 
+class MappedBudgetCandidateTestCase(BudgetMapperTestUserAPITestCase):
+    def test_mapped_budget_candidates(self):
+        cs = [factories.ClassificationSystemFactory() for _ in range(4)]
+        gov = factories.GovernmentFactory()
+        bb0_2100 = factories.BasicBudgetFactory(classification_system=cs[0], government_value=gov, year_value=2100)
+        bb0_2101 = factories.BasicBudgetFactory(classification_system=cs[0], government_value=gov, year_value=2101)
+        bb0_2102 = factories.BasicBudgetFactory(classification_system=cs[0], government_value=gov, year_value=2102)
+        factories.BasicBudgetFactory(classification_system=cs[1], government_value=gov, year_value=2100)
+        factories.MappedBudgetFactory(classification_system=cs[2], source_budget=bb0_2100)
+        factories.MappedBudgetFactory(classification_system=cs[2], source_budget=bb0_2101)
+        expected = sorted(
+            [
+                {
+                    "id": cs[2].id,
+                    "name": cs[2].name,
+                    "slug": cs[2].slug,
+                    "levelNames": cs[2].level_names,
+                    "createdAt": cs[2].created_at.strftime(datetime_format),
+                    "updatedAt": cs[2].updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": cs[3].id,
+                    "name": cs[3].name,
+                    "slug": cs[3].slug,
+                    "levelNames": cs[3].level_names,
+                    "createdAt": cs[3].created_at.strftime(datetime_format),
+                    "updatedAt": cs[3].updated_at.strftime(datetime_format),
+                },
+            ],
+            key=lambda d: d["createdAt"],
+        )
+        res = self.client.get(f"/api/v1/budgets/{bb0_2100.id}/mapped-budget-candidates/", format="json")
+        actual = sorted(res.json()["results"], key=lambda d: d["createdAt"])
+        self.assertEqual(actual, expected)
+
+        expected = sorted(
+            [
+                {
+                    "id": cs[1].id,
+                    "name": cs[1].name,
+                    "slug": cs[1].slug,
+                    "levelNames": cs[1].level_names,
+                    "createdAt": cs[1].created_at.strftime(datetime_format),
+                    "updatedAt": cs[1].updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": cs[2].id,
+                    "name": cs[2].name,
+                    "slug": cs[2].slug,
+                    "levelNames": cs[2].level_names,
+                    "createdAt": cs[2].created_at.strftime(datetime_format),
+                    "updatedAt": cs[2].updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": cs[3].id,
+                    "name": cs[3].name,
+                    "slug": cs[3].slug,
+                    "levelNames": cs[3].level_names,
+                    "createdAt": cs[3].created_at.strftime(datetime_format),
+                    "updatedAt": cs[3].updated_at.strftime(datetime_format),
+                },
+            ],
+            key=lambda d: d["createdAt"],
+        )
+        res = self.client.get(f"/api/v1/budgets/{bb0_2102.id}/mapped-budget-candidates/", format="json")
+        actual = sorted(res.json()["results"], key=lambda d: d["createdAt"])
+        self.assertEqual(actual, expected)
+
+    def test_404_if_no_budget(self):
+        res = self.client.get("/api/v1/budgets/nonsuch/mapped-budget-candidates/")
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_404_if_mapped_budget(self):
+        mb = factories.MappedBudgetFactory()
+        res = self.client.get(f"/api/v1/budgets/{mb.id}/mapped-budget-candidates/")
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+
 class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
     def test_list(self):
         ordering = CreatedAtPagination.ordering
@@ -815,7 +891,6 @@ class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertEqual(actual, expected)
 
     def test_get(self):
-        self.maxDiff = None
         cs = factories.ClassificationSystemFactory()
         classification_parent_a = factories.ClassificationFactory(classification_system=cs)
         c = factories.ClassificationFactory(classification_system=cs, parent=classification_parent_a)
@@ -1211,7 +1286,6 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertEqual(actual, expected)
 
     def test_retrieve_mapped(self):
-        self.maxDiff = None
         bs = [factories.MappedBudgetFactory() for i in range(100)]
         b = random.choice(bs)
         res = self.client.get(f"/api/v1/budgets/{b.id}/", format="json")

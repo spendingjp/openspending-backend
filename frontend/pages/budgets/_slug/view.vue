@@ -14,12 +14,13 @@
               {{ state.wdmmgTree.updatedAt }}</v-row
             >
             <v-row v-if="state.wdmmgTree.sourceBudget !== void 0"
-              ><v-spacer></v-spacer
-              ><nuxt-link
+              ><v-spacer></v-spacer>元にした予算:
+              <nuxt-link
                 :to="`/budgets/${state.wdmmgTree.sourceBudget.slug}/view`"
                 >{{ state.wdmmgTree.sourceBudget.name }}</nuxt-link
               ></v-row
             >
+            <v-row v-else> <v-autocomplete></v-autocomplete></v-row>
           </v-card-subtitle>
           <v-divider></v-divider>
           <v-card-text class="text-body-1">
