@@ -432,3 +432,11 @@ class WdmmgSerializer(serializers.ModelSerializer):
             ]
             models.WdmmgTreeCache.cache_tree(res, obj)
         return res
+
+    def to_representation(self, instance):
+        if isinstance(instance, models.MappedBudget):
+            return dict(
+                super(WdmmgSerializer, self).to_representation(instance),
+                source_budget=BudgetListSerializer(instance.source_budget).data,
+            )
+        return super(WdmmgSerializer, self).to_representation(instance)
