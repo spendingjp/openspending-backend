@@ -41,16 +41,37 @@ jobs:
         run: yarn lint
     needs: setup
 
-  generate:
+  audit:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
         node: [16]
 
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: "frontend/yarn.lock"
+      - run: yarn install
+
+      - name: audit
+        working-directory: ./frontend
+        run: "yarn audit || :"
+    needs: setup
+
+  generate:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node: [16]
     env:
       NODE_OPTIONS: "--max_old_space_size=4096"
 
+    steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
