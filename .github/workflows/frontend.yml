@@ -104,6 +104,7 @@ jobs:
           key: ${{ matrix.os }}-node-v${{ matrix.node }}-nuxt-${{ github.sha }}
 
       - name: audit
+        working-directory: ./frontend
         run: "yarn audit || :"
     needs: setup
 
@@ -138,5 +139,6 @@ jobs:
           key: ${{ matrix.os }}-node-v${{ matrix.node }}-nuxt-${{ github.sha }}
 
       - name: generate
+        working-directory: ./frontend
         run: yarn generate
     needs: setup
