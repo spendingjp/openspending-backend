@@ -13,6 +13,13 @@
               {{ state.wdmmgTree.year }}年 / 最終更新:
               {{ state.wdmmgTree.updatedAt }}</v-row
             >
+            <v-row v-if="state.wdmmgTree.sourceBudget !== void 0"
+              ><v-spacer></v-spacer
+              ><nuxt-link
+                :to="`/budgets/${state.wdmmgTree.sourceBudget.slug}/view`"
+                >{{ state.wdmmgTree.sourceBudget.name }}</nuxt-link
+              ></v-row
+            >
           </v-card-subtitle>
           <v-divider></v-divider>
           <v-card-text class="text-body-1">
