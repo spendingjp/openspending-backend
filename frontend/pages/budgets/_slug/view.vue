@@ -42,7 +42,6 @@ import {
 } from '@nuxtjs/composition-api'
 import { $axios } from '@/utils/api-accessor'
 import { WdmmgResponse } from '@/types/wdmmg-response'
-import { ClassifiactionSystemResponse } from '@/types/classification-system-response.d.ts'
 import BudgetTree from '@/components/BudgetTree.vue'
 
 type State = {
@@ -55,7 +54,6 @@ export default defineComponent({
   setup() {
     const state = reactive<State>({
       wdmmgTree: null,
-      cofogClassifications: [],
     })
     const route = useRoute()
     useAsync(async () => {
@@ -65,13 +63,6 @@ export default defineComponent({
           { timeout: 9999999 }
         )
       ).data
-    })
-    useAsync(async () => {
-      state.cofogClassifications = (
-        await $axios.get<ClassifiactionSystemResponse>(
-          `/api/v1/classification-systems/cofog/`
-        )
-      ).data.items
     })
     return { state }
   },
