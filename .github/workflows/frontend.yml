@@ -23,6 +23,7 @@ jobs:
           fetch-depth: 0 # All history
 
       - name: cache node_modules
+        working-directory: ./frontend
         id: node_modules_cache_id
         uses: actions/cache@v2
         with:
@@ -33,9 +34,11 @@ jobs:
           key: ${{ matrix.os }}-node-v${{ matrix.node }}-deps-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
 
       - name: install
+        working-directory: ./frontend
         run: yarn --check-files --frozen-lockfile --non-interactive
 
       - name: cache workspace
+        working-directory: ./frontend
         uses: actions/cache@v2
         with:
           path: |
@@ -62,6 +65,7 @@ jobs:
         uses: actions/checkout@master
 
       - name: restore workspace cache
+        working-directory: ./frontend
         uses: actions/cache@v2
         with:
           path: |
@@ -72,6 +76,7 @@ jobs:
           key: ${{ matrix.os }}-node-v${{ matrix.node }}-nuxt-${{ github.sha }}
 
       - name: lint
+        working-directory: ./frontend
         run: yarn lint
     needs: setup
 
@@ -92,6 +97,7 @@ jobs:
         uses: actions/checkout@master
 
       - name: restore workspace cache
+        working-directory: ./frontend
         uses: actions/cache@v2
         with:
           path: |
@@ -126,6 +132,7 @@ jobs:
         uses: actions/checkout@master
 
       - name: restore workspace cache
+        working-directory: ./frontend
         uses: actions/cache@v2
         with:
           path: |
