@@ -50,6 +50,35 @@ python ../misc/setup_data/tsukuba.py ../misc/setup_data/tsukuba.csv
 python manage.py runserver
 ```
 
+
+## ER graph
+
+![ER graph](./budgetmapper-model-graph.png)
+
+### Create ER graph
+
+#### requirements
+
+You need to install some depending modules such as praphviz in advance.
+
+##### ubuntu 20.04
+
+```
+sudo apt-get install libgraphviz-dev graphviz pkg-config
+```
+
+#### command
+
+```
+python manage.py graph_models budgetmapper -g -o budgetmapper-model-graph.png
+```
+
+The format of the command above is like below.
+
+```
+python manage.py graph_models [app_name] -g -o [image.name]
+```
+
 ## Appendix
 
 ### Use of vscode setting file
@@ -61,3 +90,4 @@ To take advantage of it, you should install `venv` in `backend/.venv/bin/python`
 ### List of supported environmental variables
 
 ...
+
