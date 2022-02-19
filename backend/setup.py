@@ -32,6 +32,8 @@ setup(
             "factory-boy",
             "freezegun",
             "django-extensions",
+            "pygraphviz",
+            "pydotplus",
         ],
         "prod": ["psycopg2"],
     },
