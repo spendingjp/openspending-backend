@@ -94,7 +94,7 @@ jobs:
       - name: Create ER graph
         working-directory: ./backend
         run: |
-          if ! git diff --exit-code --quiet ${{ github.head_ref }} ${{ github.base_ref }} budgetmapper/models.py
+          if ! git diff --exit-code --quiet ${{ github.ref_name }} ${{ github.event.repository.default_branch }} budgetmapper/models.py
           then
             python manage.py graph_models budgetmapper -g -o budgetmapper-model-graph.png
             git config user.name github-actions
