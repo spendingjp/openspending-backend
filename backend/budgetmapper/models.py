@@ -500,3 +500,7 @@ def touch_mapped_budget_on_budget_save(sender, instance=None, **kwargs):
     if isinstance is not None:
         for budget in MappedBudget.objects.filter(source_budget=instance):
             budget.save()
+
+
+def test_function():
+    pass
