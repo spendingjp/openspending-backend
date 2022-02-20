@@ -1,7 +1,6 @@
 import base64
 import json
 from abc import abstractmethod
-from email.policy import default
 from io import BufferedIOBase, BytesIO, RawIOBase
 
 import pykakasi
@@ -146,8 +145,8 @@ class ColorCodeField(models.CharField):
                 validators=[
                     RegexValidator(
                         regex=r'^#(?:[0-9a-fA-F]{3}){1,2}$',
-                        message="invalid_colorcode",
-                        code='invalid_colorcode',
+                        message="invalid_colorcode_format",
+                        code='invalid_colorcode_format',
                     )
                 ],
                 null=True,
