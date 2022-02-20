@@ -273,6 +273,8 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                 "slug": gov.slug,
                 "latitude": gov.latitude,
                 "longitude": gov.longitude,
+                "primaryColorCode": gov.primary_color_code,
+                "secondaryColorCode": gov.secondary_color_code,
                 "createdAt": gov.created_at.strftime(datetime_format),
                 "updatedAt": gov.updated_at.strftime(datetime_format),
             },
@@ -347,6 +349,8 @@ class WdmmgTestCase(BudgetMapperTestUserAPITestCase):
                 "slug": gov.slug,
                 "latitude": gov.latitude,
                 "longitude": gov.longitude,
+                "primaryColorCode": gov.primary_color_code,
+                "secondaryColorCode": gov.secondary_color_code,
                 "createdAt": gov.created_at.strftime(datetime_format),
                 "updatedAt": gov.updated_at.strftime(datetime_format),
             },
@@ -414,6 +418,8 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "slug": gov.slug,
                 "latitude": gov.latitude,
                 "longitude": gov.longitude,
+                "primaryColorCode": gov.primary_color_code,
+                "secondaryColorCode": gov.secondary_color_code,
                 "createdAt": gov.created_at.strftime(datetime_format),
                 "updatedAt": gov.updated_at.strftime(datetime_format),
             }
@@ -439,6 +445,8 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
             "slug": gov.slug,
             "latitude": gov.latitude,
             "longitude": gov.longitude,
+            "primaryColorCode": gov.primary_color_code,
+            "secondaryColorCode": gov.secondary_color_code,
             "createdAt": gov.created_at.strftime(datetime_format),
             "updatedAt": gov.updated_at.strftime(datetime_format),
         }
@@ -468,6 +476,8 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "slug": "theslug",
                 "latitude": None,
                 "longitude": None,
+                "primaryColorCode": None,
+                "secondaryColorCode": None,
                 "createdAt": dt.strftime(datetime_format),
                 "updatedAt": dt.strftime(datetime_format),
             }
@@ -488,6 +498,8 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "slug": "mahoro-city",
                 "latitude": -54,
                 "longitude": 170,
+                "primaryColorCode": "#123",
+                "secondaryColorCode": "#123456",
             }
             res = self.client.post("/api/v1/governments/", query, format="json")
             self.assertEqual(res.status_code, status.HTTP_201_CREATED)
@@ -497,6 +509,8 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "slug": "mahoro-city",
                 "latitude": -54,
                 "longitude": 170,
+                "primaryColorCode": "#123",
+                "secondaryColorCode": "#123456",
                 "createdAt": dt.strftime(datetime_format),
                 "updatedAt": dt.strftime(datetime_format),
             }
@@ -538,6 +552,8 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "slug": "theslug",
                 "latitude": gov.latitude,
                 "longitude": gov.longitude,
+                "primaryColorCode": gov.primary_color_code,
+                "secondaryColorCode": gov.primary_color_code,
                 "createdAt": gov.created_at.strftime(datetime_format),
                 "updatedAt": dt.strftime(datetime_format),
             }
@@ -1200,6 +1216,8 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "slug": b.government.slug,
                 "latitude": b.government.latitude,
                 "longitude": b.government.longitude,
+                "primaryColorCode": b.government.primary_color_code,
+                "secondaryColorCode": b.government.secondary_color_code,
                 "createdAt": b.government.created_at.strftime(datetime_format),
                 "updatedAt": b.government.updated_at.strftime(datetime_format),
             },
@@ -1236,6 +1254,8 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "slug": b.government.slug,
                 "latitude": b.government.latitude,
                 "longitude": b.government.longitude,
+                "primaryColorCode": b.government.primary_color_code,
+                "secondaryColorCode": b.government.secondary_color_code,
                 "createdAt": b.government.created_at.strftime(datetime_format),
                 "updatedAt": b.government.updated_at.strftime(datetime_format),
             },
@@ -1259,6 +1279,8 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
                     "slug": b.source_budget.government.slug,
                     "latitude": b.source_budget.government.latitude,
                     "longitude": b.source_budget.government.longitude,
+                    "primaryColorCode": b.source_budget.government.primary_color_code,
+                    "secondaryColorCode": b.source_budget.government.secondary_color_code,
                     "createdAt": b.source_budget.government.created_at.strftime(datetime_format),
                     "updatedAt": b.source_budget.government.updated_at.strftime(datetime_format),
                 },
