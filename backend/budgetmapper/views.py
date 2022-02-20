@@ -90,6 +90,19 @@ class ClassificationViewSet(viewsets.ModelViewSet):
 
 class BudgetFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
+        if "sourceBudget" in request.query_params:
+            return queryset.filter(
+                Q(
+                    pk__in=models.MappedBudget.objects.filter(
+                        **dict(
+                            {}
+                            if "classificationSystem" not in request.query_params
+                            else {"classification_system": request.query_params["classificationSystem"]},
+                            source_budget=request.query_params.get("sourceBudget"),
+                        )
+                    ).values("id")
+                )
+            )
         basic_qs = models.BasicBudget.objects
         if "government" in request.query_params:
             basic_qs = basic_qs.filter(government_value_id=request.query_params["government"])

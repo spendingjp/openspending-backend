@@ -1250,6 +1250,82 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
         actual = res_json["results"]
         self.assertEqual(actual, expected)
 
+    def test_list_can_filter_by_source_budget(self) -> None:
+        ordering = CreatedAtPagination.ordering
+        page_size = CreatedAtPagination.page_size
+        gov = factories.GovernmentFactory()
+        bud0 = factories.BasicBudgetFactory(government_value=gov)
+        bud1 = factories.BasicBudgetFactory(government_value=gov)
+        cs0 = factories.ClassificationSystemFactory()
+        cs1 = factories.ClassificationSystemFactory()
+        bud000 = factories.MappedBudgetFactory(source_budget=bud0, classification_system=cs0)
+        bud001 = factories.MappedBudgetFactory(source_budget=bud0, classification_system=cs0)
+        bud100 = factories.MappedBudgetFactory(source_budget=bud0, classification_system=cs1)
+        factories.MappedBudgetFactory(source_budget=bud1, classification_system=cs0)
+
+        res = self.client.get(f"/api/v1/budgets/?sourceBudget={bud0.id}", format="json")
+        expected = [
+            {
+                "id": b.id,
+                "name": b.name,
+                "slug": b.slug,
+                "year": b.year,
+                "subtitle": b.subtitle,
+                "classificationSystem": b.classification_system.id,
+                "government": b.government.id,
+                "createdAt": b.created_at.strftime(datetime_format),
+                "updatedAt": b.updated_at.strftime(datetime_format),
+                "sourceBudget": b.source_budget.id,
+            }
+            for b in sorted(
+                [bud000, bud001, bud100],
+                key=lambda b: getattr(b, ordering.strip("-")),
+                reverse=ordering.startswith("-"),
+            )
+        ][:page_size]
+
+        res_json = res.json()
+        self.assertIn("results", res_json)
+        actual = res_json["results"]
+        self.assertEqual(actual, expected)
+
+    def test_list_can_filter_by_source_budget_and_classification_system(self) -> None:
+        ordering = CreatedAtPagination.ordering
+        page_size = CreatedAtPagination.page_size
+        gov = factories.GovernmentFactory()
+        bud0 = factories.BasicBudgetFactory(government_value=gov)
+        bud1 = factories.BasicBudgetFactory(government_value=gov)
+        cs0 = factories.ClassificationSystemFactory()
+        cs1 = factories.ClassificationSystemFactory()
+        bud000 = factories.MappedBudgetFactory(source_budget=bud0, classification_system=cs0)
+        bud001 = factories.MappedBudgetFactory(source_budget=bud0, classification_system=cs0)
+        factories.MappedBudgetFactory(source_budget=bud0, classification_system=cs1)
+        factories.MappedBudgetFactory(source_budget=bud1, classification_system=cs0)
+
+        res = self.client.get(f"/api/v1/budgets/?sourceBudget={bud0.id}&classificationSystem={cs0.id}", format="json")
+        expected = [
+            {
+                "id": b.id,
+                "name": b.name,
+                "slug": b.slug,
+                "year": b.year,
+                "subtitle": b.subtitle,
+                "classificationSystem": b.classification_system.id,
+                "government": b.government.id,
+                "createdAt": b.created_at.strftime(datetime_format),
+                "updatedAt": b.updated_at.strftime(datetime_format),
+                "sourceBudget": b.source_budget.id,
+            }
+            for b in sorted(
+                [bud000, bud001], key=lambda b: getattr(b, ordering.strip("-")), reverse=ordering.startswith("-")
+            )
+        ][:page_size]
+
+        res_json = res.json()
+        self.assertIn("results", res_json)
+        actual = res_json["results"]
+        self.assertEqual(actual, expected)
+
     def test_retrieve_basic(self):
         bs = [factories.BasicBudgetFactory() for i in range(100)]
         b = bs[random.randint(0, 99)]
