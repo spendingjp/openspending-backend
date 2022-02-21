@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import freezegun
 from budgetmapper import models
-from budgetmapper.views import CreatedAtPagination
+from budgetmapper.views import CreatedAtPagination, ItemOrderPagination
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
@@ -855,10 +855,11 @@ class MappedBudgetCandidateTestCase(BudgetMapperTestUserAPITestCase):
 
 class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
     def test_list(self):
-        ordering = CreatedAtPagination.ordering
-        page_size = CreatedAtPagination.page_size
+        ordering = ItemOrderPagination.ordering
+        page_size = ItemOrderPagination.page_size
+        [factories.ClassificationFactory(item_order=i) for i in range(100)]
         cs = factories.ClassificationSystemFactory()
-        classifications = [factories.ClassificationFactory(classification_system=cs) for _ in range(100)]
+        classifications = [factories.ClassificationFactory(classification_system=cs, item_order=i) for i in range(100)]
         res = self.client.get(f"/api/v1/classification-systems/{cs.id}/classifications/", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         expected = [
@@ -866,14 +867,7 @@ class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "id": b.id,
                 "code": b.code,
                 "name": b.name,
-                "classificationSystem": {
-                    "id": cs.id,
-                    "name": cs.name,
-                    "slug": cs.slug,
-                    "levelNames": cs.level_names,
-                    "createdAt": cs.created_at.strftime(datetime_format),
-                    "updatedAt": cs.updated_at.strftime(datetime_format),
-                },
+                "classificationSystem": cs.id,
                 "icon": b.icon.id if b.icon is not None else None,
                 "parent": b.parent,
                 "createdAt": b.created_at.strftime(datetime_format),

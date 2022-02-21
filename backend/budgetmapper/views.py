@@ -12,6 +12,11 @@ from rest_framework.pagination import CursorPagination
 from . import models, serializers
 
 
+class ItemOrderPagination(CursorPagination):
+    page_size = 10
+    ordering = "item_order"
+
+
 class CreatedAtPagination(CursorPagination):
     page_size = 10
     ordering = "-created_at"
@@ -80,10 +85,10 @@ class ClassificationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return models.Classification.objects.filter(classification_system=self.kwargs["classification_system_pk"])
 
-    pagination_class = CreatedAtPagination
+    pagination_class = ItemOrderPagination
 
     def get_serializer_class(self):
-        if self.action == "list" or self.action == "retrieve":
+        if self.action == "retrieve":
             return serializers.ClassificationListItemSerializer
         return serializers.ClassificationSerializer
 
