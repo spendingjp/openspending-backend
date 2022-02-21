@@ -61,6 +61,7 @@ import { WdmmgResponse } from '@/types/wdmmg-response'
 import { ClassificationSystemListItem } from '@/types/classification-system-list-item'
 import { ClassificationSystemListResponse } from '@/types/classification-system-list-response'
 import { Budget } from '@/types/budget'
+import { BudgetListResponse } from '@/types/budget-list-response'
 import MappingBudgetCreationForm from '@/components/MappingBudgetCreationForm.vue'
 import BudgetTree from '@/components/BudgetTree.vue'
 
@@ -97,7 +98,7 @@ export default defineComponent({
           )
         ).data.results
         state.relatedBudgets = (
-          await $axios.get<ClassificationSystemListResponse>(
+          await $axios.get<BudgetListResponse>(
             `/api/v1/budgets/?sourceBudget=${state.wdmmgTree.id}`
           )
         ).data.results

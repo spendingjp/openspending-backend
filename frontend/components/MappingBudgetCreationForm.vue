@@ -90,7 +90,7 @@ import { ClassificationSystemListItem } from '@/types/classification-system-list
 import { Budget } from '@/types/budget'
 
 type State = {
-  dialog: bool
+  dialog: Boolean
   selectedMappedBudgetSlug: string | null
   newBudgetName: string
   selectedClassificationSystemIdForNewBudget: string | null
