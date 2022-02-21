@@ -6,6 +6,7 @@
           <v-card-title class="text-h3">{{
             state.wdmmgTree.name
           }}</v-card-title>
+
           <v-card-subtitle class="text-h6"
             ><v-row
               >{{ state.wdmmgTree.subtitle }}<v-spacer></v-spacer>
@@ -21,6 +22,7 @@
               ></v-row
             >
             <v-row v-else>
+              <v-spacer></v-spacer>
               <mapping-budget-creation-form
                 :mapped-budget-candidate="state.mappedBudgetCandidate"
                 :related-budgets="state.relatedBudgets"
