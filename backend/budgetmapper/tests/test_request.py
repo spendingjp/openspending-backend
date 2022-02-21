@@ -1422,6 +1422,102 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
         actual = res.json()
         self.assertEqual(actual, expected)
 
+    def test_retrieve_basic_by_slug(self):
+        bs = [factories.BasicBudgetFactory() for i in range(100)]
+        b = bs[random.randint(0, 99)]
+        res = self.client.get(f"/api/v1/budgets/{b.slug}/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = {
+            "id": b.id,
+            "name": b.name,
+            "slug": b.slug,
+            "year": b.year,
+            "subtitle": b.subtitle,
+            "classificationSystem": {
+                "id": b.classification_system.id,
+                "name": b.classification_system.name,
+                "slug": b.classification_system.slug,
+                "levelNames": b.classification_system.level_names,
+                "createdAt": b.classification_system.created_at.strftime(datetime_format),
+                "updatedAt": b.classification_system.updated_at.strftime(datetime_format),
+            },
+            "government": {
+                "id": b.government.id,
+                "name": b.government.name,
+                "slug": b.government.slug,
+                "latitude": b.government.latitude,
+                "longitude": b.government.longitude,
+                "createdAt": b.government.created_at.strftime(datetime_format),
+                "updatedAt": b.government.updated_at.strftime(datetime_format),
+            },
+            "createdAt": b.created_at.strftime(datetime_format),
+            "updatedAt": b.updated_at.strftime(datetime_format),
+        }
+
+        actual = res.json()
+        self.assertEqual(actual, expected)
+
+    def test_retrieve_mapped_by_slug(self):
+        bs = [factories.MappedBudgetFactory() for i in range(100)]
+        b = random.choice(bs)
+        res = self.client.get(f"/api/v1/budgets/{b.slug}/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = {
+            "id": b.id,
+            "name": b.name,
+            "slug": b.slug,
+            "year": b.year,
+            "subtitle": b.subtitle,
+            "classificationSystem": {
+                "id": b.classification_system.id,
+                "name": b.classification_system.name,
+                "slug": b.classification_system.slug,
+                "levelNames": b.classification_system.level_names,
+                "createdAt": b.classification_system.created_at.strftime(datetime_format),
+                "updatedAt": b.classification_system.updated_at.strftime(datetime_format),
+            },
+            "government": {
+                "id": b.government.id,
+                "name": b.government.name,
+                "slug": b.government.slug,
+                "latitude": b.government.latitude,
+                "longitude": b.government.longitude,
+                "createdAt": b.government.created_at.strftime(datetime_format),
+                "updatedAt": b.government.updated_at.strftime(datetime_format),
+            },
+            "sourceBudget": {
+                "id": b.source_budget.id,
+                "name": b.source_budget.name,
+                "slug": b.source_budget.slug,
+                "year": b.source_budget.year,
+                "subtitle": b.source_budget.subtitle,
+                "classificationSystem": {
+                    "id": b.source_budget.classification_system.id,
+                    "name": b.source_budget.classification_system.name,
+                    "slug": b.source_budget.classification_system.slug,
+                    "levelNames": b.source_budget.classification_system.level_names,
+                    "createdAt": b.source_budget.classification_system.created_at.strftime(datetime_format),
+                    "updatedAt": b.source_budget.classification_system.updated_at.strftime(datetime_format),
+                },
+                "government": {
+                    "id": b.source_budget.government.id,
+                    "name": b.source_budget.government.name,
+                    "slug": b.source_budget.government.slug,
+                    "latitude": b.source_budget.government.latitude,
+                    "longitude": b.source_budget.government.longitude,
+                    "createdAt": b.source_budget.government.created_at.strftime(datetime_format),
+                    "updatedAt": b.source_budget.government.updated_at.strftime(datetime_format),
+                },
+                "createdAt": b.source_budget.created_at.strftime(datetime_format),
+                "updatedAt": b.source_budget.updated_at.strftime(datetime_format),
+            },
+            "createdAt": b.created_at.strftime(datetime_format),
+            "updatedAt": b.updated_at.strftime(datetime_format),
+        }
+
+        actual = res.json()
+        self.assertEqual(actual, expected)
+
     def test_create_requires_authentication(self):
         gov = factories.GovernmentFactory()
         cs = factories.ClassificationSystemFactory()

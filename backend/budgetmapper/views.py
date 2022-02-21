@@ -116,19 +116,21 @@ class BudgetFilter(filters.BaseFilterBackend):
         return queryset.filter(Q(pk__in=ids))
 
 
-class BudgetViewSet(viewsets.ModelViewSet):
+class BudgetViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
     queryset = models.BudgetBase.objects.all()
     pagination_class = CreatedAtPagination
     filter_backends = [BudgetFilter]
+    lookup_fields = ("pk", "slug")
+    param_field_name_in_path = "pk"
 
     def get_serializer_class(self):
-        if "pk" not in self.kwargs:
+        if "pk" not in self.kwargs and "slug" not in self.kwargs:
             if self.action == "create":
                 if "source_budget" in self.request.data:
                     return serializers.MappedBudgetSerializer
                 return serializers.BasicBudgetCreateUpdateSerializer
             return serializers.BudgetListSerializer
-        bud = get_object_or_404(models.BudgetBase.objects, pk=self.kwargs["pk"])
+        bud = self.get_object()
         if isinstance(bud, models.BasicBudget):
             if self.action == "retrieve":
                 return serializers.BasicBudgetRetrieveSerializer
