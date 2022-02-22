@@ -63,6 +63,19 @@ class ClassificationSystemViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSe
         return serializers.ClassificationSystemSerializer
 
 
+class MappedgBudgetCandidateView(mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = serializers.ClassificationSystemSerializer
+    pagination_class = CreatedAtPagination
+
+    def get_queryset(self):
+        budget = get_object_or_404(models.BasicBudget.objects, pk=self.kwargs["budget_pk"])
+        return models.ClassificationSystem.objects.exclude(
+            pk__in=models.BasicBudget.objects.filter(
+                government_value=budget.government_value, year_value=budget.year_value
+            ).values("classification_system")
+        )
+
+
 class ClassificationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return models.Classification.objects.filter(classification_system=self.kwargs["classification_system_pk"])
@@ -77,6 +90,19 @@ class ClassificationViewSet(viewsets.ModelViewSet):
 
 class BudgetFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
+        if "sourceBudget" in request.query_params:
+            return queryset.filter(
+                Q(
+                    pk__in=models.MappedBudget.objects.filter(
+                        **dict(
+                            {}
+                            if "classificationSystem" not in request.query_params
+                            else {"classification_system": request.query_params["classificationSystem"]},
+                            source_budget=request.query_params.get("sourceBudget"),
+                        )
+                    ).values("id")
+                )
+            )
         basic_qs = models.BasicBudget.objects
         if "government" in request.query_params:
             basic_qs = basic_qs.filter(government_value_id=request.query_params["government"])
