@@ -543,6 +543,55 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
             self.assertEqual(actual, expected)
 
 
+class DefaultBudgetTestCase(BudgetMapperTestUserAPITestCase):
+    @patch(
+        "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
+        return_value="ab12345678901234567890",
+    )
+    def test_create_default_budget(self, shortuuidfield_ShortUUIDField_get_default):
+        gov = factories.GovernmentFactory()
+        budget = factories.BasicBudgetFactory(government_value=gov)
+        dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt):
+            self.client.login(username=self._user_username, password=self._user_password)
+            query = {"budget": budget.id}
+            res = self.client.post(f"/api/v1/governments/{gov.id}/default-budget/", query, format="json")
+            self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+            expected = {
+                "id": "ab12345678901234567890",
+                "government": gov.id,
+                "budget": budget.id,
+                "createdAt": dt.strftime(datetime_format),
+                "updatedAt": dt.strftime(datetime_format),
+            }
+            actual = res.json()
+            self.assertEqual(actual, expected)
+
+    def test_replace_default_budget(self):
+        gov = factories.GovernmentFactory()
+        budget1 = factories.BasicBudgetFactory(government_value=gov)
+        budget2 = factories.BasicBudgetFactory(government_value=gov)
+        db = models.DefaultBudget(government=gov, budget=budget1)
+        db.save()
+
+        self.client.login(username=self._user_username, password=self._user_password)
+        query = {"budget": budget2.id}
+        res = self.client.post(f"/api/v1/governments/{gov.id}/default-budget/", query, format="json")
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        actual = res.json()
+        obj = models.DefaultBudget.objects.get(id=actual["id"])
+        self.assertEqual(actual["government"], gov.id)
+        self.assertEqual(actual["budget"], budget2.id)
+        self.assertEqual(obj.government.id, gov.id)
+        self.assertEqual(obj.budget.id, budget2.id)
+
+    def test_post_requires_login(self):
+        gov = factories.GovernmentFactory()
+        query = {"budget": "hoge"}
+        res = self.client.post(f"/api/v1/governments/{gov.id}/default-budget/", query, format="json")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
 class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
     def test_list(self):
         ordering = CreatedAtPagination.ordering

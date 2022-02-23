@@ -440,3 +440,15 @@ class WdmmgSerializer(serializers.ModelSerializer):
                 source_budget=BudgetListSerializer(instance.source_budget).data,
             )
         return super(WdmmgSerializer, self).to_representation(instance)
+
+
+class DefaultBudgetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.DefaultBudget
+        fields = (
+            "id",
+            "government",
+            "budget",
+            "created_at",
+            "updated_at",
+        )
