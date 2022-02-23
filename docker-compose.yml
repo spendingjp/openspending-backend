@@ -1,7 +1,6 @@
 version: "3"
 services:
   proxy:
-    container_name: nginx
     restart: on-failure
     image: nginx
     volumes:
@@ -14,7 +13,6 @@ services:
     depends_on:
       - app
   app:
-    container_name: app
     build: .
     restart: always
     environment:
@@ -29,7 +27,6 @@ services:
     depends_on:
       - db
   db:
-    container_name: postgres
     image: postgres
     volumes:
       - db-volume:/var/lib/postgresql/data
