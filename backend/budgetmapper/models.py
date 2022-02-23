@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils import timezone
@@ -326,6 +326,24 @@ class MappedBudget(BudgetBase):
     @property
     def government(self):
         return self.source_budget.government
+
+    def bulk_create(self, data):
+        qs = MappedBudgetItem.objects.filter(budget=self)
+        known_classes = set()
+        with transaction.atomic():
+            for d in data:
+                if len(d["source_classifications"]) == 0:
+                    continue
+                mbi, created = qs.get_or_create(classification_id=d["classification"], defaults={"budget": self})
+                if created:
+                    mbi.source_classifications.set(d["source_classifications"])
+                    mbi.save()
+                elif set(c.id for c in mbi.source_classifications.all()) != set(d["source_classifications"]):
+                    mbi.source_classifications.set(d["source_classifications"])
+                    mbi.save()
+                known_classes.add(d["classification"])
+            qs.exclude(classification__in=known_classes).delete()
+        return qs.all()
 
 
 class BudgetItemBase(PolymorphicModel):

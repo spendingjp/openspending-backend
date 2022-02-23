@@ -6,8 +6,9 @@ from io import BytesIO, StringIO
 from django.db.models import Q
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, mixins, viewsets
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.pagination import CursorPagination
+from rest_framework.response import Response
 
 from . import models, serializers
 
@@ -79,6 +80,21 @@ class MappedgBudgetCandidateView(mixins.ListModelMixin, viewsets.GenericViewSet)
                 government_value=budget.government_value, year_value=budget.year_value
             ).values("classification_system")
         )
+
+
+class MappedbudgetItemBulkCreateView(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    def create(self, request, budget_pk):
+        budget = get_object_or_404(models.MappedBudget.objects, pk=budget_pk)
+        if "data" not in request.data:
+            return Response({"error": "data"}, status=status.HTTP_400_BAD_REQUEST)
+        data = request.data["data"]
+        try:
+            return Response(
+                serializers.MappedBudgetBulkCreateResponseSerializer({"results": budget.bulk_create(data)}).data,
+                status=status.HTTP_201_CREATED,
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ClassificationViewSet(viewsets.ModelViewSet):

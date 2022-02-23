@@ -853,6 +853,88 @@ class MappedBudgetCandidateTestCase(BudgetMapperTestUserAPITestCase):
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
 
+class MappedBudgetBulkCreate(BudgetMapperTestUserAPITestCase):
+    def test_bulk_create(self):
+        dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt) as freezed_time:
+            cs0 = factories.ClassificationSystemFactory()
+            bud0 = factories.BasicBudgetFactory(classification_system=cs0)
+            cl00 = factories.ClassificationFactory(classification_system=cs0)
+            cl01 = factories.ClassificationFactory(classification_system=cs0)
+            cl02 = factories.ClassificationFactory(classification_system=cs0)
+            cl03 = factories.ClassificationFactory(classification_system=cs0)
+            cl04 = factories.ClassificationFactory(classification_system=cs0)
+            factories.AtomicBudgetItemFactory(budget=bud0, classification=cl00)
+            factories.AtomicBudgetItemFactory(budget=bud0, classification=cl01)
+            factories.AtomicBudgetItemFactory(budget=bud0, classification=cl02)
+            factories.AtomicBudgetItemFactory(budget=bud0, classification=cl03)
+            factories.AtomicBudgetItemFactory(budget=bud0, classification=cl04)
+            cs1 = factories.ClassificationSystemFactory()
+            bud1 = factories.MappedBudgetFactory(classification_system=cs1, source_budget=bud0)
+            cl10 = factories.ClassificationFactory(classification_system=cs1)
+            cl11 = factories.ClassificationFactory(classification_system=cs1)
+            cl12 = factories.ClassificationFactory(classification_system=cs1)
+            cl13 = factories.ClassificationFactory(classification_system=cs1)
+
+            mbi10 = factories.MappedBudgetItemFactory(budget=bud1, classification=cl10)
+            mbi10.source_classifications.set([cl00])
+            mbi11 = factories.MappedBudgetItemFactory(budget=bud1, classification=cl11)
+            mbi11.source_classifications.set([cl01, cl02])
+            mbi12 = factories.MappedBudgetItemFactory(budget=bud1, classification=cl12)
+            mbi12.source_classifications.set([cl03, cl04])
+            freezed_time.tick(1000)
+            self.client.login(username=self._user_username, password=self._user_password)
+            query = {
+                "data": [
+                    {"classification": cl10.id, "sourceClassifications": [cl00.id]},
+                    {"classification": cl11.id, "sourceClassifications": [cl01.id]},
+                    {"classification": cl13.id, "sourceClassifications": [cl02.id, cl03.id, cl04.id]},
+                ]
+            }
+            dt2 = datetime.now()
+            with patch(
+                "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
+                return_value="ab12345678901234567890",
+            ):
+                res = self.client.post(f"/api/v1/budgets/{bud1.id}/bulk-create/", query, format="json")
+                self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+                expected = sorted(
+                    [
+                        {
+                            "id": mbi10.id,
+                            "budget": bud1.id,
+                            "classification": cl10.id,
+                            "sourceClassifications": [cl00.id],
+                            "createdAt": dt.strftime(datetime_format),
+                            "updatedAt": dt.strftime(datetime_format),
+                        },
+                        {
+                            "id": mbi11.id,
+                            "budget": bud1.id,
+                            "classification": cl11.id,
+                            "sourceClassifications": [cl01.id],
+                            "createdAt": dt.strftime(datetime_format),
+                            "updatedAt": dt2.strftime(datetime_format),
+                        },
+                        {
+                            "id": "ab12345678901234567890",
+                            "budget": bud1.id,
+                            "classification": cl13.id,
+                            "sourceClassifications": [cl02.id, cl03.id, cl04.id],
+                            "createdAt": dt2.strftime(datetime_format),
+                            "updatedAt": dt2.strftime(datetime_format),
+                        },
+                    ],
+                    key=lambda d: d["id"],
+                )
+                res_json = res.json()
+                self.assertIn("results", res_json)
+                actual = res_json["results"]
+                self.assertEqual(sorted(actual, key=lambda d: d["id"]), expected)
+            with self.assertRaises(models.MappedBudgetItem.DoesNotExist):
+                models.MappedBudgetItem.objects.get(id=mbi12.id)
+
+
 class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
     def test_list(self):
         ordering = ItemOrderPagination.ordering

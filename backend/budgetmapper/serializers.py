@@ -347,6 +347,10 @@ class MappedBudgetItemListSerializer(serializers.ModelSerializer):
         )
 
 
+class MappedBudgetBulkCreateResponseSerializer(serializers.Serializer):
+    results = MappedBudgetItemListSerializer(many=True)
+
+
 class MappedBudgetItemRetrieveSerializer(serializers.ModelSerializer):
     classification = ClassificationSerializer()
     source_classifications = ClassificationSerializer(many=True)
