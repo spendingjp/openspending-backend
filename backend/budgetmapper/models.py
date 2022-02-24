@@ -8,7 +8,7 @@ import shortuuidfield
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
@@ -135,6 +135,26 @@ class ItemOrderField(models.IntegerField):
         return val
 
 
+class ColorCodeField(models.CharField):
+    def __init__(self, *args, **kwargs):
+        super(ColorCodeField, self).__init__(
+            *args,
+            **dict(
+                kwargs,
+                max_length=8,
+                validators=[
+                    RegexValidator(
+                        regex=r'^#(?:[0-9a-fA-F]{3}){1,2}$',
+                        message="invalid_colorcode_format",
+                        code='invalid_colorcode_format',
+                    )
+                ],
+                null=True,
+                db_index=False,
+            ),
+        )
+
+
 class ImageTypeField(models.CharField):
     def __init__(self, *args, **kwargs):
         super(ImageTypeField, self).__init__(
@@ -188,6 +208,8 @@ class Government(models.Model):
     slug = JpSlugField(unique=True)
     latitude = LatitudeField()
     longitude = LongitudeField()
+    primary_color_code = ColorCodeField()
+    secondary_color_code = ColorCodeField()
     created_at = CurrentDateTimeField()
     updated_at = AutoUpdateCurrentDateTimeField()
 
