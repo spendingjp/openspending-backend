@@ -94,6 +94,24 @@ class GovernmentTest(TestCase):
         sut.save()
         self.assertEqual(sut.id, "ab12345678901234567890")
 
+    def test_government_has_primary_color_code(self) -> None:
+        sut = models.Government(name="まほろ市", primary_color_code="#111111")
+        sut.save()
+        self.assertEqual(sut.primary_color_code, "#111111")
+
+    def test_government_has_primary_color_code_with_validation(self) -> None:
+        sut = models.Government(
+            name="まほろ市", latitude=40, longitude=30, primary_color_code="12", secondary_color_code="#123"
+        )
+        with self.assertRaises(ValidationError):
+            sut.full_clean()
+            sut.save()
+
+    def test_government_has_secondary_color_code(self) -> None:
+        sut = models.Government(name="まほろ市", secondary_color_code="#222")
+        sut.save()
+        self.assertEqual(sut.secondary_color_code, "#222")
+
 
 class ClassificationSystemTest(TestCase):
     @patch(

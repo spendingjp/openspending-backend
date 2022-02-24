@@ -19,6 +19,8 @@ class GovernmentSerializerTestCase(TestCase):
             "slug": g.slug,
             "latitude": g.latitude,
             "longitude": g.longitude,
+            "primary_color_code": g.primary_color_code,
+            "secondary_color_code": g.secondary_color_code,
             "created_at": g.created_at.strftime(datetime_format),
             "updated_at": g.updated_at.strftime(datetime_format),
         }

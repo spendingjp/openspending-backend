@@ -42,6 +42,8 @@ class GovernmentSerializer(serializers.ModelSerializer):
             "slug",
             "latitude",
             "longitude",
+            "primary_color_code",
+            "secondary_color_code",
             "created_at",
             "updated_at",
         )
