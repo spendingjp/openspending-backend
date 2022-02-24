@@ -43,7 +43,7 @@ class IconImageTestCase(TransactionTestCase):
     def test_to_data_uri(self):
         sut = models.IconImage(name="icon_1", image_type="svg+xml", body=b"<svg></svg>")
         sut.save()
-        expected = 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='
+        expected = "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4="
         actual = sut.to_data_uri()
         self.assertEqual(actual, expected)
 
@@ -851,3 +851,17 @@ class WdmmgTreeCacheTestCase(TransactionTestCase):
             blob.save()
             actual = models.WdmmgTreeCache.get_or_none(bud)
             self.assertIsNone(actual)
+
+
+class DefaultBudgetTestCase(TestCase):
+    def test_default_budget(self):
+        gov = factories.GovernmentFactory()
+        budget = factories.BasicBudgetFactory(government_value=gov)
+        models.DefaultBudget.objects.create(government=gov, budget=budget)
+
+    def test_raise_validation_error(self):
+        gov1 = factories.GovernmentFactory()
+        gov2 = factories.GovernmentFactory()
+        budget = factories.BasicBudgetFactory(government_value=gov2)
+        with self.assertRaises(ValidationError):
+            models.DefaultBudget.objects.create(government=gov1, budget=budget)

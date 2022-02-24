@@ -474,6 +474,20 @@ class WdmmgTreeCache(models.Model):
         return None
 
 
+class DefaultBudget(models.Model):
+    id = PkField()
+    government = models.OneToOneField(Government, on_delete=models.CASCADE, db_index=True, null=False, unique=True)
+    budget = models.OneToOneField(BudgetBase, on_delete=models.CASCADE, null=False, db_index=False)
+    created_at = CurrentDateTimeField()
+    updated_at = AutoUpdateCurrentDateTimeField()
+
+    def save(self, *args, **kwargs):
+        if self.budget.government.id != self.government.id:
+            raise ValidationError("A budget must blongs to specified government.")
+
+        super(DefaultBudget, self).save(*args, **kwargs)
+
+
 @receiver(post_save, sender=AtomicBudgetItem)
 def touch_budget_on_save_atomic_budget_item(sender, instance=None, **kwargs):
     if instance is not None:

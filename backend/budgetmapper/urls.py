@@ -10,6 +10,9 @@ router.register(r"budgets", views.BudgetViewSet)
 router.register(r"wdmmg", views.WdmmgView)
 router.register(r"icon-images", views.IconImageViewSet)
 
+government_router = routers.NestedDefaultRouter(router, r"governments", lookup="government")
+government_router.register(r"default-budget", views.DefaultBudgetView, basename="government-default-budget")
+
 classification_system_router = routers.NestedDefaultRouter(
     router, r"classification-systems", lookup=r"classification_system"
 )
@@ -26,6 +29,7 @@ budget_router.register(
 
 urlpatterns = [
     path("api/v1/", include(router.urls)),
+    path("api/v1/", include(government_router.urls)),
     path("api/v1/", include(classification_system_router.urls)),
     path("api/v1/", include(budget_router.urls)),
     path("transfer/xlsx_template", views.download_xlsx_template_view),
