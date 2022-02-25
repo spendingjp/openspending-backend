@@ -7,7 +7,6 @@ from django.db.models import Q
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, status, viewsets
-from rest_framework.response import Response
 from rest_framework.pagination import CursorPagination
 from rest_framework.response import Response
 
