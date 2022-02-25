@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, status, viewsets
+from rest_framework.response import Response
 from rest_framework.pagination import CursorPagination
 from rest_framework.response import Response
 
@@ -226,3 +227,28 @@ def icon_view(request, icon_slug_or_id):
         icon = get_object_or_404(models.IconImage, id=icon_slug_or_id)
 
     return HttpResponse(icon.body, content_type=f"image/{icon.image_type}")
+
+
+class DefaultBudgetView(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    pagination_class = CreatedAtPagination
+    lookup_field = "id"
+
+    def get_queryset(self):
+        get_object_or_404(models.Government.objects, pk=self.kwargs["government_pk"])
+        return models.DefaultBudget.objects.filter(government=self.kwargs["government_pk"])
+
+    def create(self, request, *args, **kwargs):
+        budget_id = self.request.data["budget"]
+        government_id = self.kwargs["government_pk"]
+        try:
+            obj = models.DefaultBudget.objects.get(government=government_id)
+            serializer = serializers.DefaultBudgetSerializer(data=self.request.data)
+            serializer.is_valid()
+            obj = serializer.update(obj, {"government_id": government_id, "budget_id": budget_id})
+            return Response(serializer.to_representation(obj), status=status.HTTP_201_CREATED)
+        except models.DefaultBudget.DoesNotExist:
+            self.request.data["government"] = government_id
+            serializer = serializers.DefaultBudgetSerializer(data=self.request.data)
+            serializer.is_valid()
+            obj = serializer.save()
+            return Response(serializer.to_representation(obj), status=status.HTTP_201_CREATED)
