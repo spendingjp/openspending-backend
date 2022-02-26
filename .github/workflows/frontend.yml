@@ -30,4 +30,4 @@ jobs:
 
       - name: generate
         working-directory: ./frontend
-        run: yarn generate
+        run: yarn generate --fail-on-error
