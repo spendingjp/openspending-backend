@@ -6,9 +6,9 @@ from io import BytesIO, StringIO
 from django.db.models import Q
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, mixins, viewsets, status
-from rest_framework.response import Response
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.pagination import CursorPagination
+from rest_framework.response import Response
 
 from . import models, serializers
 
@@ -229,3 +229,16 @@ class DefaultBudgetView(mixins.CreateModelMixin, viewsets.GenericViewSet):
             serializer.is_valid()
             obj = serializer.save()
             return Response(serializer.to_representation(obj), status=status.HTTP_201_CREATED)
+
+
+class GovernmentBudgetView(mixins.ListModelMixin, viewsets.GenericViewSet):
+    pagination_class = None
+    queryset = None
+    lookup_fields = "slug"
+    param_field_name_in_path = "pk"
+    serializer_class = serializers.GovernmentBudgetListSerializer
+
+    def list(self, request, *args, **kwargs):
+        government_slug = self.kwargs["government_pk"]
+        obj = get_object_or_404(models.Government.objects, slug=government_slug)
+        return Response(serializers.GovernmentBudgetListSerializer(obj).data, status=status.HTTP_200_OK)

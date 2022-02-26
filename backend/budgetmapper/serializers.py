@@ -452,3 +452,21 @@ class DefaultBudgetSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
+
+
+class GovernmentBudgetListSerializer(serializers.ModelSerializer):
+    budgets = serializers.SerializerMethodField()
+    default_budget = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.Government
+        fields = ("budgets", "default_budget")
+
+    def get_budgets(self, obj: models.Government):
+        return BudgetListSerializer(obj.basicbudget_set.all(), many=True).data
+
+    def get_default_budget(self, obj: models.Government):
+        try:
+            return DefaultBudgetSerializer(obj.defaultbudget).data
+        except models.Government.defaultbudget.RelatedObjectDoesNotExist:
+            return None
