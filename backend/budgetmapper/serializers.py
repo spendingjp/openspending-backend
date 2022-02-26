@@ -473,6 +473,6 @@ class GovernmentBudgetListSerializer(serializers.ModelSerializer):
 
     def get_default_budget(self, obj: models.Government):
         try:
-            return DefaultBudgetSerializer(obj.defaultbudget).data
+            return BudgetListSerializer(obj.defaultbudget.budget).data
         except models.Government.defaultbudget.RelatedObjectDoesNotExist:
             return None

@@ -602,7 +602,7 @@ class GovernmentBudgetListTestCase(BudgetMapperTestUserAPITestCase):
         budget4 = factories.BasicBudgetFactory(government_value=gov)
         mp_budget1 = factories.MappedBudgetFactory(source_budget=budget1)
         mp_budget2 = factories.MappedBudgetFactory(source_budget=budget2)
-        default_budget = factories.DefaultBudgetFactory(government=gov, budget=budget2)
+        factories.DefaultBudgetFactory(government=gov, budget=mp_budget1)
 
         res = self.client.get(f"/api/v1/governments/{gov.slug}/budgets/", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -678,11 +678,16 @@ class GovernmentBudgetListTestCase(BudgetMapperTestUserAPITestCase):
                 },
             ],
             "defaultBudget": {
-                "id": default_budget.id,
-                "government": default_budget.government.id,
-                "budget": default_budget.budget.id,
-                "createdAt": default_budget.created_at.strftime(datetime_format),
-                "updatedAt": default_budget.updated_at.strftime(datetime_format),
+                "id": mp_budget1.id,
+                "name": mp_budget1.name,
+                "slug": mp_budget1.slug,
+                "year": mp_budget1.year,
+                "subtitle": mp_budget1.subtitle,
+                "classificationSystem": mp_budget1.classification_system.id,
+                "government": mp_budget1.government.id,
+                "sourceBudget": mp_budget1.source_budget.id,
+                "createdAt": mp_budget1.created_at.strftime(datetime_format),
+                "updatedAt": mp_budget1.updated_at.strftime(datetime_format),
             },
         }
         actual = res.json()
