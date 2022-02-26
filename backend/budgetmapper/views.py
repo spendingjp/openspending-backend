@@ -251,3 +251,16 @@ class DefaultBudgetView(mixins.CreateModelMixin, viewsets.GenericViewSet):
             serializer.is_valid()
             obj = serializer.save()
             return Response(serializer.to_representation(obj), status=status.HTTP_201_CREATED)
+
+
+class GovernmentBudgetView(mixins.ListModelMixin, viewsets.GenericViewSet):
+    pagination_class = None
+    queryset = None
+    lookup_fields = "slug"
+    param_field_name_in_path = "pk"
+    serializer_class = serializers.GovernmentBudgetListSerializer
+
+    def list(self, request, *args, **kwargs):
+        government_slug = self.kwargs["government_pk"]
+        obj = get_object_or_404(models.Government.objects, slug=government_slug)
+        return Response(serializers.GovernmentBudgetListSerializer(obj).data, status=status.HTTP_200_OK)

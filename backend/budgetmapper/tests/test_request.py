@@ -608,6 +608,207 @@ class DefaultBudgetTestCase(BudgetMapperTestUserAPITestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
+class GovernmentBudgetListTestCase(BudgetMapperTestUserAPITestCase):
+    def test_budget_list(self):
+        self.maxDiff = None
+        gov = factories.GovernmentFactory()
+        budget1 = factories.BasicBudgetFactory(government_value=gov)
+        budget2 = factories.BasicBudgetFactory(government_value=gov)
+        budget3 = factories.BasicBudgetFactory(government_value=gov)
+        budget4 = factories.BasicBudgetFactory(government_value=gov)
+        mp_budget1 = factories.MappedBudgetFactory(source_budget=budget1)
+        mp_budget2 = factories.MappedBudgetFactory(source_budget=budget2)
+        factories.DefaultBudgetFactory(government=gov, budget=mp_budget1)
+
+        res = self.client.get(f"/api/v1/governments/{gov.slug}/budgets/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = {
+            "budgets": [
+                {
+                    "id": budget1.id,
+                    "name": budget1.name,
+                    "slug": budget1.slug,
+                    "year": budget1.year,
+                    "subtitle": budget1.subtitle,
+                    "classificationSystem": budget1.classification_system.id,
+                    "government": budget1.government.id,
+                    "createdAt": budget1.created_at.strftime(datetime_format),
+                    "updatedAt": budget1.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": budget2.id,
+                    "name": budget2.name,
+                    "slug": budget2.slug,
+                    "year": budget2.year,
+                    "subtitle": budget2.subtitle,
+                    "classificationSystem": budget2.classification_system.id,
+                    "government": budget2.government.id,
+                    "createdAt": budget2.created_at.strftime(datetime_format),
+                    "updatedAt": budget2.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": budget3.id,
+                    "name": budget3.name,
+                    "slug": budget3.slug,
+                    "year": budget3.year,
+                    "subtitle": budget3.subtitle,
+                    "classificationSystem": budget3.classification_system.id,
+                    "government": budget3.government.id,
+                    "createdAt": budget3.created_at.strftime(datetime_format),
+                    "updatedAt": budget3.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": budget4.id,
+                    "name": budget4.name,
+                    "slug": budget4.slug,
+                    "year": budget4.year,
+                    "subtitle": budget4.subtitle,
+                    "classificationSystem": budget4.classification_system.id,
+                    "government": budget4.government.id,
+                    "createdAt": budget4.created_at.strftime(datetime_format),
+                    "updatedAt": budget4.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": mp_budget1.id,
+                    "name": mp_budget1.name,
+                    "slug": mp_budget1.slug,
+                    "year": mp_budget1.year,
+                    "subtitle": mp_budget1.subtitle,
+                    "classificationSystem": mp_budget1.classification_system.id,
+                    "government": mp_budget1.government.id,
+                    "sourceBudget": mp_budget1.source_budget.id,
+                    "createdAt": mp_budget1.created_at.strftime(datetime_format),
+                    "updatedAt": mp_budget1.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": mp_budget2.id,
+                    "name": mp_budget2.name,
+                    "slug": mp_budget2.slug,
+                    "year": mp_budget2.year,
+                    "subtitle": mp_budget2.subtitle,
+                    "classificationSystem": mp_budget2.classification_system.id,
+                    "government": mp_budget2.government.id,
+                    "sourceBudget": mp_budget2.source_budget.id,
+                    "createdAt": mp_budget2.created_at.strftime(datetime_format),
+                    "updatedAt": mp_budget2.updated_at.strftime(datetime_format),
+                },
+            ],
+            "defaultBudget": {
+                "id": mp_budget1.id,
+                "name": mp_budget1.name,
+                "slug": mp_budget1.slug,
+                "year": mp_budget1.year,
+                "subtitle": mp_budget1.subtitle,
+                "classificationSystem": mp_budget1.classification_system.id,
+                "government": mp_budget1.government.id,
+                "sourceBudget": mp_budget1.source_budget.id,
+                "createdAt": mp_budget1.created_at.strftime(datetime_format),
+                "updatedAt": mp_budget1.updated_at.strftime(datetime_format),
+            },
+        }
+        actual = res.json()
+        self.assertEqual(actual, expected)
+
+    def test_budget_list_without_default_budget(self):
+        gov = factories.GovernmentFactory()
+        budget1 = factories.BasicBudgetFactory(government_value=gov)
+        budget2 = factories.BasicBudgetFactory(government_value=gov)
+        budget3 = factories.BasicBudgetFactory(government_value=gov)
+        budget4 = factories.BasicBudgetFactory(government_value=gov)
+        mp_budget1 = factories.MappedBudgetFactory(source_budget=budget1)
+        mp_budget2 = factories.MappedBudgetFactory(source_budget=budget2)
+
+        res = self.client.get(f"/api/v1/governments/{gov.slug}/budgets/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = {
+            "budgets": [
+                {
+                    "id": budget1.id,
+                    "name": budget1.name,
+                    "slug": budget1.slug,
+                    "year": budget1.year,
+                    "subtitle": budget1.subtitle,
+                    "classificationSystem": budget1.classification_system.id,
+                    "government": budget1.government.id,
+                    "createdAt": budget1.created_at.strftime(datetime_format),
+                    "updatedAt": budget1.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": budget2.id,
+                    "name": budget2.name,
+                    "slug": budget2.slug,
+                    "year": budget2.year,
+                    "subtitle": budget2.subtitle,
+                    "classificationSystem": budget2.classification_system.id,
+                    "government": budget2.government.id,
+                    "createdAt": budget2.created_at.strftime(datetime_format),
+                    "updatedAt": budget2.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": budget3.id,
+                    "name": budget3.name,
+                    "slug": budget3.slug,
+                    "year": budget3.year,
+                    "subtitle": budget3.subtitle,
+                    "classificationSystem": budget3.classification_system.id,
+                    "government": budget3.government.id,
+                    "createdAt": budget3.created_at.strftime(datetime_format),
+                    "updatedAt": budget3.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": budget4.id,
+                    "name": budget4.name,
+                    "slug": budget4.slug,
+                    "year": budget4.year,
+                    "subtitle": budget4.subtitle,
+                    "classificationSystem": budget4.classification_system.id,
+                    "government": budget4.government.id,
+                    "createdAt": budget4.created_at.strftime(datetime_format),
+                    "updatedAt": budget4.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": mp_budget1.id,
+                    "name": mp_budget1.name,
+                    "slug": mp_budget1.slug,
+                    "year": mp_budget1.year,
+                    "subtitle": mp_budget1.subtitle,
+                    "classificationSystem": mp_budget1.classification_system.id,
+                    "government": mp_budget1.government.id,
+                    "sourceBudget": mp_budget1.source_budget.id,
+                    "createdAt": mp_budget1.created_at.strftime(datetime_format),
+                    "updatedAt": mp_budget1.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": mp_budget2.id,
+                    "name": mp_budget2.name,
+                    "slug": mp_budget2.slug,
+                    "year": mp_budget2.year,
+                    "subtitle": mp_budget2.subtitle,
+                    "classificationSystem": mp_budget2.classification_system.id,
+                    "government": mp_budget2.government.id,
+                    "sourceBudget": mp_budget2.source_budget.id,
+                    "createdAt": mp_budget2.created_at.strftime(datetime_format),
+                    "updatedAt": mp_budget2.updated_at.strftime(datetime_format),
+                },
+            ],
+            "defaultBudget": None,
+        }
+        actual = res.json()
+        self.assertEqual(actual, expected)
+
+    def test_budget_list_with_invalid_slug(self):
+        gov = factories.GovernmentFactory()
+        factories.BasicBudgetFactory(government_value=gov)
+        budget2 = factories.BasicBudgetFactory(government_value=gov)
+        factories.BasicBudgetFactory(government_value=gov)
+        factories.BasicBudgetFactory(government_value=gov)
+        factories.DefaultBudgetFactory(government=gov, budget=budget2)
+        invalid_slug = f"{gov.slug}invalid"
+
+        res = self.client.get(f"/api/v1/governments/{invalid_slug}/budgets/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+
 class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
     def test_list(self):
         ordering = CreatedAtPagination.ordering
