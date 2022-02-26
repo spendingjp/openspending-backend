@@ -21,6 +21,7 @@ setup(
         "drf-nested-routers",
         "django-polymorphic",
         "django",
+        "django-cors-headers",
     ],
     extras_require={
         "dev": [
@@ -28,7 +29,6 @@ setup(
             "black",
             "isort",
             "psycopg2-binary",
-            "django-cors-headers",
             "factory-boy",
             "freezegun",
             "django-extensions",

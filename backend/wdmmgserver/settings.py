@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'rest_framework.authtoken',
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
@@ -64,13 +65,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
 ]
 
+CORS_ALLOWED_ORIGIN_REGEXES = [d for d in os.getenv("APPLICATION_CORS_ALLOWED_ORIGINS", "").split(",") if len(d) > 0]
+
 if DEBUG:
-    INSTALLED_APPS.append("corsheaders")
     INSTALLED_APPS.append("django_extensions")
-    MIDDLEWARE.append("corsheaders.middleware.CorsMiddleware")
-    MIDDLEWARE.append("django.middleware.common.CommonMiddleware")
     CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'wdmmgserver.urls'
