@@ -6,11 +6,16 @@ from io import BytesIO, StringIO
 from django.db.models import Q
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, mixins, viewsets, status
-from rest_framework.response import Response
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.pagination import CursorPagination
+from rest_framework.response import Response
 
 from . import models, serializers
+
+
+class ItemOrderPagination(CursorPagination):
+    page_size = 10
+    ordering = "item_order"
 
 
 class CreatedAtPagination(CursorPagination):
@@ -77,14 +82,29 @@ class MappedgBudgetCandidateView(mixins.ListModelMixin, viewsets.GenericViewSet)
         )
 
 
+class MappedbudgetItemBulkCreateView(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    def create(self, request, budget_pk):
+        budget = get_object_or_404(models.MappedBudget.objects, pk=budget_pk)
+        if "data" not in request.data:
+            return Response({"error": "data"}, status=status.HTTP_400_BAD_REQUEST)
+        data = request.data["data"]
+        try:
+            return Response(
+                serializers.MappedBudgetBulkCreateResponseSerializer({"results": budget.bulk_create(data)}).data,
+                status=status.HTTP_201_CREATED,
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class ClassificationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return models.Classification.objects.filter(classification_system=self.kwargs["classification_system_pk"])
 
-    pagination_class = CreatedAtPagination
+    pagination_class = ItemOrderPagination
 
     def get_serializer_class(self):
-        if self.action == "list" or self.action == "retrieve":
+        if self.action == "retrieve":
             return serializers.ClassificationListItemSerializer
         return serializers.ClassificationSerializer
 
@@ -117,19 +137,21 @@ class BudgetFilter(filters.BaseFilterBackend):
         return queryset.filter(Q(pk__in=ids))
 
 
-class BudgetViewSet(viewsets.ModelViewSet):
+class BudgetViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
     queryset = models.BudgetBase.objects.all()
     pagination_class = CreatedAtPagination
     filter_backends = [BudgetFilter]
+    lookup_fields = ("pk", "slug")
+    param_field_name_in_path = "pk"
 
     def get_serializer_class(self):
-        if "pk" not in self.kwargs:
+        if "pk" not in self.kwargs and "slug" not in self.kwargs:
             if self.action == "create":
                 if "source_budget" in self.request.data:
                     return serializers.MappedBudgetSerializer
                 return serializers.BasicBudgetCreateUpdateSerializer
             return serializers.BudgetListSerializer
-        bud = get_object_or_404(models.BudgetBase.objects, pk=self.kwargs["pk"])
+        bud = self.get_object()
         if isinstance(bud, models.BasicBudget):
             if self.action == "retrieve":
                 return serializers.BasicBudgetRetrieveSerializer

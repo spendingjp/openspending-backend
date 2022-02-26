@@ -26,6 +26,7 @@ budget_router.register(r"items", views.BudgetItemViewSet, basename="budget-item"
 budget_router.register(
     r"mapped-budget-candidates", views.MappedgBudgetCandidateView, basename="budget-mapping-budget-candidate"
 )
+budget_router.register(r"bulk-create", views.MappedbudgetItemBulkCreateView, basename="budget-bulk-create")
 
 urlpatterns = [
     path("api/v1/", include(router.urls)),

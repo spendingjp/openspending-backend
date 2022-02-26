@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import freezegun
 from budgetmapper import models
-from budgetmapper.views import CreatedAtPagination
+from budgetmapper.views import CreatedAtPagination, ItemOrderPagination
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
@@ -918,12 +918,95 @@ class MappedBudgetCandidateTestCase(BudgetMapperTestUserAPITestCase):
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
 
+class MappedBudgetBulkCreate(BudgetMapperTestUserAPITestCase):
+    def test_bulk_create(self):
+        dt = datetime(2021, 1, 31, 12, 23, 34, 5678)
+        with freezegun.freeze_time(dt) as freezed_time:
+            cs0 = factories.ClassificationSystemFactory()
+            bud0 = factories.BasicBudgetFactory(classification_system=cs0)
+            cl00 = factories.ClassificationFactory(classification_system=cs0)
+            cl01 = factories.ClassificationFactory(classification_system=cs0)
+            cl02 = factories.ClassificationFactory(classification_system=cs0)
+            cl03 = factories.ClassificationFactory(classification_system=cs0)
+            cl04 = factories.ClassificationFactory(classification_system=cs0)
+            factories.AtomicBudgetItemFactory(budget=bud0, classification=cl00)
+            factories.AtomicBudgetItemFactory(budget=bud0, classification=cl01)
+            factories.AtomicBudgetItemFactory(budget=bud0, classification=cl02)
+            factories.AtomicBudgetItemFactory(budget=bud0, classification=cl03)
+            factories.AtomicBudgetItemFactory(budget=bud0, classification=cl04)
+            cs1 = factories.ClassificationSystemFactory()
+            bud1 = factories.MappedBudgetFactory(classification_system=cs1, source_budget=bud0)
+            cl10 = factories.ClassificationFactory(classification_system=cs1)
+            cl11 = factories.ClassificationFactory(classification_system=cs1)
+            cl12 = factories.ClassificationFactory(classification_system=cs1)
+            cl13 = factories.ClassificationFactory(classification_system=cs1)
+
+            mbi10 = factories.MappedBudgetItemFactory(budget=bud1, classification=cl10)
+            mbi10.source_classifications.set([cl00])
+            mbi11 = factories.MappedBudgetItemFactory(budget=bud1, classification=cl11)
+            mbi11.source_classifications.set([cl01, cl02])
+            mbi12 = factories.MappedBudgetItemFactory(budget=bud1, classification=cl12)
+            mbi12.source_classifications.set([cl03, cl04])
+            freezed_time.tick(1000)
+            self.client.login(username=self._user_username, password=self._user_password)
+            query = {
+                "data": [
+                    {"classification": cl10.id, "sourceClassifications": [cl00.id]},
+                    {"classification": cl11.id, "sourceClassifications": [cl01.id]},
+                    {"classification": cl13.id, "sourceClassifications": [cl02.id, cl03.id, cl04.id]},
+                ]
+            }
+            dt2 = datetime.now()
+            with patch(
+                "budgetmapper.models.shortuuidfield.ShortUUIDField.get_default",
+                return_value="ab12345678901234567890",
+            ):
+                res = self.client.post(f"/api/v1/budgets/{bud1.id}/bulk-create/", query, format="json")
+                self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+                expected = sorted(
+                    [
+                        {
+                            "id": mbi10.id,
+                            "budget": bud1.id,
+                            "classification": cl10.id,
+                            "sourceClassifications": [cl00.id],
+                            "createdAt": dt.strftime(datetime_format),
+                            "updatedAt": dt.strftime(datetime_format),
+                        },
+                        {
+                            "id": mbi11.id,
+                            "budget": bud1.id,
+                            "classification": cl11.id,
+                            "sourceClassifications": [cl01.id],
+                            "createdAt": dt.strftime(datetime_format),
+                            "updatedAt": dt2.strftime(datetime_format),
+                        },
+                        {
+                            "id": "ab12345678901234567890",
+                            "budget": bud1.id,
+                            "classification": cl13.id,
+                            "sourceClassifications": [cl02.id, cl03.id, cl04.id],
+                            "createdAt": dt2.strftime(datetime_format),
+                            "updatedAt": dt2.strftime(datetime_format),
+                        },
+                    ],
+                    key=lambda d: d["id"],
+                )
+                res_json = res.json()
+                self.assertIn("results", res_json)
+                actual = res_json["results"]
+                self.assertEqual(sorted(actual, key=lambda d: d["id"]), expected)
+            with self.assertRaises(models.MappedBudgetItem.DoesNotExist):
+                models.MappedBudgetItem.objects.get(id=mbi12.id)
+
+
 class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
     def test_list(self):
-        ordering = CreatedAtPagination.ordering
-        page_size = CreatedAtPagination.page_size
+        ordering = ItemOrderPagination.ordering
+        page_size = ItemOrderPagination.page_size
+        [factories.ClassificationFactory(item_order=i) for i in range(100)]
         cs = factories.ClassificationSystemFactory()
-        classifications = [factories.ClassificationFactory(classification_system=cs) for _ in range(100)]
+        classifications = [factories.ClassificationFactory(classification_system=cs, item_order=i) for i in range(100)]
         res = self.client.get(f"/api/v1/classification-systems/{cs.id}/classifications/", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         expected = [
@@ -931,14 +1014,7 @@ class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "id": b.id,
                 "code": b.code,
                 "name": b.name,
-                "classificationSystem": {
-                    "id": cs.id,
-                    "name": cs.name,
-                    "slug": cs.slug,
-                    "levelNames": cs.level_names,
-                    "createdAt": cs.created_at.strftime(datetime_format),
-                    "updatedAt": cs.updated_at.strftime(datetime_format),
-                },
+                "classificationSystem": cs.id,
                 "icon": b.icon.id if b.icon is not None else None,
                 "parent": b.parent,
                 "createdAt": b.created_at.strftime(datetime_format),
@@ -1432,6 +1508,108 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
         bs = [factories.MappedBudgetFactory() for i in range(100)]
         b = random.choice(bs)
         res = self.client.get(f"/api/v1/budgets/{b.id}/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = {
+            "id": b.id,
+            "name": b.name,
+            "slug": b.slug,
+            "year": b.year,
+            "subtitle": b.subtitle,
+            "classificationSystem": {
+                "id": b.classification_system.id,
+                "name": b.classification_system.name,
+                "slug": b.classification_system.slug,
+                "levelNames": b.classification_system.level_names,
+                "createdAt": b.classification_system.created_at.strftime(datetime_format),
+                "updatedAt": b.classification_system.updated_at.strftime(datetime_format),
+            },
+            "government": {
+                "id": b.government.id,
+                "name": b.government.name,
+                "slug": b.government.slug,
+                "latitude": b.government.latitude,
+                "longitude": b.government.longitude,
+                "primaryColorCode": b.government.primary_color_code,
+                "secondaryColorCode": b.government.secondary_color_code,
+                "createdAt": b.government.created_at.strftime(datetime_format),
+                "updatedAt": b.government.updated_at.strftime(datetime_format),
+            },
+            "sourceBudget": {
+                "id": b.source_budget.id,
+                "name": b.source_budget.name,
+                "slug": b.source_budget.slug,
+                "year": b.source_budget.year,
+                "subtitle": b.source_budget.subtitle,
+                "classificationSystem": {
+                    "id": b.source_budget.classification_system.id,
+                    "name": b.source_budget.classification_system.name,
+                    "slug": b.source_budget.classification_system.slug,
+                    "levelNames": b.source_budget.classification_system.level_names,
+                    "createdAt": b.source_budget.classification_system.created_at.strftime(datetime_format),
+                    "updatedAt": b.source_budget.classification_system.updated_at.strftime(datetime_format),
+                },
+                "government": {
+                    "id": b.source_budget.government.id,
+                    "name": b.source_budget.government.name,
+                    "slug": b.source_budget.government.slug,
+                    "latitude": b.source_budget.government.latitude,
+                    "longitude": b.source_budget.government.longitude,
+                    "primaryColorCode": b.source_budget.government.primary_color_code,
+                    "secondaryColorCode": b.source_budget.government.secondary_color_code,
+                    "createdAt": b.source_budget.government.created_at.strftime(datetime_format),
+                    "updatedAt": b.source_budget.government.updated_at.strftime(datetime_format),
+                },
+                "createdAt": b.source_budget.created_at.strftime(datetime_format),
+                "updatedAt": b.source_budget.updated_at.strftime(datetime_format),
+            },
+            "createdAt": b.created_at.strftime(datetime_format),
+            "updatedAt": b.updated_at.strftime(datetime_format),
+        }
+
+        actual = res.json()
+        self.assertEqual(actual, expected)
+
+    def test_retrieve_basic_by_slug(self):
+        bs = [factories.BasicBudgetFactory() for i in range(100)]
+        b = bs[random.randint(0, 99)]
+        res = self.client.get(f"/api/v1/budgets/{b.slug}/", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = {
+            "id": b.id,
+            "name": b.name,
+            "slug": b.slug,
+            "year": b.year,
+            "subtitle": b.subtitle,
+            "classificationSystem": {
+                "id": b.classification_system.id,
+                "name": b.classification_system.name,
+                "slug": b.classification_system.slug,
+                "levelNames": b.classification_system.level_names,
+                "createdAt": b.classification_system.created_at.strftime(datetime_format),
+                "updatedAt": b.classification_system.updated_at.strftime(datetime_format),
+            },
+            "government": {
+                "id": b.government.id,
+                "name": b.government.name,
+                "slug": b.government.slug,
+                "latitude": b.government.latitude,
+                "longitude": b.government.longitude,
+                "primaryColorCode": b.government.primary_color_code,
+                "secondaryColorCode": b.government.secondary_color_code,
+                "createdAt": b.government.created_at.strftime(datetime_format),
+                "updatedAt": b.government.updated_at.strftime(datetime_format),
+            },
+            "createdAt": b.created_at.strftime(datetime_format),
+            "updatedAt": b.updated_at.strftime(datetime_format),
+        }
+
+        actual = res.json()
+        self.assertEqual(actual, expected)
+
+    def test_retrieve_mapped_by_slug(self):
+        bs = [factories.MappedBudgetFactory() for i in range(100)]
+        b = random.choice(bs)
+        res = self.client.get(f"/api/v1/budgets/{b.slug}/", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         expected = {
             "id": b.id,
