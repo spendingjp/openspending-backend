@@ -12,6 +12,7 @@ router.register(r"icon-images", views.IconImageViewSet)
 
 government_router = routers.NestedDefaultRouter(router, r"governments", lookup="government")
 government_router.register(r"default-budget", views.DefaultBudgetView, basename="government-default-budget")
+government_router.register(r"budgets", views.GovernmentBudgetView, basename="government-budget-list")
 
 classification_system_router = routers.NestedDefaultRouter(
     router, r"classification-systems", lookup=r"classification_system"

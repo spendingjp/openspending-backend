@@ -98,3 +98,11 @@ class IconImageFactory(DjangoModelFactory):
     name = fuzzy.FuzzyText()
     body = b"<svg></svg>"
     image_type = "svg+xml"
+
+
+class DefaultBudgetFactory(DjangoModelFactory):
+    class Meta:
+        model = models.DefaultBudget
+
+    government = factory.SubFactory(GovernmentFactory)
+    budget = factory.SubFactory(BasicBudgetFactory)
