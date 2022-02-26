@@ -61,9 +61,9 @@ export default {
   build: {},
 
   publicRuntimeConfig: {
-    apiUrl: process.env.API_URL || 'http://localhost:8000',
+    apiUrl: process.env.API_URL || 'https://openspending.net',
     axios: {
-      baseURL: process.env.API_URL || 'http://localhost:8000',
+      baseURL: process.env.API_URL || 'https://openspending.net',
     },
   },
 
