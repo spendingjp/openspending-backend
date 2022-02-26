@@ -594,11 +594,14 @@ class DefaultBudgetTestCase(BudgetMapperTestUserAPITestCase):
 
 class GovernmentBudgetListTestCase(BudgetMapperTestUserAPITestCase):
     def test_budget_list(self):
+        self.maxDiff = None
         gov = factories.GovernmentFactory()
         budget1 = factories.BasicBudgetFactory(government_value=gov)
         budget2 = factories.BasicBudgetFactory(government_value=gov)
         budget3 = factories.BasicBudgetFactory(government_value=gov)
         budget4 = factories.BasicBudgetFactory(government_value=gov)
+        mp_budget1 = factories.MappedBudgetFactory(source_budget=budget1)
+        mp_budget2 = factories.MappedBudgetFactory(source_budget=budget2)
         default_budget = factories.DefaultBudgetFactory(government=gov, budget=budget2)
 
         res = self.client.get(f"/api/v1/governments/{gov.slug}/budgets/", format="json")
@@ -649,6 +652,30 @@ class GovernmentBudgetListTestCase(BudgetMapperTestUserAPITestCase):
                     "createdAt": budget4.created_at.strftime(datetime_format),
                     "updatedAt": budget4.updated_at.strftime(datetime_format),
                 },
+                {
+                    "id": mp_budget1.id,
+                    "name": mp_budget1.name,
+                    "slug": mp_budget1.slug,
+                    "year": mp_budget1.year,
+                    "subtitle": mp_budget1.subtitle,
+                    "classificationSystem": mp_budget1.classification_system.id,
+                    "government": mp_budget1.government.id,
+                    "sourceBudget": mp_budget1.source_budget.id,
+                    "createdAt": mp_budget1.created_at.strftime(datetime_format),
+                    "updatedAt": mp_budget1.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": mp_budget2.id,
+                    "name": mp_budget2.name,
+                    "slug": mp_budget2.slug,
+                    "year": mp_budget2.year,
+                    "subtitle": mp_budget2.subtitle,
+                    "classificationSystem": mp_budget2.classification_system.id,
+                    "government": mp_budget2.government.id,
+                    "sourceBudget": mp_budget2.source_budget.id,
+                    "createdAt": mp_budget2.created_at.strftime(datetime_format),
+                    "updatedAt": mp_budget2.updated_at.strftime(datetime_format),
+                },
             ],
             "defaultBudget": {
                 "id": default_budget.id,
@@ -667,6 +694,8 @@ class GovernmentBudgetListTestCase(BudgetMapperTestUserAPITestCase):
         budget2 = factories.BasicBudgetFactory(government_value=gov)
         budget3 = factories.BasicBudgetFactory(government_value=gov)
         budget4 = factories.BasicBudgetFactory(government_value=gov)
+        mp_budget1 = factories.MappedBudgetFactory(source_budget=budget1)
+        mp_budget2 = factories.MappedBudgetFactory(source_budget=budget2)
 
         res = self.client.get(f"/api/v1/governments/{gov.slug}/budgets/", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -715,6 +744,30 @@ class GovernmentBudgetListTestCase(BudgetMapperTestUserAPITestCase):
                     "government": budget4.government.id,
                     "createdAt": budget4.created_at.strftime(datetime_format),
                     "updatedAt": budget4.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": mp_budget1.id,
+                    "name": mp_budget1.name,
+                    "slug": mp_budget1.slug,
+                    "year": mp_budget1.year,
+                    "subtitle": mp_budget1.subtitle,
+                    "classificationSystem": mp_budget1.classification_system.id,
+                    "government": mp_budget1.government.id,
+                    "sourceBudget": mp_budget1.source_budget.id,
+                    "createdAt": mp_budget1.created_at.strftime(datetime_format),
+                    "updatedAt": mp_budget1.updated_at.strftime(datetime_format),
+                },
+                {
+                    "id": mp_budget2.id,
+                    "name": mp_budget2.name,
+                    "slug": mp_budget2.slug,
+                    "year": mp_budget2.year,
+                    "subtitle": mp_budget2.subtitle,
+                    "classificationSystem": mp_budget2.classification_system.id,
+                    "government": mp_budget2.government.id,
+                    "sourceBudget": mp_budget2.source_budget.id,
+                    "createdAt": mp_budget2.created_at.strftime(datetime_format),
+                    "updatedAt": mp_budget2.updated_at.strftime(datetime_format),
                 },
             ],
             "defaultBudget": None,

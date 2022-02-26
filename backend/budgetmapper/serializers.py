@@ -463,7 +463,13 @@ class GovernmentBudgetListSerializer(serializers.ModelSerializer):
         fields = ("budgets", "default_budget")
 
     def get_budgets(self, obj: models.Government):
-        return BudgetListSerializer(obj.basicbudget_set.all(), many=True).data
+        basic_budgets = obj.basicbudget_set.all().prefetch_related("mapped_budget")
+        basic_budget_list = list(basic_budgets)
+        mapped_budget_list = [
+            mapped_budget for basic_budget in basic_budget_list for mapped_budget in basic_budget.mapped_budget.all()
+        ]
+
+        return BudgetListSerializer(basic_budget_list + mapped_budget_list, many=True).data
 
     def get_default_budget(self, obj: models.Government):
         try:
