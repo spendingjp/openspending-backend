@@ -66,8 +66,4 @@ export default {
       baseURL: process.env.API_URL || 'https://openspending.net',
     },
   },
-
-  router: {
-    base: '/static/',
-  },
 }
