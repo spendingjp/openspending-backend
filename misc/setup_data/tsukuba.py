@@ -25,6 +25,8 @@ if __name__ == "__main__":
         budget = models.MappedBudget(name="つくば市COFOG2021", classification_system=cofog, source_budget=tsukuba_budget)
         budget.save()
 
+    models.DefaultBudget.objects.get_or_create(government=tsukuba, budget=budget)
+
     buf = defaultdict(list)
     with open(args.input, "r") as fin:
         reader = csv.DictReader(fin)
