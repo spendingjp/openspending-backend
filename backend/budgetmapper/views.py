@@ -50,10 +50,18 @@ class IconImageViewSet(viewsets.ReadOnlyModelViewSet):
         return serializers.IconImageListSerializer
 
 
+class GovernmentFilter(filters.BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        if "hasDefaultBudget" in request.query_params:
+            return queryset.filter(Q(pk__in=models.DefaultBudget.objects.all().values("government_id")))
+        return queryset
+
+
 class GovernmentViewSet(viewsets.ModelViewSet):
     queryset = models.Government.objects.all()
     serializer_class = serializers.GovernmentSerializer
     pagination_class = CreatedAtPagination
+    filter_backends = [GovernmentFilter]
 
 
 class ClassificationSystemViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):

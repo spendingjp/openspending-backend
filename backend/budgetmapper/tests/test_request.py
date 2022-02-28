@@ -432,6 +432,41 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
         actual = res_json["results"]
         self.assertEqual(actual, expected)
 
+    def test_list_with_filter_governments_without_default_budget(self):
+        ordering = CreatedAtPagination.ordering
+        page_size = CreatedAtPagination.page_size
+        govs = [factories.GovernmentFactory() for i in range(100)]
+        bud0 = factories.BasicBudgetFactory(government_value=govs[0])
+        bud1 = factories.BasicBudgetFactory(government_value=govs[1])
+        bud2 = factories.BasicBudgetFactory(government_value=govs[2])
+        factories.DefaultBudgetFactory(government=govs[0], budget=bud0)
+        factories.DefaultBudgetFactory(government=govs[1], budget=bud1)
+        factories.DefaultBudgetFactory(government=govs[2], budget=bud2)
+        res = self.client.get("/api/v1/governments/?hasDefaultBudget", format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        expected = [
+            {
+                "id": gov.id,
+                "name": gov.name,
+                "slug": gov.slug,
+                "latitude": gov.latitude,
+                "longitude": gov.longitude,
+                "primaryColorCode": gov.primary_color_code,
+                "secondaryColorCode": gov.secondary_color_code,
+                "createdAt": gov.created_at.strftime(datetime_format),
+                "updatedAt": gov.updated_at.strftime(datetime_format),
+            }
+            for gov in sorted(
+                [govs[0], govs[1], govs[2]],
+                key=lambda gov: getattr(gov, ordering.strip("-")),
+                reverse=ordering.startswith("-"),
+            )[:page_size]
+        ]
+        res_json = res.json()
+        self.assertIn("results", res_json)
+        actual = res_json["results"]
+        self.assertEqual(actual, expected)
+
     def test_retrieve(self):
         govs = [factories.GovernmentFactory() for i in range(100)]
         gov = govs[random.randint(0, 99)]
