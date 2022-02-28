@@ -197,6 +197,71 @@ class WdmmgSerializerTestCase(TestCase):
         actual = serializers.WdmmgSerializer().get_budgets(obj=bud)
         self.assertEqual(actual, expected)
 
+    def test_get_budgets_add_amount_of_inner_node(self):
+        from budgetmapper.models import IconImage
+
+        self.maxDiff = None
+
+        cs = factories.ClassificationSystemFactory()
+        cl0 = factories.ClassificationFactory(classification_system=cs)
+        cl00 = factories.ClassificationFactory(classification_system=cs, parent=cl0)
+        cl000 = factories.ClassificationFactory(classification_system=cs, parent=cl00)
+        cl001 = factories.ClassificationFactory(classification_system=cs, parent=cl00)
+        cl002 = factories.ClassificationFactory(classification_system=cs, parent=cl00)
+
+        bud = factories.BasicBudgetFactory(classification_system=cs)
+
+        abi000 = factories.AtomicBudgetItemFactory(value=123.0, budget=bud, classification=cl00)
+        abi001 = factories.AtomicBudgetItemFactory(value=125.0, budget=bud, classification=cl001)
+        abi002 = factories.AtomicBudgetItemFactory(value=127.0, budget=bud, classification=cl002)
+
+        expected = [
+            {
+                "id": cl0.id,
+                "name": cl0.name,
+                "code": cl0.code,
+                "amount": abi000.amount + abi001.amount + abi002.amount,
+                "icon_id": IconImage.get_default_icon().id,
+                "children": [
+                    {
+                        "id": cl00.id,
+                        "name": cl00.name,
+                        "code": cl00.code,
+                        "icon_id": IconImage.get_default_icon().id,
+                        "amount": abi000.amount + abi001.amount + abi002.amount,
+                        "children": [
+                            {
+                                "id": cl000.id,
+                                "name": cl000.name,
+                                "code": cl000.code,
+                                "amount": 0.0,
+                                "icon_id": IconImage.get_default_icon().id,
+                                "children": None,
+                            },
+                            {
+                                "id": cl001.id,
+                                "name": cl001.name,
+                                "code": cl001.code,
+                                "amount": abi001.amount,
+                                "icon_id": IconImage.get_default_icon().id,
+                                "children": None,
+                            },
+                            {
+                                "id": cl002.id,
+                                "name": cl002.name,
+                                "code": cl002.code,
+                                "amount": abi002.amount,
+                                "icon_id": IconImage.get_default_icon().id,
+                                "children": None,
+                            },
+                        ],
+                    }
+                ],
+            }
+        ]
+        actual = serializers.WdmmgSerializer().get_budgets(obj=bud)
+        self.assertEqual(actual, expected)
+
     @patch("budgetmapper.serializers.models.WdmmgTreeCache.get_or_none", return_value=None)
     @patch("budgetmapper.serializers.models.WdmmgTreeCache.cache_tree")
     def test_get_budgets_creates_cache(self, cache_tree, get_or_none):
