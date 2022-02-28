@@ -427,6 +427,49 @@ class ComplexBudgetItemTestCase(TestCase):
         self.assertAlmostEqual(bud1.get_amount_of(cl11), abi01.value + abi12.value)
         self.assertAlmostEqual(bud1.get_amount_of(cl110), abi01.value + abi12.value)
 
+    def test_get_amount_of_mapped_tree_innter_nodes(self) -> None:
+        cs0 = factories.ClassificationSystemFactory()
+        bud0 = factories.BasicBudgetFactory(classification_system=cs0)
+        cl00 = factories.ClassificationFactory(classification_system=cs0)
+        cl000 = factories.ClassificationFactory(classification_system=cs0, parent=cl00)
+        cl001 = factories.ClassificationFactory(classification_system=cs0, parent=cl00)
+        cl01 = factories.ClassificationFactory(classification_system=cs0)
+        cl010 = factories.ClassificationFactory(classification_system=cs0, parent=cl01)
+        cl011 = factories.ClassificationFactory(classification_system=cs0, parent=cl01)
+        cl012 = factories.ClassificationFactory(classification_system=cs0, parent=cl01)
+
+        abi00 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl000)
+        abi01 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl001)
+        abi10 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl010)
+        abi11 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl011)
+        abi12 = factories.AtomicBudgetItemFactory(budget=bud0, classification=cl012)
+
+        cs1 = factories.ClassificationSystemFactory()
+        bud1 = factories.MappedBudgetFactory(classification_system=cs1, source_budget=bud0)
+        cl10 = factories.ClassificationFactory(classification_system=cs1)
+        cl100 = factories.ClassificationFactory(classification_system=cs1, parent=cl10)
+        cl101 = factories.ClassificationFactory(classification_system=cs1, parent=cl10)
+        cl11 = factories.ClassificationFactory(classification_system=cs1)
+        cl110 = factories.ClassificationFactory(classification_system=cs1, parent=cl11)
+
+        mbi00 = models.MappedBudgetItem(budget=bud1, classification=cl10)
+        mbi00.save()
+        mbi00.source_classifications.set([cl000])
+
+        mbi01 = models.MappedBudgetItem(budget=bud1, classification=cl101)
+        mbi01.save()
+        mbi01.source_classifications.set([cl010, cl011])
+
+        mbi10 = models.MappedBudgetItem(budget=bud1, classification=cl11)
+        mbi10.save()
+        mbi10.source_classifications.set([cl001, cl012])
+
+        self.assertAlmostEqual(bud1.get_amount_of(cl10), abi00.value + abi10.value + abi11.value)
+        self.assertAlmostEqual(bud1.get_amount_of(cl100), 0)
+        self.assertAlmostEqual(bud1.get_amount_of(cl101), abi10.value + abi11.value)
+        self.assertAlmostEqual(bud1.get_amount_of(cl11), abi01.value + abi12.value)
+        self.assertAlmostEqual(bud1.get_amount_of(cl110), 0)
+
     def test_basic_budget_updated_at_renewed_when_atomic_budget_item_added(self) -> None:
         dt_orig = datetime(2021, 1, 31, 12, 23, 34, 5678)
         with freezegun.freeze_time(dt_orig) as dt:

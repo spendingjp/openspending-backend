@@ -8,8 +8,8 @@ import shortuuidfield
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
-from django.db import models, transaction
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from django.db import models, transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils import timezone
@@ -293,11 +293,16 @@ class BudgetBase(PolymorphicModel):
     def get_amount_of(self, classification: Classification) -> float:
         if self.classification_system != classification.classification_system:
             raise ValueError
+        return self.get_item_amount_of(classification) + sum(
+            self.get_amount_of(c) for c in Classification.objects.filter(parent=classification)
+        )
+
+    def get_item_amount_of(self, classification: Classification) -> float:
         try:
             val = BudgetItemBase.objects.get(budget=self, classification=classification)
             return val.amount
         except BudgetItemBase.DoesNotExist:
-            return sum(self.get_amount_of(c) for c in Classification.objects.filter(parent=classification))
+            return 0.0
 
     def iterate_items(self):
         for cl in self.classification_system.iterate_classifications():

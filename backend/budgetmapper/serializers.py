@@ -400,10 +400,10 @@ class WdmmgNodeSerializer(serializers.ModelSerializer):
             children.append(WdmmgNodeSerializer(instance=c, context={"budget": self.context["budget"]}).data)
             is_leaf = False
         if is_leaf:
-            amount = self.context["budget"].get_amount_of(instance)
+            amount = self.context["budget"].get_item_amount_of(instance)
             children = None
         else:
-            amount = sum((c["amount"] for c in children))
+            amount = self.context["budget"].get_item_amount_of(instance) + sum((c["amount"] for c in children))
         return dict(super().to_representation(instance), amount=amount, children=children)
 
 
