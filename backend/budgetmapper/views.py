@@ -13,17 +13,31 @@ from rest_framework.response import Response
 from . import models, serializers
 
 
-class ItemOrderPagination(CursorPagination):
+class RelativePathNextLinkPagination(CursorPagination):
+    def paginate_queryset(self, queryset, request, view=None):
+        self.request = request
+        return super().paginate_queryset(queryset, request, view)
+
+    def get_next_link(self):
+        self.base_url = self.request.get_full_path()
+        return super(RelativePathNextLinkPagination, self).get_next_link()
+
+    def get_previous_link(self):
+        self.base_url = self.request.get_full_path()
+        return super(RelativePathNextLinkPagination, self).get_previous_link()
+
+
+class ItemOrderPagination(RelativePathNextLinkPagination):
     page_size = 10
     ordering = "item_order"
 
 
-class CreatedAtPagination(CursorPagination):
+class CreatedAtPagination(RelativePathNextLinkPagination):
     page_size = 10
     ordering = "-created_at"
 
 
-class UpdatedAtPagination(CursorPagination):
+class UpdatedAtPagination(RelativePathNextLinkPagination):
     page_size = 10
     ordering = "-updated_at"
 

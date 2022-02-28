@@ -431,17 +431,24 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertIn("results", res_json)
         actual = res_json["results"]
         self.assertEqual(actual, expected)
+        self.assertIn("next", res_json)
+        self.assertIn("previous", res_json)
+        self.assertIsNone(res_json["previous"])
+        n = res_json["next"]
+        if len(govs) > page_size:
+            self.assertIsInstance(n, str)
+            self.assertTrue(n.startswith("/api/v1/governments/?cursor="))
+        else:
+            self.assertIsNone(n)
 
     def test_list_with_filter_governments_without_default_budget(self):
         ordering = CreatedAtPagination.ordering
         page_size = CreatedAtPagination.page_size
         govs = [factories.GovernmentFactory() for i in range(100)]
-        bud0 = factories.BasicBudgetFactory(government_value=govs[0])
-        bud1 = factories.BasicBudgetFactory(government_value=govs[1])
-        bud2 = factories.BasicBudgetFactory(government_value=govs[2])
-        factories.DefaultBudgetFactory(government=govs[0], budget=bud0)
-        factories.DefaultBudgetFactory(government=govs[1], budget=bud1)
-        factories.DefaultBudgetFactory(government=govs[2], budget=bud2)
+        target_indices = list(range(0, 100, 2))
+        for i in target_indices:
+            bud = factories.BasicBudgetFactory(government_value=govs[i])
+            factories.DefaultBudgetFactory(government=govs[i], budget=bud)
         res = self.client.get("/api/v1/governments/?hasDefaultBudget", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         expected = [
@@ -457,7 +464,7 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "updatedAt": gov.updated_at.strftime(datetime_format),
             }
             for gov in sorted(
-                [govs[0], govs[1], govs[2]],
+                [govs[i] for i in target_indices],
                 key=lambda gov: getattr(gov, ordering.strip("-")),
                 reverse=ordering.startswith("-"),
             )[:page_size]
@@ -466,6 +473,17 @@ class GovernmentCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertIn("results", res_json)
         actual = res_json["results"]
         self.assertEqual(actual, expected)
+        self.assertIn("next", res_json)
+        self.assertIn("previous", res_json)
+        self.assertIsNone(res_json["previous"])
+        n = res_json["next"]
+        if len(target_indices) > page_size:
+            self.assertIsInstance(n, str)
+            self.assertTrue(n.startswith("/api/v1/governments/?"))
+            self.assertTrue("cursor=" in n)
+            self.assertTrue("hasDefaultBudget" in n)
+        else:
+            self.assertIsNone(n)
 
     def test_retrieve(self):
         govs = [factories.GovernmentFactory() for i in range(100)]
@@ -870,6 +888,15 @@ class ClassificationSystemCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertIn("results", res_json)
         actual = res_json["results"]
         self.assertEqual(actual, expected)
+        self.assertIn("next", res_json)
+        self.assertIn("previous", res_json)
+        self.assertIsNone(res_json["previous"])
+        n = res_json["next"]
+        if len(css) > page_size:
+            self.assertIsInstance(n, str)
+            self.assertTrue(n.startswith("/api/v1/classification-systems/?cursor="))
+        else:
+            self.assertIsNone(n)
 
     def test_retrieve(self):
         css = [factories.ClassificationSystemFactory() for i in range(100)]
@@ -1266,6 +1293,15 @@ class ClassificationCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertIn("results", res_json)
         actual = res_json["results"]
         self.assertEqual(actual, expected)
+        self.assertIn("next", res_json)
+        self.assertIn("previous", res_json)
+        self.assertIsNone(res_json["previous"])
+        n = res_json["next"]
+        if len(classifications) > page_size:
+            self.assertIsInstance(n, str)
+            self.assertTrue(n.startswith(f"/api/v1/classification-systems/{cs.id}/classifications/?cursor="))
+        else:
+            self.assertIsNone(n)
 
     def test_get(self):
         cs = factories.ClassificationSystemFactory()
@@ -1479,6 +1515,15 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertIn("results", res_json)
         actual = res_json["results"]
         self.assertEqual(actual, expected)
+        self.assertIn("next", res_json)
+        self.assertIn("previous", res_json)
+        self.assertIsNone(res_json["previous"])
+        n = res_json["next"]
+        if len(bs) > page_size:
+            self.assertIsInstance(n, str)
+            self.assertTrue(n.startswith("/api/v1/budgets/?cursor="))
+        else:
+            self.assertIsNone(n)
 
     def test_list_can_filter_by_government(self):
         ordering = CreatedAtPagination.ordering
@@ -1491,7 +1536,7 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
                 bs.append(factories.BasicBudgetFactory(government_value=govs[(i // 2) % 4]))
             else:
                 bs.append(factories.MappedBudgetFactory(source_budget=bs[i - 1]))
-
+        expected_buds = [b for b in bs if b.government.id == govs[0].id]
         res = self.client.get(f"/api/v1/budgets/?government={govs[0].id}", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         expected = [
@@ -1520,7 +1565,7 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "updatedAt": b.updated_at.strftime(datetime_format),
             }
             for b in sorted(
-                [b for b in bs if b.government.id == govs[0].id],
+                expected_buds,
                 key=lambda b: getattr(b, ordering.strip("-")),
                 reverse=ordering.startswith("-"),
             )[:page_size]
@@ -1529,6 +1574,17 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertIn("results", res_json)
         actual = res_json["results"]
         self.assertEqual(actual, expected)
+        self.assertIn("next", res_json)
+        self.assertIn("previous", res_json)
+        self.assertIsNone(res_json["previous"])
+        n = res_json["next"]
+        if len(expected_buds) > page_size:
+            self.assertIsInstance(n, str)
+            self.assertTrue(n.startswith("/api/v1/budgets/?"))
+            self.assertTrue("cursor=" in n)
+            self.assertTrue(f"government={govs[0].id}" in n)
+        else:
+            self.assertIsNone(n)
 
     def test_list_can_filter_by_year(self):
         ordering = CreatedAtPagination.ordering
@@ -1539,6 +1595,7 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
                 bs.append(factories.BasicBudgetFactory(year_value=(2000 + i // 10)))
             else:
                 bs.append(factories.MappedBudgetFactory(source_budget=bs[i - 1]))
+        expected_buds = [b for b in bs if b.year == 2001]
         res = self.client.get("/api/v1/budgets/?year=2001", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         expected = [
@@ -1567,7 +1624,7 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "updatedAt": b.updated_at.strftime(datetime_format),
             }
             for b in sorted(
-                [b for b in bs if b.year == 2001],
+                expected_buds,
                 key=lambda b: getattr(b, ordering.strip("-")),
                 reverse=ordering.startswith("-"),
             )[:page_size]
@@ -1576,6 +1633,17 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertIn("results", res_json)
         actual = res_json["results"]
         self.assertEqual(actual, expected)
+        self.assertIn("next", res_json)
+        self.assertIn("previous", res_json)
+        self.assertIsNone(res_json["previous"])
+        n = res_json["next"]
+        if len(expected_buds) > page_size:
+            self.assertIsInstance(n, str)
+            self.assertTrue(n.startswith("/api/v1/budgets/?"))
+            self.assertTrue("cursor=" in n)
+            self.assertTrue("year=2001" in n)
+        else:
+            self.assertIsNone(n)
 
     def test_list_can_filter_by_government_and_year(self):
         ordering = CreatedAtPagination.ordering
@@ -1589,6 +1657,7 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
                 )
             else:
                 bs.append(factories.MappedBudgetFactory(source_budget=bs[i - 1]))
+        expected_buds = [b for b in bs if b.government.id == govs[0].id and b.year == 2001]
         res = self.client.get(f"/api/v1/budgets/?government={govs[0].id}&year=2001", format="json")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         expected = [
@@ -1617,7 +1686,7 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "updatedAt": b.updated_at.strftime(datetime_format),
             }
             for b in sorted(
-                [b for b in bs if b.government.id == govs[0].id and b.year == 2001],
+                expected_buds,
                 key=lambda b: getattr(b, ordering.strip("-")),
                 reverse=ordering.startswith("-"),
             )[:page_size]
@@ -1626,6 +1695,18 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertIn("results", res_json)
         actual = res_json["results"]
         self.assertEqual(actual, expected)
+        self.assertIn("next", res_json)
+        self.assertIn("previous", res_json)
+        self.assertIsNone(res_json["previous"])
+        n = res_json["next"]
+        if len(expected_buds) > page_size:
+            self.assertIsInstance(n, str)
+            self.assertTrue(n.startswith("/api/v1/budgets/?"))
+            self.assertTrue("cursor=" in n)
+            self.assertTrue("year=2001" in n)
+            self.assertTrue(f"government={govs[0].id}" in n)
+        else:
+            self.assertIsNone(n)
 
     def test_list_can_filter_by_source_budget(self) -> None:
         ordering = CreatedAtPagination.ordering
@@ -1639,7 +1720,7 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
         bud001 = factories.MappedBudgetFactory(source_budget=bud0, classification_system=cs0)
         bud100 = factories.MappedBudgetFactory(source_budget=bud0, classification_system=cs1)
         factories.MappedBudgetFactory(source_budget=bud1, classification_system=cs0)
-
+        expected_buds = [bud000, bud001, bud100]
         res = self.client.get(f"/api/v1/budgets/?sourceBudget={bud0.id}", format="json")
         expected = [
             {
@@ -1655,7 +1736,7 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "sourceBudget": b.source_budget.id,
             }
             for b in sorted(
-                [bud000, bud001, bud100],
+                expected_buds,
                 key=lambda b: getattr(b, ordering.strip("-")),
                 reverse=ordering.startswith("-"),
             )
@@ -1665,6 +1746,17 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertIn("results", res_json)
         actual = res_json["results"]
         self.assertEqual(actual, expected)
+        self.assertIn("next", res_json)
+        self.assertIn("previous", res_json)
+        self.assertIsNone(res_json["previous"])
+        n = res_json["next"]
+        if len(expected_buds) > page_size:
+            self.assertIsInstance(n, str)
+            self.assertTrue(n.startswith("/api/v1/budgets/?"))
+            self.assertTrue("cursor=" in n)
+            self.assertTrue(f"sourceBudget={bud0.id}" in n)
+        else:
+            self.assertIsNone(n)
 
     def test_list_can_filter_by_source_budget_and_classification_system(self) -> None:
         ordering = CreatedAtPagination.ordering
@@ -1678,7 +1770,7 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
         bud001 = factories.MappedBudgetFactory(source_budget=bud0, classification_system=cs0)
         factories.MappedBudgetFactory(source_budget=bud0, classification_system=cs1)
         factories.MappedBudgetFactory(source_budget=bud1, classification_system=cs0)
-
+        expected_buds = [bud000, bud001]
         res = self.client.get(f"/api/v1/budgets/?sourceBudget={bud0.id}&classificationSystem={cs0.id}", format="json")
         expected = [
             {
@@ -1694,7 +1786,7 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
                 "sourceBudget": b.source_budget.id,
             }
             for b in sorted(
-                [bud000, bud001], key=lambda b: getattr(b, ordering.strip("-")), reverse=ordering.startswith("-")
+                expected_buds, key=lambda b: getattr(b, ordering.strip("-")), reverse=ordering.startswith("-")
             )
         ][:page_size]
 
@@ -1702,6 +1794,18 @@ class BudgetCrudTestCase(BudgetMapperTestUserAPITestCase):
         self.assertIn("results", res_json)
         actual = res_json["results"]
         self.assertEqual(actual, expected)
+        self.assertIn("next", res_json)
+        self.assertIn("previous", res_json)
+        self.assertIsNone(res_json["previous"])
+        n = res_json["next"]
+        if len(expected_buds) > page_size:
+            self.assertIsInstance(n, str)
+            self.assertTrue(n.startswith("/api/v1/budgets/?"))
+            self.assertTrue("cursor=" in n)
+            self.assertTrue(f"sourceBudget={bud0.id}" in n)
+            self.assertTrue(f"classificationSystem={cs0.id}" in n)
+        else:
+            self.assertIsNone(n)
 
     def test_retrieve_basic(self):
         bs = [factories.BasicBudgetFactory() for i in range(100)]
