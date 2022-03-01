@@ -42,6 +42,7 @@ if __name__ == "__main__":
             "classification_system": cofog_cs,
         },
     )[0]
+    models.DefaultBudget.objects.get_or_create(government=abikoshi, budget=cofog_budget)
     models.MappedBudgetItem.objects.filter(budget=cofog_budget).delete()
     models.AtomicBudgetItem.objects.filter(budget=budget).delete()
     models.Classification.objects.filter(classification_system=cs).delete()
