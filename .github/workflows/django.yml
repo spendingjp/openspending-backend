@@ -37,7 +37,7 @@ jobs:
       - name: Prettier
         working-directory: ./backend
         run: |
-          python -m black --check --diff --line-length 120 --skip-string-normalization .
+          python -m black --check --extend-exclude migrations --diff --line-length 120 --skip-string-normalization .
       - name: Lint
         working-directory: ./backend
         run: |
